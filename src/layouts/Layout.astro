@@ -1,0 +1,47 @@
+---
+import '../styles/global.css';
+import '../styles/studio.css';
+import { site } from '../lib/site.mjs';
+const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', noindex = false } = Astro.props;
+const toolSections = ['Punnett square', 'DNA translator', 'Population growth', 'Hardy-Weinberg'];
+const activeSection = toolSections.includes(section) ? 'Tools' : section;
+const url = new URL(Astro.url.pathname, Astro.site);
+const isHome = Astro.url.pathname === '/';
+const pageTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
+const nav = [['Explore', '/'], ['Tools', '/tools/'], ['Cells', '/cells/'], ['Practice', '/practice/'], ['Printables', '/printable-diagrams/'], ['Learn', '/learn/']];
+const org = { '@type': 'Organization', name: site.name, url: site.url + '/' };
+const schema = schemaType === 'Article'
+  ? { '@context': 'https://schema.org', '@type': 'Article', headline: title, description, url: url.href, mainEntityOfPage: url.href, author: org, publisher: org, isAccessibleForFree: true, inLanguage: 'en' }
+  : schemaType === 'CollectionPage'
+    ? { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: url.href, isAccessibleForFree: true, inLanguage: 'en', publisher: org }
+    : { '@context': 'https://schema.org', '@type': 'WebApplication', name: title, url: url.href, description, applicationCategory: 'EducationalApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', isAccessibleForFree: true, inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, publisher: org };
+const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: site.url + '/', description: site.defaultDescription, inLanguage: 'en', publisher: org };
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{pageTitle}</title>
+  <meta name="description" content={description}/><link rel="canonical" href={url}/>
+  {noindex ? <meta name="robots" content="noindex,follow"/> : <meta name="robots" content="index,follow,max-image-preview:large"/>}
+  <meta name="theme-color" content="#f9f7ef"/>
+  <meta property="og:site_name" content={site.name}/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:url" content={url}/><meta property="og:locale" content="en_US"/>
+  <meta name="twitter:card" content="summary"/><meta name="twitter:title" content={title}/><meta name="twitter:description" content={description}/>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  {isHome && <script type="application/ld+json" set:html={JSON.stringify(website)} />}
+  {site.analyticsId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${site.analyticsId}`}></script>}
+  {site.analyticsId && <script is:inline define:vars={{ id: site.analyticsId }}>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', id);
+  </script>}
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header"><a href="/" class="brand" aria-label={`${site.name} home`}><img src="/favicon.svg" width="37" height="37" alt=""/><span>biology<span class="brand-light">lab</span><small>{site.tagline}</small></span></a><nav aria-label="Main navigation">{nav.map(([label, href]) => <a href={href} class:list={{ active: activeSection === label }} aria-current={activeSection === label ? 'page' : undefined}>{label}</a>)}</nav><a href="/worksheets/" class="header-learn">Worksheets <span aria-hidden="true">↗</span></a></header>
+  <main id="main"><slot/></main>
+  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>A little curiosity. A living picture.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
+</body>
+</html>

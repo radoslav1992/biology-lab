@@ -1,0 +1,23 @@
+---
+import { learningApps, learningTheme, relatedLearning } from '../lib/learning-apps.mjs';
+interface Props { topic: string }
+const { topic } = Astro.props;
+const links = (relatedLearning[topic] || []).map(link => ({...link, destination: learningApps.find(app => app.id === link.app)})).filter(link => link.destination?.url);
+---
+{links.map(link => <aside class="learning-connection" data-theme={learningTheme} aria-label="Explore a related subject">
+  <span class="connection-label">Connect the dots · {link.destination.name}</span>
+  <h2>{link.title}</h2><p>{link.description}</p>
+  <a href={link.destination.url + link.path}>{link.label} <span aria-hidden="true">↗</span></a>
+</aside>)}
+<style>
+  .learning-connection{--connection-ink:#243e35;--connection-muted:#506358;--connection-accent:#27624c;--connection-bg:#eef4eb;--connection-line:#c6d6c8;margin:36px 0;padding:26px;border:1px solid var(--connection-line);border-left:4px solid var(--connection-accent);border-radius:0 16px 16px 0;color:var(--connection-ink);background:var(--connection-bg)}
+  .learning-connection[data-theme="space"]{--connection-ink:#eef3f9;--connection-muted:#afc3d5;--connection-accent:#a2e3f5;--connection-bg:#0d1c2e;--connection-line:#334c65}
+  .learning-connection[data-theme="clay"]{--connection-ink:#3e322a;--connection-muted:#6d5c50;--connection-accent:#985039;--connection-bg:#f4eade;--connection-line:#dac5af}
+  .learning-connection .connection-label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--connection-accent)}
+  .learning-connection h2{font-size:1.35rem;line-height:1.3;letter-spacing:-.02em;color:var(--connection-ink);margin:12px 0}
+  .learning-connection p{font-size:.95rem;line-height:1.75;color:var(--connection-muted);margin:0 0 14px}
+  .learning-connection a{display:inline-block;padding-block:8px;color:var(--connection-accent);font-size:.92rem;font-weight:700;text-decoration:underline;text-underline-offset:4px;line-height:1.5}
+  .learning-connection a:focus-visible{outline:3px solid var(--connection-accent);outline-offset:4px;border-radius:2px}
+  @media(max-width:520px){.learning-connection{padding:20px}}
+  @media print{.learning-connection{display:none}}
+</style>
