@@ -1,0 +1,45 @@
+---
+import Faq from '../components/Faq.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import DnaTranslator from '../components/DnaTranslator.astro';
+import { CODON_TABLE, AMINO_ACIDS, STOP_CODONS } from '../lib/molecular.mjs';
+const bases = ['U', 'C', 'A', 'G'];
+// The classic 4 × 4 × 4 layout: first base picks the row group, second base the row, third base the column.
+const chart = bases.map(first => ({ first, rows: bases.map(second => ({ second, cells: bases.map(third => { const codon = first + second + third; return { codon, ...CODON_TABLE[codon] }; }) })) }));
+const codonCount = abbr => Object.values(CODON_TABLE).filter(a => a.abbr === abbr).length;
+const sixfold = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 6).map(a => a.name.toLowerCase());
+const single = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 1).map(a => a.name.toLowerCase());
+const senseCodons = 64 - STOP_CODONS.length;
+---
+<Layout title="DNA to mRNA to Protein Converter — Transcription & Translation" section="DNA translator" description="Paste a DNA coding strand to see its template strand, mRNA, codons in any reading frame, and the amino acid chain, plus GC content, Tm, and a full codon chart.">
+<div class="intro"><div><div class="eyebrow">Molecular biology, base by base</div><h1>From DNA to protein, one codon at a time.</h1><p>Type or paste a coding strand. We transcribe it, read the codons in your chosen frame, and build the amino acid chain, with every step shown and every base color-coded.</p></div></div>
+<DnaTranslator/>
+<section class="explanation" aria-labelledby="codon-chart-heading">
+  <h2 id="codon-chart-heading">Genetic code chart</h2>
+  <p>The genetic code is the dictionary a ribosome uses to turn mRNA into protein. Each three-base codon names one amino acid or a stop signal. Find the codon’s first base in the left column, its second base in the next column, and its third base along the top: the cell where they meet is the amino acid. AUG both encodes methionine and marks where translation begins, and the three highlighted stop codons (UAA, UAG, UGA) end it.</p>
+  <div class="fact-table-wrap"><table class="fact-table codon-chart">
+    <caption class="codon-caption">All 64 mRNA codons of the standard genetic code, read 5′ → 3′, with three-letter and one-letter amino acid codes.</caption>
+    <thead><tr><th scope="col">1st base (5′)</th><th scope="col">2nd base</th><th scope="col">3rd base: U</th><th scope="col">3rd base: C</th><th scope="col">3rd base: A</th><th scope="col">3rd base: G</th></tr></thead>
+    {chart.map(group => <tbody>{group.rows.map((row, i) => <tr>{i === 0 && <th scope="rowgroup" rowspan="4" class="codon-first">{group.first}</th>}<th scope="row">{row.second}</th>{row.cells.map(c => <td class:list={{ 'codon-stop': c.letter === '*', 'codon-start': c.codon === 'AUG' }}><code>{c.codon}</code> {c.letter === '*' ? 'Stop' : c.abbr}{c.letter !== '*' && <span class="codon-letter"> ({c.letter})</span>}</td>)}</tr>)}</tbody>)}
+  </table></div>
+  <p>Because 64 codons cover only 20 amino acids, the code is <strong>degenerate</strong>: {senseCodons} sense codons share the work, and most amino acids have more than one. {sixfold.map(n => n[0].toUpperCase() + n.slice(1)).join(', ')} each have six codons, while {single.join(' and ')} have just one. Notice that synonymous codons usually differ only in the third base, which is why a change there is often a silent mutation and why one tRNA can read several codons through third-position “wobble” pairing.</p>
+  <p>The chart is written in mRNA letters. To use it with a gene, take the coding strand of the DNA and swap every T for U, or read the template strand and write its complement. If a stop codon appears early in a reading frame, the frame is probably not the one the cell uses: try the other two frames, or tick “Begin at first AUG” in the translator above.</p>
+</section>
+<div class="related"><a href="/learn/transcription-and-translation/">Transcription &amp; translation explained ↗</a><a href="/learn/dna-structure/">DNA structure &amp; base pairing ↗</a><a href="/cells/ribosome/">The ribosome ↗</a><a href="/practice/">Practice questions ↗</a></div>
+<Faq items={faqs['dna-transcription-translation']} title="DNA translator questions"/>
+</Layout>
+<style>
+.codon-chart{font-size:14px}
+.codon-chart th,.codon-chart td{padding:11px 12px;vertical-align:top}
+.codon-chart thead th{font-size:13px;white-space:nowrap}
+.codon-chart th[scope=row]{font-weight:700;color:var(--muted);width:72px}
+.codon-chart .codon-first{font-family:Manrope,sans-serif;font-size:24px;font-weight:800;color:var(--green);text-align:center;vertical-align:middle;width:96px;background:#f5f9f4}
+.codon-chart td{white-space:nowrap}
+.codon-chart td code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--muted);margin-right:4px}
+.codon-chart .codon-letter{color:var(--muted);font-size:12px}
+.codon-chart .codon-stop{background:#fff1ec;color:#9a3d1b;font-weight:700}
+.codon-chart .codon-start{background:#e1f4eb;color:#226b45;font-weight:700}
+.codon-caption{caption-side:bottom;text-align:left;padding:12px 4px 0;font-size:13px;color:var(--muted)}
+@media(max-width:600px){.codon-chart th,.codon-chart td{padding:8px}.codon-chart .codon-first{font-size:20px;width:56px}.codon-chart th[scope=row]{width:44px}}
+</style>

@@ -1,0 +1,194 @@
+---
+// Punnett square lab: monohybrid, dihybrid, and ABO/Rh blood-type crosses.
+// `compact` renders the monohybrid-only version that sits beside the homepage hero (no tabs, no explanation).
+const { compact = false } = Astro.props;
+const modes = [['mono', 'Monohybrid'], ['di', 'Dihybrid'], ['blood', 'Blood type']];
+const abo = [['AA', 'AA · type A'], ['AO', 'AO · type A'], ['BB', 'BB · type B'], ['BO', 'BO · type B'], ['AB', 'AB · type AB'], ['OO', 'OO · type O']];
+const rh = [['DD', 'DD · Rh-positive'], ['Dd', 'Dd · Rh-positive'], ['dd', 'dd · Rh-negative']];
+---
+<punnett-lab data-compact={compact ? 'true' : undefined}>
+{!compact && <div class="tabs" aria-label="Type of cross">{modes.map(([id, label]) => <button data-mode={id} class:list={['tab', { active: id === 'mono' }]} aria-pressed={id === 'mono'}>{label}</button>)}</div>}
+<div class="workbench">
+  <div class="canvas-pane">
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">⊞</span> Punnett square <span class="badge" data-badge>MONOHYBRID</span></span><span class="canvas-hint">Rows: parent 1 gametes · Columns: parent 2 gametes</span></div>
+    <div class="graph punnett-stage" data-grid></div>
+    <div class="graph-caption"><div class="punnett-legend" data-legend></div><span data-cross>Aa × Aa</span></div>
+    {!compact && <div class="result-grid" data-metrics aria-live="polite"></div>}
+  </div>
+  <div class="controls">
+    <h3>{compact ? 'Cross two parents. See the odds.' : 'Choose the parents.'}</h3>
+    <div data-group="letters">
+      <label class="field">Parent 1 genotype<input type="text" data-p1 value="Aa" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false"/></label>
+      <label class="field">Parent 2 genotype<input type="text" data-p2 value="Aa" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false"/></label>
+    </div>
+    {!compact && <div data-group="traits">
+      <label class="field">Dominant trait name <span class="unit-toggle">(optional)</span><input type="text" data-dom placeholder="e.g. Purple flowers" maxlength="40" autocomplete="off"/></label>
+      <label class="field">Recessive trait name <span class="unit-toggle">(optional)</span><input type="text" data-rec placeholder="e.g. White flowers" maxlength="40" autocomplete="off"/></label>
+    </div>}
+    {!compact && <div data-group="blood" hidden>
+      <label class="field">Parent 1 ABO genotype<select data-abo1>{abo.map(([v, label]) => <option value={v} selected={v === 'AO'}>{label}</option>)}</select></label>
+      <label class="field">Parent 2 ABO genotype<select data-abo2>{abo.map(([v, label]) => <option value={v} selected={v === 'BO'}>{label}</option>)}</select></label>
+      <label class="check-row"><input type="checkbox" data-rh-toggle/> Include the Rh factor (D / d)</label>
+      <div data-rh-fields hidden>
+        <label class="field">Parent 1 Rh genotype<select data-rh1>{rh.map(([v, label]) => <option value={v} selected={v === 'Dd'}>{label}</option>)}</select></label>
+        <label class="field">Parent 2 Rh genotype<select data-rh2>{rh.map(([v, label]) => <option value={v} selected={v === 'dd'}>{label}</option>)}</select></label>
+      </div>
+    </div>}
+    <div class="pills" data-presets aria-label="Example crosses"></div>
+    {!compact && <button class="primary full-width" data-solve style="margin-top:16px">Build the square</button>}
+    <p class="error" data-error role="alert"></p>
+    {compact && <div class="divider"></div>}
+    {compact && <div data-results aria-live="polite"></div>}
+    <p class="small-note" data-note>Uppercase = dominant allele, lowercase = recessive allele. Complete dominance is assumed.</p>
+  </div>
+</div>
+{!compact && <div class="explanation"><h2>Follow the cross</h2><ol data-steps></ol></div>}
+</punnett-lab>
+<noscript>Enable JavaScript to build a Punnett square. For the cross Aa × Aa, the four boxes hold AA, Aa, Aa, and aa: a 1 : 2 : 1 genotype ratio and a 3 : 1 phenotype ratio, so each offspring has a 25% chance of showing the recessive trait.</noscript>
+<script>
+import { punnett, bloodTypeCross } from '../lib/genetics.mjs';
+import { escapeHtml, pct } from '../lib/format.mjs';
+type Mode = 'mono' | 'di' | 'blood';
+const PRESETS: Record<Mode, [string, string][]> = { mono: [['Aa', 'Aa'], ['AA', 'aa'], ['Aa', 'aa']], di: [['AaBb', 'AaBb'], ['AaBb', 'aabb'], ['AABb', 'aaBb']], blood: [['AO', 'BO'], ['AB', 'OO'], ['AO', 'AO']] };
+const NOTES: Record<Mode, string> = {
+  mono: 'Uppercase = dominant allele, lowercase = recessive allele. Complete dominance is assumed: Aa looks the same as AA.',
+  di: 'Use a different letter for each gene (AaBb). The two genes are assumed to be on different chromosomes, so they assort independently. Three genes (AaBbCc) build a 64-box square.',
+  blood: 'ABO uses three alleles: A and B are codominant, O is recessive. Add the Rh gene (D dominant, d recessive) to get the + or − sign.',
+};
+class PunnettLab extends HTMLElement {
+  connectedCallback() {
+    const compact = this.dataset.compact === 'true';
+    let mode: Mode = 'mono';
+    const q = <T extends Element>(sel: string) => this.querySelector<T>(sel);
+    const p1 = q<HTMLInputElement>('[data-p1]')!, p2 = q<HTMLInputElement>('[data-p2]')!;
+    const dom = q<HTMLInputElement>('[data-dom]'), rec = q<HTMLInputElement>('[data-rec]');
+    const abo1 = q<HTMLSelectElement>('[data-abo1]'), abo2 = q<HTMLSelectElement>('[data-abo2]'), rh1 = q<HTMLSelectElement>('[data-rh1]'), rh2 = q<HTMLSelectElement>('[data-rh2]');
+    const rhToggle = q<HTMLInputElement>('[data-rh-toggle]'), rhFields = q<HTMLElement>('[data-rh-fields]');
+    const errorBox = q<HTMLElement>('[data-error]')!, gridBox = q<HTMLElement>('[data-grid]')!, legendBox = q<HTMLElement>('[data-legend]')!, crossBox = q<HTMLElement>('[data-cross]')!, badge = q<HTMLElement>('[data-badge]')!;
+    const metrics = q<HTMLElement>('[data-metrics]'), results = q<HTMLElement>('[data-results]'), steps = q<HTMLElement>('[data-steps]');
+    const cellHtml = (s: string) => { const [a, b] = s.split(' '); return b ? `<span>${a}</span><small>${b}</small>` : a; };
+    const list = (arr: string[]) => arr.join(', ');
+    const draw = (r: any) => {
+      const phenoIndex = new Map<string, number>();
+      r.phenotypes.forEach((p: any, i: number) => p.genotypes.forEach((g: string) => phenoIndex.set(g, i)));
+      const cols = r.gametes2.length;
+      gridBox.innerHTML = `<table class="punnett-grid cols-${cols}"><caption class="punnett-caption">Punnett square for ${r.parent1} × ${r.parent2}</caption><thead><tr><th scope="col" class="punnett-corner"><span>P1 ↓</span><span>P2 →</span></th>${r.gametes2.map((g: string) => `<th scope="col">${cellHtml(g)}</th>`).join('')}</tr></thead><tbody>${r.grid.map((row: string[], i: number) => `<tr><th scope="row">${cellHtml(r.gametes1[i])}</th>${row.map(c => { const k = phenoIndex.get(c)!; return `<td class="pheno-${k}" title="${escapeHtml(r.phenotypes[k].phenotype)}">${cellHtml(c)}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+      legendBox.innerHTML = r.phenotypes.map((p: any, i: number) => `<span class="pheno-${i}"><i aria-hidden="true"></i>${escapeHtml(p.phenotype)} · ${p.count}/${r.boxes} (${pct(p.fraction, 2)})</span>`).join('');
+      crossBox.textContent = `${r.parent1} × ${r.parent2}`;
+      badge.textContent = mode === 'blood' ? 'BLOOD TYPE' : r.loci === 1 ? 'MONOHYBRID' : r.loci === 2 ? 'DIHYBRID' : 'TRIHYBRID';
+      const recessiveLabel = mode === 'blood' ? 'Chance of type O' : r.loci === 1 ? 'Chance of recessive phenotype' : 'Chance of all-recessive phenotype';
+      const recessive = mode === 'blood' ? r.typeOFraction : r.recessiveFraction;
+      if (metrics) metrics.innerHTML = [['Genotype ratio', r.genotypeRatio], ['Phenotype ratio', r.phenotypeRatio], [recessiveLabel, pct(recessive, 2)], ['Boxes in the square', String(r.boxes)], ['Distinct genotypes', String(r.genotypes.length)], ['Distinct phenotypes', String(r.phenotypes.length)]].map(([label, val]) => `<div class="result-tile"><span>${label}</span><strong>${val}</strong></div>`).join('');
+      if (results) results.innerHTML = `<div class="readout-row"><span>Genotype ratio</span><strong>${r.genotypeRatio}</strong></div><div class="readout-row"><span>Phenotype ratio</span><strong>${r.phenotypeRatio}</strong></div><div class="readout-row"><span>Recessive chance</span><strong class="orange">${pct(r.recessiveFraction, 2)}</strong></div>`;
+      if (steps) {
+        const counted = r.genotypes.map((g: any) => `${g.genotype} × ${g.count}`).join(', ');
+        const grouped = r.phenotypes.map((p: any) => `${escapeHtml(p.phenotype)} (${list(p.genotypes)}) = ${p.count}/${r.boxes} = ${pct(p.fraction, 2)}`).join('; ');
+        const out: string[] = [];
+        if (mode === 'blood') {
+          out.push(`ABO blood type is controlled by one gene with three alleles. I<sup>A</sup> (written A) and I<sup>B</sup> (B) are codominant, and i (O) is recessive to both. Parent 1 (${r.parent1}) makes the gametes ${list(r.uniqueGametes1)}; parent 2 (${r.parent2}) makes ${list(r.uniqueGametes2)}.${r.includesRh ? ' The Rh factor is a second gene on a different chromosome: D (Rh-positive) is dominant to d (Rh-negative), so every gamete carries one ABO allele and one Rh allele, and the two genes assort independently.' : ''}`);
+          out.push(`Write parent 1’s gametes down the side and parent 2’s across the top, then fill the ${r.boxes} boxes by joining the row gamete with the column gamete.`);
+          out.push(`Count the genotypes: ${counted} → genotype ratio ${r.genotypeRatio}.`);
+          out.push(`Read each genotype as a blood type: AA and AO are type A, BB and BO are type B, AB shows both antigens (type AB), and OO is type O${r.includesRh ? '; DD and Dd are Rh-positive, dd is Rh-negative' : ''}. Result: ${grouped} → phenotype ratio ${r.phenotypeRatio}.`);
+        } else {
+          out.push(`Parent 1 (${r.parent1}) makes ${r.uniqueGametes1.length} kind${r.uniqueGametes1.length === 1 ? '' : 's'} of gamete: ${list(r.uniqueGametes1)}. Parent 2 (${r.parent2}) makes ${list(r.uniqueGametes2)}. Each gamete carries exactly one allele of every gene (Mendel’s law of segregation)${r.loci > 1 ? ', and the alleles of different genes are packaged independently of one another (law of independent assortment)' : ''}.`);
+          out.push(`Write parent 1’s gametes down the side and parent 2’s across the top. Fill each of the ${r.boxes} boxes by pairing the row gamete with the column gamete, dominant allele first (A before a).`);
+          out.push(`Count the genotypes: ${counted} → genotype ratio ${r.genotypeRatio}.`);
+          out.push(`Group by appearance. With complete dominance one dominant allele is enough to show the dominant trait, so ${grouped} → phenotype ratio ${r.phenotypeRatio}.`);
+          if (r.recessiveFraction > 0) out.push(`Each offspring of this cross has a ${pct(r.recessiveFraction, 2)} chance of the “${escapeHtml(r.phenotypes[r.phenotypes.length - 1].phenotype)}” phenotype. The odds are the same for every child; earlier children do not change them.`);
+          else out.push(`No box is homozygous recessive for every gene, so none of the offspring can show the fully recessive phenotype in this cross.`);
+        }
+        steps.innerHTML = out.map(s => `<li>${s}</li>`).join('');
+      }
+    };
+    const render = () => {
+      try {
+        let r: any;
+        if (mode === 'blood') {
+          const withRh = !!rhToggle?.checked;
+          r = bloodTypeCross(abo1!.value, abo2!.value, withRh ? rh1!.value : undefined, withRh ? rh2!.value : undefined);
+        } else {
+          const traits: Record<string, { dominant: string; recessive: string }> = {};
+          if (mode === 'mono' && (dom?.value.trim() || rec?.value.trim())) traits[p1.value.trim().charAt(0).toUpperCase()] = { dominant: dom?.value ?? '', recessive: rec?.value ?? '' };
+          r = punnett(p1.value, p2.value, traits);
+        }
+        errorBox.textContent = '';
+        draw(r);
+      } catch (e) {
+        errorBox.textContent = (e as Error).message + ' The square keeps the last valid cross.';
+        if (metrics) metrics.innerHTML = '';
+        if (steps) steps.innerHTML = '<li>Correct the genotypes above to follow the cross.</li>';
+      }
+      syncPills();
+    };
+    const currentPair = () => mode === 'blood' ? [abo1!.value, abo2!.value] : [p1.value.trim(), p2.value.trim()];
+    const syncPills = () => { const [a, b] = currentPair(); this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(btn => { const [x, y] = PRESETS[mode][Number(btn.dataset.preset)]; const on = x === a && y === b; btn.classList.toggle('selected', on); btn.setAttribute('aria-pressed', String(on)); }); };
+    const applyPreset = (i: number) => { const [a, b] = PRESETS[mode][i]; if (mode === 'blood') { abo1!.value = a; abo2!.value = b; } else { p1.value = a; p2.value = b; } render(); };
+    const presetsUI = () => { q<HTMLElement>('[data-presets]')!.innerHTML = PRESETS[mode].map(([a, b], i) => `<button class="pill" data-preset="${i}" aria-pressed="false">${a} × ${b}</button>`).join(''); this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(btn => btn.onclick = () => applyPreset(Number(btn.dataset.preset))); };
+    const setMode = (m: Mode) => {
+      mode = m;
+      this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => { b.classList.toggle('active', b.dataset.mode === m); b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+      q<HTMLElement>('[data-group="letters"]')!.hidden = m === 'blood';
+      const traits = q<HTMLElement>('[data-group="traits"]'); if (traits) traits.hidden = m !== 'mono';
+      const blood = q<HTMLElement>('[data-group="blood"]'); if (blood) blood.hidden = m !== 'blood';
+      q<HTMLElement>('[data-note]')!.textContent = NOTES[m];
+      presetsUI();
+      applyPreset(0);
+    };
+    [p1, p2, dom, rec].forEach(i => { if (!i) return; i.addEventListener('input', render); i.addEventListener('keydown', e => { if (e.key === 'Enter') render(); }); });
+    [abo1, abo2, rh1, rh2].forEach(s => s?.addEventListener('change', render));
+    rhToggle?.addEventListener('change', () => { if (rhFields) rhFields.hidden = !rhToggle.checked; render(); });
+    q<HTMLButtonElement>('[data-solve]')?.addEventListener('click', render);
+    this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode as Mode));
+    setMode('mono');
+  }
+}
+customElements.define('punnett-lab', PunnettLab);
+</script>
+<style is:global>
+punnett-lab .punnett-stage{display:flex;align-items:center;justify-content:center;padding:22px 14px;min-height:300px;overflow-x:auto}
+punnett-lab .punnett-grid{border-collapse:separate;border-spacing:5px;table-layout:fixed;width:min(100%,470px);font-family:Manrope,sans-serif;margin:0 auto}
+punnett-lab .punnett-caption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+punnett-lab .punnett-grid th,punnett-lab .punnett-grid td{text-align:center;vertical-align:middle;border-radius:10px;font-weight:700;overflow-wrap:anywhere;line-height:1.15}
+punnett-lab .punnett-grid th{background:#fff;color:var(--ink);border:1px solid #c9dacd;font-size:18px;padding:10px 4px}
+punnett-lab .punnett-grid th[scope=row],punnett-lab .punnett-grid th.punnett-corner{width:58px}
+punnett-lab .punnett-grid th.punnett-corner{background:transparent;border:0;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.3px;padding:4px 0}
+punnett-lab .punnett-grid th.punnett-corner span{display:block}
+punnett-lab .punnett-grid td{background:#fff;border:1px solid var(--line);font-size:21px;color:var(--ink);height:86px;padding:6px 4px;letter-spacing:-.3px}
+punnett-lab .punnett-grid th small,punnett-lab .punnett-grid td small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:3px;letter-spacing:0}
+punnett-lab .punnett-grid.cols-4{width:min(100%,520px)}
+punnett-lab .punnett-grid.cols-4 td{height:66px;font-size:16px;padding:4px 2px}
+punnett-lab .punnett-grid.cols-4 th{font-size:15px;padding:8px 2px}
+punnett-lab .punnett-grid.cols-4 th[scope=row],punnett-lab .punnett-grid.cols-4 th.punnett-corner{width:50px}
+punnett-lab .punnett-grid.cols-8{width:100%;min-width:560px;border-spacing:3px}
+punnett-lab .punnett-grid.cols-8 td{height:44px;font-size:12px;padding:2px;border-radius:6px;letter-spacing:0}
+punnett-lab .punnett-grid.cols-8 th{font-size:12px;padding:6px 2px;border-radius:6px}
+punnett-lab .punnett-grid.cols-8 th[scope=row],punnett-lab .punnett-grid.cols-8 th.punnett-corner{width:44px}
+punnett-lab .pheno-0{background:#dcefe1!important;border-color:#8fcfa5!important}
+punnett-lab .pheno-1{background:#fff0c9!important;border-color:#f6c453!important}
+punnett-lab .pheno-2{background:#e1ecf6!important;border-color:#a9c6de!important}
+punnett-lab .pheno-3{background:#fbe4d8!important;border-color:#f0a884!important}
+punnett-lab .pheno-4{background:#ece3f1!important;border-color:#c4a5d0!important}
+punnett-lab .pheno-5{background:#cfe8d8!important;border-color:#2f8a5b!important}
+punnett-lab .pheno-6{background:#f6efe0!important;border-color:#d9c79a!important}
+punnett-lab .pheno-7{background:#f9e3e9!important;border-color:#e3a2b6!important}
+punnett-lab .punnett-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted)}
+punnett-lab .punnett-legend span{display:inline-flex;align-items:center;gap:7px;background:transparent!important;border-color:transparent!important}
+punnett-lab .punnett-legend i{flex:0 0 12px;width:12px;height:12px;border-radius:3px;border:1px solid;background:inherit;border-color:inherit}
+punnett-lab .punnett-legend .pheno-0 i{background:#dcefe1;border-color:#8fcfa5}
+punnett-lab .punnett-legend .pheno-1 i{background:#fff0c9;border-color:#f6c453}
+punnett-lab .punnett-legend .pheno-2 i{background:#e1ecf6;border-color:#a9c6de}
+punnett-lab .punnett-legend .pheno-3 i{background:#fbe4d8;border-color:#f0a884}
+punnett-lab .punnett-legend .pheno-4 i{background:#ece3f1;border-color:#c4a5d0}
+punnett-lab .punnett-legend .pheno-5 i{background:#cfe8d8;border-color:#2f8a5b}
+punnett-lab .punnett-legend .pheno-6 i{background:#f6efe0;border-color:#d9c79a}
+punnett-lab .punnett-legend .pheno-7 i{background:#f9e3e9;border-color:#e3a2b6}
+punnett-lab input[type=text]{width:100%;padding:12px;border:1px solid #c9dacd;border-radius:10px;color:var(--ink);background:#fff;min-width:0;font-size:16px;font-family:Manrope,sans-serif;font-weight:700;letter-spacing:.6px}
+punnett-lab input[data-dom],punnett-lab input[data-rec]{font-family:inherit;font-weight:400;letter-spacing:0}
+punnett-lab .check-row{margin:4px 0 16px}
+punnett-lab [data-rh-fields]{margin-top:4px}
+punnett-lab .graph-caption{align-items:flex-start}
+.home-experiment punnett-lab .punnett-stage{padding:18px 12px;min-height:0}
+.home-experiment punnett-lab .punnett-grid td{height:78px}
+@media(max-width:700px){punnett-lab .punnett-stage{padding:16px 10px;min-height:0}punnett-lab .punnett-grid{border-spacing:4px}punnett-lab .punnett-grid td{height:74px;font-size:19px}punnett-lab .punnett-grid.cols-4 td{height:56px;font-size:14px}punnett-lab .punnett-grid.cols-4 th{font-size:13px}punnett-lab .punnett-grid.cols-4 th[scope=row],punnett-lab .punnett-grid.cols-4 th.punnett-corner{width:42px}punnett-lab .punnett-grid th.punnett-corner{font-size:10px}}
+@media(max-width:400px){punnett-lab .punnett-grid.cols-4 td{height:50px;font-size:13px;border-radius:7px}punnett-lab .punnett-grid.cols-4 th{padding:6px 1px}}
+</style>

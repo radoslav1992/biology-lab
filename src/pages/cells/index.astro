@@ -1,0 +1,29 @@
+---
+import CellDiagram from '../../components/CellDiagram.astro';
+import DiagramThumb from '../../components/DiagramThumb.astro';
+import Layout from '../../layouts/Layout.astro';
+import { organelles, cellTypes } from '../../lib/organelles.mjs';
+const entries = Object.entries(organelles);
+// One short membrane summary per organelle for the comparison table (the atlas entries carry the long version).
+const membranes = {
+  nucleus: 'Double: the nuclear envelope, pierced by pores',
+  mitochondrion: 'Double: smooth outer, inner folded into cristae',
+  chloroplast: 'Double envelope plus thylakoid membranes inside',
+  ribosome: 'None: RNA and protein only',
+  'endoplasmic-reticulum': 'Single, continuous with the nuclear envelope',
+  'golgi-apparatus': 'Single, as 4–8 stacked cisternae',
+  lysosome: 'Single, with an enzyme-resistant inner face',
+  'cell-membrane': 'Is one: a 7–8 nm phospholipid bilayer',
+};
+const title = 'Cell Organelles: Interactive Diagram, Functions & Comparison';
+const description = 'Explore a labeled animal and plant cell, then compare eight organelles by membranes, location, and job, from the nucleus and mitochondria to the cell membrane.';
+---
+<Layout title={title} section="Cells" schemaType="CollectionPage" description={description}>
+<div class="intro"><div><div class="eyebrow">The cell atlas</div><h1>Get to know the parts of a cell.</h1><p>Click any organelle in the diagram to open its page: how many membranes it has, how big it is, what it does, one story of it in action, and the misconception to leave behind. Switch to the plant cell to see the wall, the central vacuole, and the chloroplasts appear.</p></div></div>
+<CellDiagram interactive kind="animal"/>
+<div class="section-heading"><div><div class="eyebrow">Eight organelles</div><h2>One page for every part.</h2><p>Membranes, size, count per cell, and the job each structure does, with numbers you can quote.</p></div><a class="text-link" href="/printable-diagrams/">Print a cell to label ↗</a></div>
+<div class="atlas-grid">{entries.map(([slug, o]) => <a class="atlas-card" data-organelle={slug} href={`/cells/${slug}/`}><span class="atlas-symbol" aria-hidden="true"><DiagramThumb kind={slug}/></span><span class="badge">{o.type}</span><h3>{o.title}</h3><p>{o.functions[0][0]}</p><span class="text-link">Explore the {o.title.toLowerCase()} ↗</span></a>)}</div>
+<section class="explanation"><h2>Compare the organelles</h2><p>Membranes are the quickest way to sort the parts of a cell. Two membranes point to an organelle that began as a captured bacterium (mitochondria and chloroplasts), or to the envelope around the genome. One membrane marks the endomembrane system, the connected set of compartments that the ER, Golgi, lysosomes, and cell membrane trade vesicles between. Ribosomes have none, which is why bacteria have them too.</p><div class="fact-table-wrap"><table class="fact-table"><thead><tr><th>Organelle</th><th>Found in</th><th>Membranes</th><th>Main job</th></tr></thead><tbody>{entries.map(([slug, o]) => <tr><td><a class="text-link" href={`/cells/${slug}/`}>{o.title}</a></td><td>{o.foundIn.join(', ')}</td><td>{membranes[slug]}</td><td>{o.functions[0][0]}</td></tr>)}</tbody></table></div><p>Bacteria and archaea (prokaryotes) have a cell membrane and ribosomes but none of the membrane-bound organelles in this table. Their DNA sits in the cytoplasm as a nucleoid, and their smaller 70S ribosomes are the reason many antibiotics can hit them without harming ours.</p></section>
+<section class="explanation"><h2>Animal cell vs plant cell</h2><p>{cellTypes.animal.description} {cellTypes.plant.description} Both share the nucleus, mitochondria, ribosomes, ER, Golgi apparatus, and cell membrane; the five differences below are what an exam usually asks for.</p><ul><li><strong>Cell wall.</strong> Plant cells build a rigid cellulose wall outside the membrane, typically 0.1–10 µm thick. Animal cells have only their flexible membrane, so they can crawl, engulf food, and change shape.</li><li><strong>Chloroplasts.</strong> Green plant tissues carry 30–100 chloroplasts per cell to run photosynthesis. Animal cells have none and must eat sugar that plants made.</li><li><strong>Central vacuole.</strong> A mature plant cell keeps one water-filled vacuole that can fill 80–90% of its volume; its pressure against the wall (turgor) is what holds a plant upright. Animal cells have only small, short-lived vacuoles and vesicles.</li><li><strong>Centrioles.</strong> Animal cells organize the spindle for cell division from a pair of centrioles beside the nucleus. Flowering plants and conifers have no centrioles and build their spindle without them.</li><li><strong>Shape.</strong> The wall gives plant cells a fixed, boxy outline that fits neighbors like bricks. Animal cells are rounded or irregular, and their shape follows the cytoskeleton and whatever they are attached to.</li><li><strong>Bonus: lysosomes and storage.</strong> Animal cells digest with many lysosomes and store glucose as glycogen; plant cells digest mostly inside the vacuole and store glucose as starch grains.</li></ul></section>
+<div class="related"><a href="/learn/cell-theory/">Read the lesson: cell theory ↗</a><a href="/learn/prokaryotes-vs-eukaryotes/">Prokaryotes vs eukaryotes ↗</a><a href="/tools/cell-size/">Why cells stay small: surface area to volume ↗</a><a href="/tools/water-potential/">Osmosis and water potential ↗</a><a href="/printable-diagrams/">Printable cell diagrams ↗</a><a href="/practice/">Practice cell questions ↗</a></div>
+</Layout>

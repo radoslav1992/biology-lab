@@ -1,0 +1,213 @@
+---
+import { DEFAULT_SEQUENCE, transcribe, translate, proteinSummary, gcContent, meltingTemperature } from '../lib/molecular.mjs';
+import { fmt, pct } from '../lib/format.mjs';
+// Everything below is computed at build time only for the noscript fallback; the live tool runs in the browser.
+const demoRna = transcribe(DEFAULT_SEQUENCE);
+const demo = proteinSummary(translate(demoRna));
+const demoGc = pct(gcContent(DEFAULT_SEQUENCE), 1);
+const demoTm = fmt(meltingTemperature(DEFAULT_SEQUENCE), 1);
+const presets = [['demo', 'Start–stop demo'], ['hbb', 'β-globin (normal GAG)'], ['hbs', 'Sickle cell (GTG)'], ['insulin', 'Insulin B chain']];
+---
+<dna-lab>
+<div class="workbench">
+  <div class="canvas-pane">
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">◉</span> Gene to protein <span class="badge" data-status>COMPLETE ORF</span></span><span class="canvas-hint">Read left to right, 5′ → 3′</span></div>
+    <div class="dna-strands" data-strands role="group" aria-label="DNA strands and mRNA aligned base by base"></div>
+    <div class="graph-caption"><div class="dna-legend" role="group" aria-label="Base colors"><span class="dna-b-A">A adenine</span><span class="dna-b-T">T thymine</span><span class="dna-b-G">G guanine</span><span class="dna-b-C">C cytosine</span><span class="dna-b-U">U uracil</span></div><span>Gaps mark codons in the chosen frame · faded bases are outside it</span></div>
+    <div class="dna-chain" data-chain role="group" aria-label="Codon to amino acid chain"></div>
+    <div class="graph-caption"><div class="dna-legend" role="group" aria-label="Amino acid side-chain classes"><span class="dna-key-nonpolar">Nonpolar</span><span class="dna-key-polar">Polar</span><span class="dna-key-basic">Basic (+)</span><span class="dna-key-acidic">Acidic (−)</span><span class="dna-key-stop">Stop</span></div><span>Codon above, amino acid below</span></div>
+    <div class="result-grid" data-metrics aria-live="polite"></div>
+  </div>
+  <div class="controls">
+    <h3>Type a coding strand. Watch it become protein.</h3>
+    <label class="field" for="dna-sequence" style="margin-bottom:8px">DNA coding strand (5′ → 3′)</label>
+    <textarea id="dna-sequence" data-sequence rows="4" spellcheck="false" autocomplete="off" autocapitalize="characters" aria-describedby="dna-sequence-help" set:text={DEFAULT_SEQUENCE}></textarea>
+    <p class="small-note" id="dna-sequence-help" style="margin-top:8px">Letters A, C, G, T only; spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.</p>
+    <p class="control-label" style="margin-top:16px">Example sequences</p>
+    <div class="pills" aria-label="Example sequences">{presets.map(([key, label]) => <button type="button" class:list={['pill', { selected: key === 'demo' }]} data-preset={key} aria-pressed={key === 'demo'}>{label}</button>)}</div>
+    <p class="control-label" style="margin-top:16px">Reading frame</p>
+    <div class="pills" aria-label="Reading frame">{[0, 1, 2].map(f => <button type="button" class:list={['pill', { selected: f === 0 }]} data-frame={f} aria-pressed={f === 0}>Frame {f + 1}</button>)}</div>
+    <label class="check-row"><input type="checkbox" data-start/> Begin at first AUG (sets the frame automatically)</label>
+    <button type="button" class="primary full-width" data-translate>Translate</button>
+    <p class="error" data-error role="alert"></p>
+    <div class="dna-compare" data-compare aria-live="polite"></div>
+    <div class="divider"></div>
+    <div class="dna-revcomp"><span class="control-label">Reverse complement (5′ → 3′)</span><code data-revcomp></code></div>
+    <p class="small-note" data-note></p>
+    <button type="button" class="secondary full-width" data-reset style="margin-top:20px">Reset example</button>
+  </div>
+</div>
+<div class="explanation"><h2>Follow the flow of information</h2><div data-steps></div></div>
+</dna-lab>
+<noscript>Enable JavaScript to translate your own sequence. For the example coding strand {DEFAULT_SEQUENCE} ({DEFAULT_SEQUENCE.length} nt, GC content {demoGc}, Tm about {demoTm} °C), transcription gives the mRNA {demoRna}, and reading frame 1 translates to {demo.abbrs}, stopping at the {demo.stopCodon} codon: a {demo.length}-amino-acid peptide, one-letter code {demo.letters}.</noscript>
+<script>
+import { cleanSequence, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
+import { fmt, pct, escapeHtml } from '../lib/format.mjs';
+type Preset = { dna: string; reference: string; referenceLabel: string; note: string };
+const PRESETS: Record<string, Preset> = {
+  demo: { dna: DEFAULT_SEQUENCE, reference: 'demo', referenceLabel: 'the demo sequence', note: 'A made-up 39-nt gene: AUG start, seven amino acids, then the UGA stop. Change any base to see whether the mutation is silent, missense, or nonsense.' },
+  hbb: { dna: 'ATGGTGCATCTGACTCCTGAGGAGAAGTCTGCCGTTACTGCC', reference: 'hbb', referenceLabel: 'normal β-globin', note: 'The first 14 codons of the human β-globin gene (HBB). Codon 7 is GAG, glutamate; in the mature protein it is residue 6 because the initiator methionine is removed.' },
+  hbs: { dna: 'ATGGTGCATCTGACTCCTGTGGAGAAGTCTGCCGTTACTGCC', reference: 'hbb', referenceLabel: 'normal β-globin', note: 'Sickle-cell hemoglobin (HbS): a single A → T substitution at nucleotide 20 turns codon 7 from GAG into GTG, so valine replaces glutamate on the surface of the protein.' },
+  insulin: { dna: 'ATGTTCGTGAACCAACACCTGTGCGGCTCACACCTGGTGGAAGCTCTC', reference: 'insulin', referenceLabel: 'the insulin fragment', note: 'The opening of the insulin B chain, Phe-Val-Asn-Gln-His-Leu-Cys-Gly-Ser-His-Leu-Val-Glu-Ala-Leu, with an AUG added for the demo. In cells the B chain is cut from the longer preproinsulin, so it has no methionine of its own.' },
+};
+const EFFECTS: Record<string, string> = { silent: 'silent (same amino acid)', missense: 'missense (different amino acid)', nonsense: 'nonsense (premature stop)', 'stop-loss': 'stop lost (read-through)' };
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+class DnaLab extends HTMLElement {
+  connectedCallback() {
+    const el = <T extends Element>(selector: string) => this.querySelector(selector) as T;
+    const textarea = el<HTMLTextAreaElement>('[data-sequence]');
+    const startBox = el<HTMLInputElement>('[data-start]');
+    const framePills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-frame]'));
+    const presetPills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-preset]'));
+    let frame = 0, presetKey = 'demo', referenceKey = 'demo';
+    const strand = (label: string, left: string, seq: string, right: string, from: number, to: number, marks: Map<number, string>) => {
+      let html = '';
+      for (let i = 0; i < seq.length; i++) {
+        if (i > 0 && i >= frame && (i - frame) % 3 === 0) html += ' ';
+        const outside = i < from || i >= to;
+        html += `<span class="dna-b dna-b-${seq[i]}${outside ? ' dna-dim' : ''}${marks.has(i) ? ' ' + marks.get(i) : ''}">${seq[i]}</span>`;
+      }
+      return `<div class="dna-row"><span class="dna-row-label">${label}</span><code class="dna-seq"><span class="dna-end">${left} </span>${html}<span class="dna-end"> ${right}</span></code></div>`;
+    };
+    const syncPills = () => {
+      framePills.forEach(b => { const on = Number(b.dataset.frame) === frame; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); b.disabled = startBox.checked; });
+      presetPills.forEach(b => { const on = b.dataset.preset === presetKey; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+    };
+    const compare = (dna: string) => {
+      const reference = PRESETS[referenceKey];
+      if (!reference) return '';
+      const label = escapeHtml(reference.referenceLabel);
+      if (dna === reference.dna) return `<strong>Mutation check</strong>Identical to ${label}. Edit, delete, or insert a base above to model a mutation.`;
+      if (dna.length !== reference.dna.length) {
+        const delta = dna.length - reference.dna.length, size = Math.abs(delta);
+        if (size > 9) return '';
+        return `<strong>Mutation check · vs ${label}</strong>${delta > 0 ? 'Insertion' : 'Deletion'} of ${plural(size, 'base')}. ${size % 3 === 0 ? 'A multiple of three keeps the downstream codons in frame, adding or removing whole amino acids.' : 'Not a multiple of three, so every codon after it is misread: a frameshift.'}`;
+      }
+      const diff = compareCodingStrands(reference.dna, dna, frame);
+      if (diff.substitutions.length > dna.length / 4) return '';
+      const subs = diff.substitutions.slice(0, 6).map(s => `nt ${s.position} ${s.from}→${s.to}`).join(', ') + (diff.substitutions.length > 6 ? ', …' : '');
+      const changes = diff.codonChanges.length ? diff.codonChanges.slice(0, 4).map(c => `codon ${c.codon} <code>${c.from}</code>→<code>${c.to}</code> ${escapeHtml(c.aminoFrom.abbr)}→${escapeHtml(c.aminoTo.abbr)}: ${EFFECTS[c.effect]}`).join('<br/>') + (diff.codonChanges.length > 4 ? '<br/>…' : '') : `no codon changes in frame ${frame + 1}`;
+      return `<strong>Mutation check · vs ${label}</strong>${plural(diff.substitutions.length, 'substitution')} (${subs}).<br/>${changes}.`;
+    };
+    const render = () => {
+      const dna = cleanSequence(textarea.value);
+      const rna = transcribe(dna), template = templateStrand(dna);
+      let scanning = '';
+      if (startBox.checked) {
+        const at = findStartCodon(rna);
+        if (at >= 0) { frame = at % 3; scanning = `<li><strong>Scanning.</strong> The ribosome’s small subunit moves along the mRNA from the 5′ cap and initiates at the first AUG, which begins at nucleotide ${at + 1}. That fixes the reading frame (frame ${frame + 1}); ${plural(Math.floor(at / 3), 'upstream codon')} in that frame ${Math.floor(at / 3) === 1 ? 'is' : 'are'} skipped.</li>`; }
+        else scanning = `<li><strong>Scanning.</strong> There is no AUG anywhere in this mRNA, so a scanning ribosome would never initiate. Untick “Begin at first AUG” to translate from nucleotide 1 regardless.</li>`;
+      }
+      syncPills();
+      const all = codons(rna, frame);
+      const peptide = translate(rna, { frame, fromStartCodon: startBox.checked });
+      const summary = proteinSummary(peptide);
+      const first = peptide[0], last = peptide[peptide.length - 1];
+      const from = first ? first.position - 1 : frame;
+      const to = last ? last.position + 2 : frame + all.length * 3;
+      const marks = new Map<number, string>();
+      if (first && first.codon === START_CODON) [0, 1, 2].forEach(k => marks.set(first.position - 1 + k, 'dna-start'));
+      if (summary.terminated && last) [0, 1, 2].forEach(k => marks.set(last.position - 1 + k, 'dna-stop'));
+      el<HTMLElement>('[data-strands]').innerHTML = strand('Coding 5′→3′', '5′', dna, '3′', from, to, new Map()) + strand('Template 3′→5′', '3′', template, '5′', from, to, new Map()) + strand('mRNA 5′→3′', '5′', rna, '3′', from, to, marks);
+      el<HTMLElement>('[data-chain]').innerHTML = peptide.length
+        ? peptide.map((p, i) => `<span class="dna-chip dna-chip-${p.amino.type}${i === 0 && p.codon === START_CODON ? ' dna-chip-start' : ''}" title="${escapeHtml(p.amino.name)} · codon ${p.index} · nucleotides ${p.position}–${p.position + 2}"><b>${p.codon}</b><i>${p.amino.letter === '*' ? 'STOP' : p.amino.abbr}</i><small>${p.amino.letter === '*' ? 'release' : `#${i + 1} · ${p.amino.letter}`}</small></span>`).join('')
+        : `<p class="dna-empty">${all.length ? 'No AUG start codon in this mRNA, so nothing is translated. Untick “Begin at first AUG” to read from the first base, or add an ATG to the coding strand.' : 'Add at least three bases in this frame to form a codon.'}</p>`;
+      const gc = gcContent(dna);
+      el<HTMLElement>('[data-metrics]').innerHTML = [
+        ['Length', `${dna.length.toLocaleString('en-US')} nt`],
+        [`Codons in frame ${frame + 1}`, `${all.length.toLocaleString('en-US')}`],
+        ['Amino acids', `${summary.length.toLocaleString('en-US')}`],
+        ['GC content', pct(gc, 1)],
+        ['Melting temperature', dna.length <= 50 ? `${fmt(meltingTemperature(dna), 1)} °C` : 'n/a (> 50 nt)'],
+        ['Stop codon', summary.terminated ? `${summary.stopCodon} at codon ${summary.stopIndex}` : peptide.length ? 'None in frame' : '—'],
+      ].map(([label, value]) => `<div class="result-tile"><span>${label}</span><strong>${value}</strong></div>`).join('');
+      el<HTMLElement>('[data-status]').textContent = !peptide.length ? 'NOTHING TRANSLATED' : summary.terminated && summary.startsWithMet ? 'COMPLETE ORF' : summary.terminated ? 'STOP CODON FOUND' : 'NO STOP CODON';
+      const counts = composition(dna);
+      const shown = (list: string[], limit: number) => list.slice(0, limit).join(' ') + (list.length > limit ? ' …' : '');
+      const leftover = Math.max(0, dna.length - frame - all.length * 3);
+      el<HTMLElement>('[data-steps]').innerHTML = `<ol>
+<li><strong>Transcription.</strong> RNA polymerase separates the two strands and reads the template strand 3′→5′ (3′-${template.slice(0, 12)}${template.length > 12 ? '…' : ''}-5′), adding the complementary RNA nucleotide at each step. The new mRNA, 5′-${rna.slice(0, 12)}${rna.length > 12 ? '…' : ''}-3′, has exactly the coding strand’s sequence with U in place of T. The coding strand has ${counts.A} A, ${counts.T} T, ${counts.G} G, and ${counts.C} C, so its GC content is ${pct(gc, 1)}.</li>
+${scanning}
+<li><strong>Reading frame ${frame + 1}.</strong> Starting at nucleotide ${frame + 1}, the ${dna.length}-nt mRNA divides into ${plural(all.length, 'complete codon')}${leftover ? ` with ${plural(leftover, 'leftover base')} at the 3′ end` : ''}: ${all.length ? shown(all, 8) : 'none'}.</li>
+<li><strong>Translation.</strong> ${peptide.length ? `At the ribosome, each codon is matched by a tRNA whose anticodon pairs with it and which carries the amino acid the code assigns. ${first && first.codon === START_CODON ? 'The AUG start codon brings in methionine, so the chain begins Met.' : `Translation here begins at ${first ? first.codon : ''} (${first ? first.amino.abbr : ''}) rather than at an AUG, which real ribosomes would not do.`} The growing chain reads ${summary.length ? summary.abbrs.split('-').slice(0, 12).join('-') + (summary.length > 12 ? '-…' : '') : '(no residues)'}.` : 'No codons were translated.'}</li>
+<li><strong>${summary.terminated ? 'Termination' : 'No stop yet'}.</strong> ${summary.terminated ? `${summary.stopCodon} at codon ${summary.stopIndex} has no matching tRNA. A release factor binds instead, the ribosome hydrolyzes the last peptidyl-tRNA bond, and the finished chain of ${plural(summary.length, 'amino acid')} is released: ${summary.letters || '(empty)'} in one-letter code.` : peptide.length ? `None of the ${plural(all.length, 'codon')} in frame ${frame + 1} is UAA, UAG, or UGA, so the reading frame stays open and a ribosome would run off the end of this sequence with ${plural(summary.length, 'amino acid')} attached (${summary.letters}).` : 'Nothing to terminate.'}</li>
+</ol>`;
+      el<HTMLElement>('[data-revcomp]').textContent = reverseComplement(dna);
+      el<HTMLElement>('[data-compare]').innerHTML = compare(dna);
+      el<HTMLElement>('[data-note]').textContent = presetKey && PRESETS[presetKey] ? PRESETS[presetKey].note : 'Your own sequence. The reverse complement is the template strand read in its own 5′ → 3′ direction: what you would paste if you had sequenced the other strand.';
+      el<HTMLElement>('[data-error]').textContent = '';
+    };
+    const run = () => {
+      try { render(); } catch (e) {
+        el<HTMLElement>('[data-error]').textContent = (e as Error).message;
+        el<HTMLElement>('[data-strands]').innerHTML = '';
+        el<HTMLElement>('[data-chain]').innerHTML = '<p class="dna-empty">Fix the sequence to see the codon chain.</p>';
+        el<HTMLElement>('[data-metrics]').innerHTML = '';
+        el<HTMLElement>('[data-steps]').textContent = 'Correct the sequence above to see transcription and translation worked through.';
+        el<HTMLElement>('[data-status]').textContent = 'CHECK INPUT';
+        el<HTMLElement>('[data-revcomp]').textContent = '—';
+        el<HTMLElement>('[data-compare]').innerHTML = '';
+        syncPills();
+      }
+    };
+    textarea.addEventListener('input', () => { presetKey = ''; run(); });
+    framePills.forEach(b => b.addEventListener('click', () => { frame = Number(b.dataset.frame); run(); }));
+    presetPills.forEach(b => b.addEventListener('click', () => { const preset = PRESETS[b.dataset.preset!]; presetKey = b.dataset.preset!; referenceKey = preset.reference; textarea.value = preset.dna; frame = 0; run(); }));
+    startBox.addEventListener('change', run);
+    el<HTMLButtonElement>('[data-translate]').addEventListener('click', run);
+    el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; run(); });
+    run();
+  }
+}
+customElements.define('dna-lab', DnaLab);
+</script>
+<style is:global>
+dna-lab textarea{display:block;width:100%;min-height:112px;padding:11px 12px;border:1px solid #ccd9d3;border-radius:10px;background:#fff;color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;font-size:14px;line-height:1.55;letter-spacing:.8px;text-transform:uppercase;resize:vertical;overflow-wrap:anywhere}
+dna-lab .dna-strands{display:grid;gap:10px;padding:20px 24px 16px;background:#f5f9f4;overflow-x:auto;min-height:130px}
+dna-lab .dna-strands:empty{display:none}
+dna-lab .dna-row{display:flex;align-items:center;white-space:nowrap;width:max-content;min-width:100%}
+dna-lab .dna-row-label{position:sticky;left:0;z-index:1;flex:0 0 138px;padding-right:12px;background:#f5f9f4;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+dna-lab .dna-seq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;font-size:16px;line-height:1.7;letter-spacing:1px;white-space:pre;color:var(--ink)}
+dna-lab .dna-end{color:var(--muted);font-size:12px;letter-spacing:0}
+dna-lab .dna-b{font-weight:700}
+dna-lab .dna-b-A{color:#2f8a5b}
+dna-lab .dna-b-T{color:#c9582a}
+dna-lab .dna-b-G{color:#7b4b8a}
+dna-lab .dna-b-C{color:#386a95}
+dna-lab .dna-b-U{color:#9e6620}
+dna-lab .dna-dim{opacity:.32;font-weight:400}
+dna-lab .dna-start{background:#dcf1e3;border-radius:4px;box-shadow:0 0 0 2px #dcf1e3}
+dna-lab .dna-stop{background:#ffe1d3;border-radius:4px;box-shadow:0 0 0 2px #ffe1d3}
+dna-lab .dna-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-weight:600}
+dna-lab .dna-legend span{display:inline-flex;align-items:center;gap:6px}
+dna-lab .dna-legend span:before{content:'';width:10px;height:10px;border-radius:3px;background:currentColor;flex:0 0 auto}
+dna-lab .dna-legend .dna-key-nonpolar{color:#3f8a5f}
+dna-lab .dna-legend .dna-key-polar{color:#4b86b4}
+dna-lab .dna-legend .dna-key-basic{color:#b3861d}
+dna-lab .dna-legend .dna-key-acidic{color:#d0683a}
+dna-lab .dna-legend .dna-key-stop{color:#173226}
+dna-lab .dna-chain{display:flex;flex-wrap:wrap;gap:8px;padding:18px 24px;border-top:1px solid var(--line);background:#fff;max-height:420px;overflow:auto}
+dna-lab .dna-chip{display:grid;justify-items:center;gap:1px;min-width:64px;padding:8px 9px 7px;border-radius:10px;border:1px solid #c9dacd;background:#e6f2e8;line-height:1.25;text-align:center}
+dna-lab .dna-chip b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:.6px;color:var(--muted)}
+dna-lab .dna-chip i{font-style:normal;font-family:Manrope,sans-serif;font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.2px}
+dna-lab .dna-chip small{font-size:10px;color:var(--muted);letter-spacing:.2px}
+dna-lab .dna-chip-polar{background:#edf3f9;border-color:#a9c6de}
+dna-lab .dna-chip-basic{background:#fff4dd;border-color:#f0c96a}
+dna-lab .dna-chip-acidic{background:#fdeee6;border-color:#f0b391}
+dna-lab .dna-chip-stop{background:#173226;border-color:#173226}
+dna-lab .dna-chip-stop b,dna-lab .dna-chip-stop i,dna-lab .dna-chip-stop small{color:#fff}
+dna-lab .dna-chip-start{box-shadow:0 0 0 2px #2f8a5b}
+dna-lab .dna-empty{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+dna-lab .dna-compare{margin-top:14px;padding:12px 14px;border-radius:10px;background:#fff8eb;border:1px solid #eee3cd;font-size:13px;line-height:1.65;color:var(--ink);overflow-wrap:anywhere}
+dna-lab .dna-compare:empty{display:none}
+dna-lab .dna-compare strong{display:block;margin-bottom:4px;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#855812}
+dna-lab .dna-compare code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+dna-lab .dna-revcomp code{display:block;margin-top:6px;padding:10px 12px;border-radius:9px;background:#f5f9f4;border:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;letter-spacing:.5px;color:var(--ink);overflow-wrap:anywhere;max-height:132px;overflow:auto}
+dna-lab .pill:disabled{opacity:.45;cursor:default}
+dna-lab .pill:disabled:hover{background:#fff;border-color:var(--line);color:var(--ink)}
+dna-lab .pill.selected:disabled:hover{background:#e3f0e5;border-color:var(--green);color:#226b45}
+dna-lab .check-row{margin:16px 0 18px;line-height:1.4}
+dna-lab .explanation ol{padding-left:23px;display:grid;gap:10px}
+dna-lab .explanation li strong{color:var(--ink)}
+@media(max-width:700px){dna-lab .dna-strands{padding:16px;gap:8px}dna-lab .dna-row-label{flex-basis:112px;font-size:10px}dna-lab .dna-seq{font-size:14px}dna-lab .dna-chain{padding:14px 16px;gap:6px;max-height:340px}dna-lab .dna-chip{min-width:56px;padding:7px 7px 6px}dna-lab .dna-chip i{font-size:14px}}
+</style>

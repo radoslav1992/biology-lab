@@ -1,0 +1,142 @@
+---
+// Hardy-Weinberg lab: allele and genotype frequencies from p, from the recessive phenotype frequency q²,
+// or from observed genotype counts (which adds a chi-square test for equilibrium).
+const modes = [['p', 'From allele frequency p'], ['q2', 'From recessive phenotype frequency q²'], ['counts', 'From observed genotype counts']];
+---
+<hardy-lab>
+<div class="tabs" aria-label="What you know about the population">{modes.map(([id, label]) => <button data-mode={id} class:list={['tab', { active: id === 'p' }]} aria-pressed={id === 'p'}>{label}</button>)}</div>
+<div class="workbench">
+  <div class="canvas-pane">
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">p²</span> Genotype frequencies <span class="badge" data-badge>EXPECTED</span></span><span class="canvas-hint">p² + 2pq + q² = 1</span></div>
+    <div class="graph"><svg viewBox="0 0 720 410" role="img" aria-label="Bar chart of Hardy-Weinberg genotype frequencies: p squared for AA, 2pq for Aa, and q squared for aa, with a strip showing the allele frequencies p and q"><g data-drawing></g></svg></div>
+    <div class="graph-caption"><div class="legend"><span>Expected under Hardy-Weinberg</span><span class="orange" data-observed-legend hidden>Observed in the sample</span></div><span data-summary>p = 0.7 · q = 0.3</span></div>
+    <div class="result-grid" data-metrics aria-live="polite"></div>
+  </div>
+  <div class="controls">
+    <h3>What do you know about the population?</h3>
+    <div data-group="p"><label class="field">Dominant allele frequency p <span class="unit-toggle">(0 to 1)</span><input type="number" data-p min="0" max="1" step="0.01" value="0.7"/></label></div>
+    <div data-group="q2" hidden><label class="field">Recessive phenotype frequency q² <span class="unit-toggle">(fraction of the population, 0 to 1)</span><input type="number" data-q2 min="0" max="1" step="any" value="0.09"/></label></div>
+    <div data-group="counts" hidden>
+      <label class="field">Homozygous dominant (AA) count<input type="number" data-aa min="0" max="1000000000" step="1" value="49"/></label>
+      <label class="field">Heterozygous (Aa) count<input type="number" data-het min="0" max="1000000000" step="1" value="42"/></label>
+      <label class="field">Homozygous recessive (aa) count<input type="number" data-rr min="0" max="1000000000" step="1" value="9"/></label>
+    </div>
+    <div class="pills" data-presets aria-label="Example populations"></div>
+    <p class="error" data-error role="alert"></p>
+    <div class="divider"></div>
+    <p class="small-note" data-note>p is the frequency of the dominant allele A and q = 1 − p is the frequency of a. The equation assumes random mating, no selection, no mutation, no migration, and a very large population.</p>
+    <button class="secondary full-width" data-reset style="margin-top:20px">Reset example</button>
+  </div>
+</div>
+<div class="explanation"><h2>Follow the calculation</h2><div class="formula">p + q = 1 &nbsp;·&nbsp; p² + 2pq + q² = 1</div><ol data-steps></ol></div>
+</hardy-lab>
+<noscript>Enable JavaScript to run the Hardy-Weinberg calculator. Worked example: if 9% of a population shows a recessive trait, q² = 0.09, so q = 0.3, p = 0.7, p² = 0.49 (49% AA), 2pq = 0.42 (42% carriers), and q² = 0.09 (9% aa).</noscript>
+<script>
+import { hardyWeinberg } from '../lib/genetics.mjs';
+import { fmt, pct, palette } from '../lib/format.mjs';
+import { chart, rect, text } from '../lib/svg.mjs';
+type Mode = 'p' | 'q2' | 'counts';
+const DEFAULTS: Record<Mode, number[]> = { p: [0.7], q2: [0.09], counts: [49, 42, 9] };
+const PRESETS: Record<Mode, { label: string; values: number[] }[]> = {
+  p: [{ label: 'p = 0.5 · equal alleles', values: [0.5] }, { label: 'p = 0.7', values: [0.7] }, { label: 'p = 0.99 · rare recessive', values: [0.99] }],
+  q2: [{ label: 'q² = 0.09', values: [0.09] }, { label: 'q² = 0.16', values: [0.16] }, { label: 'Cystic fibrosis ≈ 1 in 2,500', values: [0.0004] }, { label: 'Albinism ≈ 1 in 20,000', values: [0.00005] }],
+  counts: [{ label: '49 · 42 · 9 (fits)', values: [49, 42, 9] }, { label: '1,787 · 3,037 · 1,305', values: [1787, 3037, 1305] }, { label: '30 · 60 · 10 (heterozygote excess)', values: [30, 60, 10] }],
+};
+const NOTES: Record<Mode, string> = {
+  p: 'p is the frequency of the dominant allele A and q = 1 − p is the frequency of a. The equation assumes random mating, no selection, no mutation, no migration, and a very large population.',
+  q2: 'Start from q² when you only know how common the recessive phenotype is. Only aa individuals show it, so q = √q², then p = 1 − q. Enter 1 in 2,500 as 0.0004.',
+  counts: 'Enter how many individuals of each genotype you observed. The tool estimates p by counting alleles, predicts the counts expected under Hardy-Weinberg, and runs a chi-square test with df = 1 (critical value 3.841 at α = 0.05).',
+};
+class HardyLab extends HTMLElement {
+  connectedCallback() {
+    let mode: Mode = 'p';
+    const q = <T extends Element>(sel: string) => this.querySelector<T>(sel)!;
+    const inputs: Record<Mode, HTMLInputElement[]> = { p: [q('[data-p]')], q2: [q('[data-q2]')], counts: [q('[data-aa]'), q('[data-het]'), q('[data-rr]')] };
+    const num = (i: HTMLInputElement) => i.value === '' ? NaN : Number(i.value);
+    const draw = (r: any) => {
+      const box = { left: 72, top: 34, width: 616, height: 226 };
+      const c = chart({ box, x: [0, 3], y: [0, 1], xTicks: 3, yTicks: 4, xFormat: () => '', yFormat: (v: number) => pct(v, 0) });
+      let out = c.grid;
+      const labels = ['AA · p²', 'Aa · 2pq', 'aa · q²'];
+      const expected = [r.p2, r.twoPq, r.q2];
+      const observed = mode === 'counts' ? [r.observed.AA / r.n, r.observed.Aa / r.n, r.observed.aa / r.n] : null;
+      const base = c.py(0), group = box.width / 3;
+      expected.forEach((v, i) => {
+        const center = box.left + group * (i + 0.5);
+        if (observed) {
+          const w = 60, gap = 10, ex = center - w - gap / 2, ox = center + gap / 2, eh = base - c.py(v), oh = base - c.py(observed[i]);
+          out += rect(ex, base - eh, w, eh, { fill: palette.leaf, stroke: palette.leafDark, width: 1.5, rx: 5 }) + rect(ox, base - oh, w, oh, { fill: palette.coral, stroke: palette.coralDark, width: 1.5, rx: 5 });
+          out += text(ex + w / 2, base - eh - 8, pct(v, 1), { size: 12, weight: 700, color: palette.leafDark }) + text(ox + w / 2, base - oh - 8, pct(observed[i], 1), { size: 12, weight: 700, color: palette.coralDark });
+        } else {
+          const w = 92, h = base - c.py(v);
+          out += rect(center - w / 2, base - h, w, h, { fill: palette.leaf, stroke: palette.leafDark, width: 1.5, rx: 6 });
+          out += text(center, base - h - 10, pct(v, 1), { size: 14, weight: 700, color: palette.leafDark });
+        }
+        out += text(center, base + 24, labels[i], { size: 14, weight: 600, color: palette.ink });
+      });
+      const y = 322, pw = Math.max(0, Math.min(box.width, box.width * r.p));
+      out += text(box.left, y - 9, 'Allele frequencies in the gene pool', { size: 12, anchor: 'start', weight: 600, color: palette.ink });
+      out += `<clipPath id="hardy-strip"><rect x="${box.left}" y="${y}" width="${box.width}" height="26" rx="7"/></clipPath><g clip-path="url(#hardy-strip)">` + rect(box.left, y, box.width, 26, { fill: palette.coral, stroke: 'none', width: 0 }) + rect(box.left, y, pw, 26, { fill: palette.leaf, stroke: 'none', width: 0 }) + '</g>';
+      if (pw > 70) out += text(box.left + pw / 2, y + 18, `p = ${pct(r.p, 1)}`, { size: 13, weight: 700, color: palette.white });
+      if (box.width - pw > 70) out += text(box.left + pw + (box.width - pw) / 2, y + 18, `q = ${pct(r.q, 1)}`, { size: 13, weight: 700, color: palette.white });
+      out += text(box.left, y + 46, `p (allele A) = ${fmt(r.p, 4)}`, { size: 13, anchor: 'start', weight: 600, color: palette.leafDark }) + text(box.left + box.width, y + 46, `q (allele a) = ${fmt(r.q, 4)}`, { size: 13, anchor: 'end', weight: 600, color: palette.coralDark });
+      q('[data-drawing]').innerHTML = out;
+    };
+    const render = () => {
+      const errorBox = q<HTMLElement>('[data-error]'), metrics = q<HTMLElement>('[data-metrics]'), steps = q<HTMLElement>('[data-steps]');
+      try {
+        const v = inputs[mode].map(num);
+        const r: any = mode === 'p' ? hardyWeinberg({ p: v[0] }) : mode === 'q2' ? hardyWeinberg({ q2: v[0] }) : hardyWeinberg({ counts: { AA: v[0], Aa: v[1], aa: v[2] } });
+        errorBox.textContent = '';
+        draw(r);
+        q<HTMLElement>('[data-observed-legend]').hidden = mode !== 'counts';
+        q<HTMLElement>('[data-summary]').textContent = `p = ${fmt(r.p, 3)} · q = ${fmt(r.q, 3)}`;
+        q<HTMLElement>('[data-badge]').textContent = mode === 'counts' ? (r.inEquilibrium ? 'IN EQUILIBRIUM' : 'NOT IN EQUILIBRIUM') : 'EXPECTED';
+        const freq = (x: number) => `${fmt(x, 4)} (${pct(x, 2)})`;
+        const tiles: [string, string][] = [['p · dominant allele A', fmt(r.p, 4)], ['q · recessive allele a', fmt(r.q, 4)], ['p² · AA', freq(r.p2)], ['2pq · Aa (carriers)', freq(r.twoPq)], ['q² · aa', freq(r.q2)]];
+        if (mode === 'counts') tiles.push(['Sample size n', fmt(r.n, 0)], ['χ² (df = 1)', fmt(r.chiSquare, 3)], ['Critical value (α = 0.05)', '3.841'], ['Verdict', r.inEquilibrium ? 'Consistent with equilibrium' : 'Not in equilibrium']);
+        else tiles.push(['Dominant phenotype · p² + 2pq', pct(r.dominantPhenotype, 2)]);
+        metrics.innerHTML = tiles.map(([label, val]) => `<div class="result-tile"><span>${label}</span><strong>${val}</strong></div>`).join('');
+        const expand = `Expand (p + q)² = p² + 2pq + q²: p² = ${fmt(r.p, 4)}² = ${fmt(r.p2, 4)} (AA), 2pq = 2 × ${fmt(r.p, 4)} × ${fmt(r.q, 4)} = ${fmt(r.twoPq, 4)} (Aa), q² = ${fmt(r.q, 4)}² = ${fmt(r.q2, 4)} (aa). Check: ${fmt(r.p2, 4)} + ${fmt(r.twoPq, 4)} + ${fmt(r.q2, 4)} = ${fmt(r.p2 + r.twoPq + r.q2, 4)}.`;
+        const out: string[] = [];
+        if (mode === 'p') {
+          out.push(`Only two alleles exist at this gene, so their frequencies add to 1: q = 1 − p = 1 − ${fmt(r.p, 4)} = ${fmt(r.q, 4)}.`, expand,
+            `In a population of 1,000 you would expect about ${fmt(Math.round(r.p2 * 1000), 0)} AA, ${fmt(Math.round(r.twoPq * 1000), 0)} Aa, and ${fmt(Math.round(r.q2 * 1000), 0)} aa individuals. The dominant phenotype (AA + Aa) makes up ${pct(r.dominantPhenotype, 2)} of the population and ${pct(r.twoPq, 2)} are heterozygous carriers.`);
+        } else if (mode === 'q2') {
+          out.push(`Only homozygous recessive (aa) individuals show the recessive phenotype, so their frequency equals q². Take the square root: q = √${fmt(v[0], 5)} = ${fmt(r.q, 4)}.`, `The two allele frequencies add to 1, so p = 1 − q = 1 − ${fmt(r.q, 4)} = ${fmt(r.p, 4)}.`, expand,
+            r.dominantPhenotype > 0 ? `Among individuals with the dominant phenotype, the share that are carriers is 2pq / (p² + 2pq) = ${fmt(r.twoPq, 4)} / ${fmt(r.dominantPhenotype, 4)} = ${pct(r.twoPq / r.dominantPhenotype, 1)}${r.twoPq > 0 ? `, roughly 1 in ${fmt(Math.round(1 / r.twoPq), 0)} people overall` : ''}.` : 'Every individual is homozygous recessive, so there are no carriers to find.');
+        } else {
+          const o = r.observed, e = r.expected, k = r.contributions;
+          out.push(`The sample has n = ${fmt(o.AA, 0)} + ${fmt(o.Aa, 0)} + ${fmt(o.aa, 0)} = ${fmt(r.n, 0)} individuals, so it holds 2n = ${fmt(r.alleles, 0)} alleles.`,
+            `Count the A alleles: each AA carries two and each Aa carries one, so p = (2 × ${fmt(o.AA, 0)} + ${fmt(o.Aa, 0)}) / ${fmt(r.alleles, 0)} = ${fmt(r.dominantAlleles, 0)} / ${fmt(r.alleles, 0)} = ${fmt(r.p, 4)}, and q = 1 − p = ${fmt(r.q, 4)}.`,
+            `Expected counts if the population were in Hardy-Weinberg equilibrium: AA = p²n = ${fmt(e.AA, 2)}, Aa = 2pqn = ${fmt(e.Aa, 2)}, aa = q²n = ${fmt(e.aa, 2)}.`,
+            `χ² = Σ (O − E)² / E = ${fmt(k.AA, 3)} + ${fmt(k.Aa, 3)} + ${fmt(k.aa, 3)} = ${fmt(r.chiSquare, 3)}. With three genotype classes and p estimated from the data, df = 3 − 1 − 1 = 1.`,
+            r.inEquilibrium ? `The α = 0.05 critical value for df = 1 is 3.841. Since ${fmt(r.chiSquare, 3)} ≤ 3.841 (p ≈ ${fmt(r.pValue, 3)}), the genotype counts are consistent with Hardy-Weinberg equilibrium: there is no evidence of selection, non-random mating, or other evolutionary forces at this gene.` : `The α = 0.05 critical value for df = 1 is 3.841. Since ${fmt(r.chiSquare, 3)} > 3.841 (p ${r.pValue < 0.001 ? '< 0.001' : '≈ ' + fmt(r.pValue, 3)}), the genotype counts differ significantly from Hardy-Weinberg expectations: the population is not in equilibrium, so something (selection, non-random mating, migration, drift, or population structure) is acting on this gene.`);
+        }
+        steps.innerHTML = out.map(s => `<li>${s}</li>`).join('');
+      } catch (e) {
+        errorBox.textContent = (e as Error).message + ' The chart keeps the last valid values.';
+        metrics.innerHTML = '';
+        steps.innerHTML = '<li>Correct the values above to follow the calculation.</li>';
+      }
+      syncPills();
+    };
+    const syncPills = () => { const current = inputs[mode].map(num); this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(b => { const on = PRESETS[mode][Number(b.dataset.preset)].values.every((x, i) => x === current[i]); b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); }); };
+    const fill = (values: number[]) => { inputs[mode].forEach((i, k) => i.value = String(values[k])); render(); };
+    const presetsUI = () => { q<HTMLElement>('[data-presets]').innerHTML = PRESETS[mode].map((p, i) => `<button class="pill" data-preset="${i}" aria-pressed="false">${p.label}</button>`).join(''); this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(b => b.onclick = () => fill(PRESETS[mode][Number(b.dataset.preset)].values)); };
+    const setMode = (m: Mode) => {
+      mode = m;
+      this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => { b.classList.toggle('active', b.dataset.mode === m); b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+      this.querySelectorAll<HTMLElement>('[data-group]').forEach(g => g.hidden = g.dataset.group !== m);
+      q<HTMLElement>('[data-note]').textContent = NOTES[m];
+      presetsUI();
+      render();
+    };
+    Object.values(inputs).flat().forEach(i => i.addEventListener('input', render));
+    this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode as Mode));
+    q<HTMLButtonElement>('[data-reset]').onclick = () => fill(DEFAULTS[mode]);
+    setMode('p');
+  }
+}
+customElements.define('hardy-lab', HardyLab);
+</script>
