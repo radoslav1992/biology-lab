@@ -1,0 +1,7 @@
+---
+import DiagramThumb from './DiagramThumb.astro';
+import { catalog } from '../lib/catalog.mjs';
+const featured = ['/punnett-square-calculator/', '/dna-transcription-translation/', '/population-growth-calculator/', '/cells/', '/tools/enzyme-kinetics/', '/worksheets/'];
+const tools = featured.map(href => catalog.find(t => t.href === href)).filter(Boolean);
+---
+<div class="tool-grid">{tools.map(t => <a class="tool-card" data-category={t.category} href={t.href}><div class="card-top"><span class="badge">{t.category}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-diagram"><DiagramThumb kind={t.href}/></div><h3>{t.title}</h3><p>{t.description}</p><div class="card-meta"><span>{t.meta}</span><span>Free tool</span></div></a>)}</div>

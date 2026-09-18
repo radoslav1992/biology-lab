@@ -1,0 +1,25 @@
+---
+interface Item { question: string; answer: string; href?: string; label?: string; }
+interface Props { items: Item[]; title?: string; }
+const { items = [], title = 'Frequently asked questions' } = Astro.props;
+const schema = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: items.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) };
+---
+{items.length > 0 && <section class="faq-section" aria-labelledby="faq-heading">
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  <div class="faq-intro">
+    <div class="eyebrow">A little question. A bigger picture.</div>
+    <h2 id="faq-heading">{title}</h2>
+    <p>Wondering about the why? Start here.</p>
+  </div>
+  <div class="faq-list">
+    {items.map((item, index) => (
+      <details class="faq-item" open={index === 0}>
+        <summary><span>{item.question}</span><span class="faq-indicator" aria-hidden="true"></span></summary>
+        <div class="faq-answer">
+          <p>{item.answer}</p>
+          {item.href && <a class="text-link" href={item.href}>{item.label} <span aria-hidden="true">↗</span></a>}
+        </div>
+      </details>
+    ))}
+  </div>
+</section>}

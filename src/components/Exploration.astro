@@ -1,0 +1,54 @@
+---
+import { activeKeys, defaultMode } from '../lib/explorations.mjs';
+const { tool } = Astro.props;
+const firstMode = defaultMode(tool);
+const visible = activeKeys(tool, firstMode);
+---
+<exploration-lab data-slug={tool.slug}>
+{tool.modes && <div class="tabs" aria-label="Exploration mode">{tool.modes.map(([value, label], i) => <button class:list={['tab', { active: i === 0 }]} data-mode={value} aria-pressed={i === 0}>{label}</button>)}</div>}
+<div class="workbench"><div class="canvas-pane"><div class="canvas-top"><span class="canvas-title">{tool.title}</span><span class="badge">LIVE EXPLORATION</span></div><div class="graph large-graph"><svg viewBox="0 0 720 520" role="img" aria-label={tool.diagramLabel || tool.title + ' diagram'}><g data-drawing></g></svg></div><div class="graph-caption"><span>{tool.caption || 'Change a value to see the connection'}</span></div><div class="result-grid" data-results aria-live="polite"></div></div><div class="controls"><h3>{tool.controlsTitle || 'Your measurements'}</h3>{tool.fields.map(f => <label class="field" data-field-wrap={f.key} hidden={!visible.includes(f.key)}>{f.label}{f.unit && <span class="unit-toggle"> ({f.unit})</span>}<input type="number" data-field={f.key} value={f.value} min={f.min} max={f.max} step={f.step ?? 'any'}/></label>)}
+{tool.presets && <div class="pills" aria-label="Presets">{tool.presets.map((p, i) => <button class="pill" data-preset={i}>{p.label}</button>)}</div>}
+<p class="error" data-error role="alert"></p><button class="secondary full-width" data-reset>Reset example</button><p class="small-note">{tool.note}</p></div></div>
+<div class="explanation"><h2>{tool.explanationTitle || 'Why it works'}</h2><div class="formula">{tool.formula}</div><ol data-steps></ol></div>
+</exploration-lab><noscript>Enable JavaScript for the interactive diagram and calculations. Key relationship: {tool.formula}. The linked concept note explains the method with a worked example.</noscript>
+<script>
+import { explorations, explore, explorationDiagram, activeKeys, defaultMode } from '../lib/explorations.mjs';
+class ExplorationLab extends HTMLElement {
+  connectedCallback() {
+    const tool = explorations.find(t => t.slug === this.dataset.slug)!;
+    let mode = defaultMode(tool);
+    const inputs = Array.from(this.querySelectorAll<HTMLInputElement>('[data-field]'));
+    const update = () => {
+      const values = Object.fromEntries(inputs.map(i => [i.dataset.field, i.value === '' ? NaN : Number(i.value)]));
+      try {
+        const out = explore(tool.slug, values, mode);
+        this.querySelector('[data-drawing]')!.innerHTML = explorationDiagram(tool.slug, out.model);
+        this.querySelector('[data-results]')!.innerHTML = out.metrics.map(m => `<div class="result-tile"><span>${m.label}</span><strong>${m.value}</strong></div>`).join('');
+        this.querySelector('[data-steps]')!.replaceChildren(...out.steps.map(s => { const li = document.createElement('li'); li.textContent = s; return li; }));
+        this.querySelector('[data-error]')!.textContent = '';
+      } catch (e) {
+        this.querySelector('[data-error]')!.textContent = (e as Error).message + ' The diagram keeps the last valid values.';
+        this.querySelector('[data-results]')!.innerHTML = '';
+        this.querySelector('[data-steps]')!.textContent = 'Correct the values to see the calculation.';
+      }
+    };
+    const modeUI = () => {
+      this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => { b.classList.toggle('active', b.dataset.mode === mode); b.setAttribute('aria-pressed', String(b.dataset.mode === mode)); });
+      const keys = activeKeys(tool, mode);
+      this.querySelectorAll<HTMLElement>('[data-field-wrap]').forEach(w => { w.hidden = !keys.includes(w.dataset.fieldWrap!); });
+      update();
+    };
+    inputs.forEach(i => i.addEventListener('input', update));
+    this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => { mode = b.dataset.mode!; modeUI(); });
+    (this.querySelector('[data-reset]') as HTMLButtonElement).onclick = () => { inputs.forEach(i => i.value = String(tool.fields.find(f => f.key === i.dataset.field)!.value)); mode = defaultMode(tool); modeUI(); };
+    this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(b => b.onclick = () => {
+      const preset = tool.presets![Number(b.dataset.preset)];
+      if (preset.mode) mode = preset.mode;
+      Object.entries(preset.values).forEach(([key, value]) => { const i = inputs.find(i => i.dataset.field === key); if (i) i.value = String(value); });
+      modeUI();
+    });
+    modeUI();
+  }
+}
+customElements.define('exploration-lab', ExplorationLab);
+</script>

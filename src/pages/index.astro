@@ -1,0 +1,22 @@
+---
+import LearningApps from '../components/LearningApps.astro';
+import Faq from '../components/Faq.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import PunnettSquare from '../components/PunnettSquare.astro';
+import ToolCards from '../components/ToolCards.astro';
+import { catalog } from '../lib/catalog.mjs';
+import { lessons } from '../lib/lessons.mjs';
+import { QUESTIONS } from '../lib/practice.mjs';
+import { organelles } from '../lib/organelles.mjs';
+const toolCount = catalog.filter(t => !['Practice', 'Reference'].includes(t.category) && t.href !== '/cells/').length;
+---
+<Layout title="Free Biology Calculators & Interactive Explorers" description="Explore free biology tools: build Punnett squares, translate DNA into protein, model population growth, test Hardy-Weinberg equilibrium, and practice with visual explanations.">
+<section class="home-stage">
+  <div class="home-intro"><div class="eyebrow">A playground for curious minds</div><h1>Free Biology Calculators &amp; <em>Explorers</em></h1><p><strong class="playful-lead">A little play. A big aha.</strong> Cross two parents. Change a gene. Watch the rules of life fall into place.</p><a class="primary-link" href="/tools/">Find your next experiment <span aria-hidden="true">↗</span></a><div class="home-note"><span class="note-mark" aria-hidden="true">↳</span><span>Start right here.<br/><strong>What happens when both parents are Aa?</strong></span></div><span class="free-note">Free to explore · No account needed</span></div>
+  <div class="home-experiment"><PunnettSquare compact/><a class="experiment-link" href="/punnett-square-calculator/">Open the full Punnett square calculator <span aria-hidden="true">↗</span></a></div>
+</section>
+<div class="stat-strip"><span><strong>{toolCount}</strong>interactive tools</span><span><strong>{Object.keys(organelles).length}</strong>organelles to explore</span><span><strong>{lessons.length}</strong>ideas explained</span><span><strong>{QUESTIONS.length}</strong>ways to practice</span></div>
+<div class="section-heading"><div><div class="eyebrow">Follow your curiosity</div><h2>Interactive Biology Calculators &amp; Explorers</h2><p>What will click today? Pick something interesting. See where it takes you.</p></div><a class="text-link" href="/tools/">All tools & collections ↗</a></div><ToolCards/>
+<div class="learning-strip"><div><span class="strip-label">SMALL STEPS. REAL UNDERSTANDING.</span><h2>You’ve got this. Try eight questions.</h2><p>No timer, no pressure. Just a little practice and a clearer picture.</p></div><a href="/practice/">Let’s give it a go ↗</a></div>
+<LearningApps/><Faq items={faqs['home']} title="Biology Lab: frequently asked questions"/></Layout>
