@@ -1,0 +1,18 @@
+---
+import RelatedLearning from '../../components/RelatedLearning.astro';
+import Layout from '../../layouts/Layout.astro';
+import { lessons } from '../../lib/lessons.mjs';
+export function getStaticPaths() { return lessons.map(lesson => ({ params: { slug: lesson.slug }, props: { lesson } })); }
+const { lesson } = Astro.props;
+const suffix = ' — Key Idea & Worked Example';
+const title = (lesson.title + suffix).length <= 65 ? lesson.title + suffix : `${lesson.title} Explained`;
+const cut = lesson.body.slice(0, 110);
+const snippet = lesson.body.length > 110 ? cut.slice(0, cut.lastIndexOf(' ')) + '…' : cut;
+const description = `${lesson.subtitle} ${snippet}`;
+const index = lessons.findIndex(l => l.slug === lesson.slug);
+const bySlug = Object.fromEntries(lessons.map(l => [l.slug, l]));
+const related = (lesson.related || []).map(slug => bySlug[slug]).filter(l => l && l.slug !== lesson.slug);
+const extra = [...lessons.slice(index + 1), ...lessons.slice(0, index)].find(l => !related.includes(l));
+const relatedLessons = extra ? [...related, extra] : related;
+---
+<Layout title={title} description={description} section="Learn" schemaType="Article"><article class="article"><div class="breadcrumb"><a href="/learn/">Concept notes</a> / {lesson.title}</div><div class="eyebrow">Biology Lab concept note</div><h1>{lesson.title}</h1><p>{lesson.subtitle}</p><div class="formula">{lesson.formula}</div><h2>The idea</h2><p>{lesson.body}</p><h2>Work through an example</h2><p>{lesson.example}</p><h2>What to watch for</h2><p>{lesson.pitfall}</p><div class="learning-strip"><div><span class="strip-label">SEE IT MOVE</span><h2>Make the idea move.</h2><p>Explore this concept with real inputs and a live diagram.</p></div><a href={lesson.href}>{lesson.cta} <span aria-hidden="true">↗</span></a></div><div class="related">{relatedLessons.map(l => <a href={`/learn/${l.slug}/`}>{l.title} <span aria-hidden="true">↗</span></a>)}<a href="/practice/">Practice this topic <span aria-hidden="true">↗</span></a></div><RelatedLearning topic={lesson.slug}/></article></Layout>

@@ -1,0 +1,28 @@
+---
+import CellDiagram from '../../components/CellDiagram.astro';
+import Faq from '../../components/Faq.astro';
+import Layout from '../../layouts/Layout.astro';
+import { faqs } from '../../lib/faqs.mjs';
+import { lessons } from '../../lib/lessons.mjs';
+import { organelles } from '../../lib/organelles.mjs';
+export function getStaticPaths() { return Object.keys(organelles).map(slug => ({ params: { slug }, props: { slug } })); }
+const { slug } = Astro.props;
+const o = organelles[slug];
+const full = `${o.title}: Structure, Function & Location in the Cell`;
+const title = full.length <= 65 ? full : `${o.title}: Structure, Function & Location`;
+// Meta description: the whole intro when it fits, otherwise its first sentence plus the longest tail that keeps it
+// within 160 characters (tests/organelles.test.mjs mirrors this rule).
+const TAILS = ['Structure, functions, size, and a common misconception.', 'Structure, functions, and a common misconception.', 'Structure and function.'];
+const first = o.intro.split(/(?<=[.!?])\s+/)[0];
+const description = o.intro.length <= 160 ? o.intro : TAILS.map(t => `${first} ${t}`).find(d => d.length <= 160) || first;
+const lesson = lessons.find(l => l.slug === o.lesson);
+const kind = slug === 'chloroplast' ? 'plant' : 'animal';
+const items = faqs[slug] || [];
+---
+<Layout title={title} section="Cells" schemaType="Article" description={description}><div class="breadcrumb"><a href="/cells/">Cell atlas</a> / {o.title}</div><div class="intro"><div><div class="eyebrow">{o.type}</div><h1>{o.title}</h1><p>{o.intro}</p></div><span class="intro-note">Found in: {o.foundIn.join(' · ')}</span></div><CellDiagram highlight={slug} kind={kind}/><div class="shape-intro-grid"><section class="shape-fact-box"><h2>Know its structure</h2><table class="fact-table"><tbody><tr><td>Found in</td><td>{o.foundIn.join(', ')}</td></tr>{o.properties.map(([key, val]) => <tr><td>{key}</td><td>{val}</td></tr>)}</tbody></table><h3>What it does</h3><ul class="cell-functions">{o.functions.map(([key, val]) => <li><strong>{key}.</strong> {val}</li>)}</ul></section><aside class="shape-fact-box"><h3>In action</h3><p>{o.example}</p><h3>A common misconception</h3><p>{o.pitfall}</p></aside></div><div class="related"><a href={`/learn/${o.lesson}/`}>Read the lesson{lesson ? `: ${lesson.title}` : ''} ↗</a>{o.related.map(key => <a href={`/cells/${key}/`}>Compare with the {organelles[key].title.toLowerCase()} ↗</a>)}<a href="/cells/">See the whole cell atlas ↗</a><a href="/printable-diagrams/">Print a cell diagram to label ↗</a><a href="/practice/">Practice cell questions ↗</a></div><Faq items={items} title={`${o.title}: common questions`}/></Layout>
+<style>
+.cell-functions{padding-left:20px;margin:0}
+.cell-functions li{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:10px}
+.cell-functions strong{color:var(--ink)}
+.intro-note{max-width:260px;white-space:normal;text-align:right;line-height:1.5}
+</style>

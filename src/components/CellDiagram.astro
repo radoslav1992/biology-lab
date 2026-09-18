@@ -1,0 +1,283 @@
+---
+// Cell atlas diagram: a labeled animal or plant cell whose organelles link to their atlas pages.
+// Props: highlight (organelle slug), kind ('animal' | 'plant'), interactive (adds the animal/plant toggle and pre-renders both cells).
+// The SVG is drawn at build time from the geometry below; only the toggle and the key-to-diagram hover need JavaScript.
+import { organelles, cellTypes } from '../lib/organelles.mjs';
+import { text, line, rect, circle, ellipse, path, group } from '../lib/svg.mjs';
+const { highlight, kind = 'animal', interactive = false } = Astro.props;
+const HIGHLIGHT = highlight && organelles[highlight] ? highlight : undefined;
+const KIND = cellTypes[kind] ? kind : 'animal';
+
+const C = { ink: '#173226', leaf: '#2f8a5b', leafDark: '#226b45', leafLight: '#8fcfa5', mint: '#e6f2e8', coral: '#e2703a', sun: '#f6c453', amber: '#a9761c', sky: '#4b86b4', skyDark: '#356a94', skyLight: '#a9c6de', plum: '#7b4b8a', plumLight: '#ead9ef', cream: '#fff3d6', white: '#ffffff', hi: '#ffe1cd' };
+const STYLE = {
+  nucleus: { stroke: C.plum, fill: C.plumLight },
+  mitochondrion: { stroke: C.amber, fill: C.sun },
+  chloroplast: { stroke: C.leaf, fill: C.leafLight },
+  ribosome: { stroke: C.ink, fill: C.ink },
+  'endoplasmic-reticulum': { stroke: C.sky, fill: C.skyLight },
+  'golgi-apparatus': { stroke: C.skyDark, fill: C.cream },
+  lysosome: { stroke: '#c9582a', fill: '#f9dccb' },
+  'cell-membrane': { stroke: C.ink, fill: 'none' },
+  extra: { stroke: C.leafDark, fill: C.mint },
+};
+const deg = a => a * Math.PI / 180;
+const ept = (cx, cy, rx, ry, a) => [cx + rx * Math.cos(deg(a)), cy + ry * Math.sin(deg(a))];
+const r1 = n => Math.round(n * 10) / 10;
+/** Axis-aligned elliptical arc from angle a0 to a1 (degrees, clockwise on screen). */
+const arc = (cx, cy, rx, ry, a0, a1) => { const [x0, y0] = ept(cx, cy, rx, ry, a0), [x1, y1] = ept(cx, cy, rx, ry, a1); return `M ${r1(x0)} ${r1(y0)} A ${rx} ${ry} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${r1(x1)} ${r1(y1)}`; };
+const shapeAttrs = (s, hi, width = 2.2) => ({ fill: hi ? C.hi : s.fill, stroke: hi ? C.coral : s.stroke, width: hi ? 4 : width });
+
+function nucleus(cx, cy, rx, ry, hi) {
+  const s = STYLE.nucleus, a = shapeAttrs(s, hi, 2.4);
+  let d = ellipse(cx, cy, rx, ry, { ...a, dash: '22 5' }).replace('<ellipse', '<ellipse class="cell-shape"');
+  d += ellipse(cx, cy, rx - 6, ry - 6, { fill: 'none', stroke: hi ? C.coral : s.stroke, width: 1.4, opacity: 0.7 });
+  // chromatin threads
+  const w = rx * 0.55, h = ry * 0.5, k = rx / 78;
+  d += path(`M ${r1(cx - w)} ${r1(cy - h * 0.1)} c ${14 * k} -18 ${26 * k} 10 ${40 * k} -6 s ${22 * k} -22 ${38 * k} -4 s ${12 * k} 20 ${28 * k} 8`, { stroke: hi ? C.coral : s.stroke, width: 1.8, opacity: 0.55 });
+  d += path(`M ${r1(cx - w + 6)} ${r1(cy + h * 0.85)} c ${16 * k} -14 ${24 * k} 12 ${42 * k} 0 s ${20 * k} -16 ${36 * k} -2`, { stroke: hi ? C.coral : s.stroke, width: 1.8, opacity: 0.55 });
+  d += circle(r1(cx + rx * 0.3), r1(cy + ry * 0.28), r1(Math.min(rx, ry) * 0.24), { fill: hi ? C.coral : s.stroke, stroke: 'none', width: 0, opacity: 0.55 });
+  return d;
+}
+function mitochondrion(cx, cy, rx, ry, rot, hi) {
+  const s = STYLE.mitochondrion, a = shapeAttrs(s, hi);
+  const irx = rx - 5, iry = ry - 5;
+  let d = ellipse(0, 0, rx, ry, a).replace('<ellipse', '<ellipse class="cell-shape"');
+  d += ellipse(0, 0, irx, iry, { fill: 'none', stroke: hi ? C.coral : s.stroke, width: 1.2, opacity: 0.8 });
+  const n = Math.max(3, Math.round(rx / 11));
+  for (let i = 0; i < n; i++) {
+    const x = -irx + (i + 1) * (2 * irx) / (n + 1), edge = iry * Math.sqrt(Math.max(0, 1 - (x / irx) ** 2)), depth = iry * 0.65;
+    const top = i % 2 === 0;
+    const y0 = top ? -edge : edge, y1 = top ? -edge + depth : edge - depth, sweep = top ? 0 : 1;
+    d += path(`M ${r1(x - 3)} ${r1(y0)} L ${r1(x - 3)} ${r1(y1)} A 3 3 0 0 ${sweep} ${r1(x + 3)} ${r1(y1)} L ${r1(x + 3)} ${r1(y0)}`, { stroke: hi ? C.coral : s.stroke, width: 1.5 });
+  }
+  return group(d, { transform: `translate(${cx} ${cy}) rotate(${rot})` });
+}
+function chloroplast(cx, cy, rx, ry, rot, hi) {
+  const s = STYLE.chloroplast, a = shapeAttrs(s, hi);
+  let d = ellipse(0, 0, rx, ry, a).replace('<ellipse', '<ellipse class="cell-shape"');
+  d += ellipse(0, 0, rx - 5, ry - 5, { fill: 'none', stroke: hi ? C.coral : s.stroke, width: 1.2, opacity: 0.8 });
+  const stacks = [-rx * 0.5, -rx * 0.05, rx * 0.42];
+  const ink = hi ? '#c9582a' : C.leafDark;
+  stacks.forEach((x, i) => {
+    const y = i % 2 === 0 ? -1 : 2, count = 4;
+    for (let k = 0; k < count; k++) d += rect(x - 7, y - 7 + k * 4, 14, 2.6, { fill: ink, stroke: 'none', width: 0, rx: 1.3 });
+    if (i < stacks.length - 1) d += line(x + 7, y, stacks[i + 1] - 7, i % 2 === 0 ? 4 : 1, { color: ink, width: 1.2, opacity: 0.8 });
+  });
+  return group(d, { transform: `translate(${cx} ${cy}) rotate(${rot})` });
+}
+function golgi(cx, cy, hi) {
+  const s = STYLE['golgi-apparatus'], stroke = hi ? C.coral : s.stroke, fill = hi ? C.hi : s.fill;
+  let d = '';
+  const layers = 5;
+  for (let i = 0; i < layers; i++) {
+    const w = 52 + i * 7, y = cy - 22 + i * 11, x0 = cx - w / 2, x1 = cx + w / 2, bow = 6 + i * 1.2;
+    d += path(`M ${x0} ${y} C ${x0 + w * 0.25} ${y - bow} ${x1 - w * 0.25} ${y - bow} ${x1} ${y} C ${x1 - w * 0.25} ${y + 4.5} ${x0 + w * 0.25} ${y + 4.5} ${x0} ${y} Z`, { fill, stroke, width: hi ? 3 : 1.8 }).replace('<path', `<path class="${i === layers - 1 ? 'cell-shape' : ''}"`);
+  }
+  // vesicles: two arriving at the cis face (top), three budding from the trans face (bottom)
+  [[cx - 20, cy - 34], [cx + 16, cy - 36]].forEach(([x, y]) => { d += circle(x, y, 4, { fill, stroke, width: 1.6 }); });
+  [[cx - 36, cy + 34], [cx - 4, cy + 38], [cx + 30, cy + 36]].forEach(([x, y]) => { d += circle(x, y, 4.5, { fill, stroke, width: 1.6 }); });
+  return d;
+}
+function lysosome(cx, cy, r, hi) {
+  const s = STYLE.lysosome, a = shapeAttrs(s, hi, 2);
+  let d = circle(cx, cy, r, a).replace('<circle', '<circle class="cell-shape"');
+  [[-0.4, -0.3], [0.3, -0.35], [-0.1, 0.15], [0.4, 0.3], [-0.45, 0.35]].forEach(([dx, dy]) => { d += circle(r1(cx + dx * r), r1(cy + dy * r), 1.8, { fill: hi ? C.coral : s.stroke, stroke: 'none', width: 0, opacity: 0.75 }); });
+  return d;
+}
+function ribosomes(cx, cy, hi) {
+  const fill = hi ? C.coral : C.ink;
+  const pts = [[-18, -10], [-6, -16], [8, -12], [19, -4], [14, 8], [2, 14], [-11, 12], [-20, 3], [-4, -2], [7, 2]];
+  let d = circle(cx, cy, 30, { fill: 'transparent', stroke: 'none', width: 0 });
+  if (hi) d += circle(cx, cy, 28, { fill: C.hi, stroke: C.coral, width: 4, dash: '4 6' }).replace('<circle', '<circle class="cell-shape"');
+  pts.forEach(([dx, dy]) => { d += circle(cx + dx, cy + dy, 2.6, { fill, stroke: 'none', width: 0, opacity: 0.9 }); });
+  // a polysome: several ribosomes threaded on one mRNA. The strand is two cubic segments (the second mirrors the
+  // first's control point, as the path's "s" command does); each ribosome sits on the curve at parameter t.
+  const x0 = cx - 36, y0 = cy + 28;
+  const segs = [[[0, 0], [12, -8], [24, 8], [36, 0]], [[36, 0], [48, -8], [58, -8], [70, 0]]];
+  const bez = (t, [p0, p1, p2, p3]) => [0, 1].map(i => (1 - t) ** 3 * p0[i] + 3 * (1 - t) ** 2 * t * p1[i] + 3 * (1 - t) * t * t * p2[i] + t ** 3 * p3[i]);
+  d += path(`M ${x0} ${y0} c 12 -8 24 8 36 0 s 22 -8 34 0`, { stroke: hi ? C.coral : C.sky, width: 1.2, opacity: 0.8 });
+  segs.forEach(seg => [0.18, 0.5, 0.82].forEach(t => { const [x, y] = bez(t, seg); d += circle(r1(x0 + x), r1(y0 + y), 2.6, { fill, stroke: 'none', width: 0, opacity: 0.9 }); }));
+  return d;
+}
+/** Rough ER: concentric arcs around the nucleus, studded with ribosomes, joined to the nuclear envelope. */
+function roughER(cx, cy, rx, ry, a0, a1, layers, hi, connectAt) {
+  const s = STYLE['endoplasmic-reticulum'], stroke = hi ? C.coral : s.stroke;
+  let d = '';
+  for (let k = 1; k <= layers; k++) {
+    const RX = rx + 13 * k, RY = ry + 11 * k;
+    d += path(arc(cx, cy, RX, RY, a0, a1), { stroke, width: hi ? 3.5 : 2.4 }).replace('<path', `<path class="${k === layers ? 'cell-shape' : ''}"`);
+    for (let a = a0 + 6, i = 0; a < a1; a += 9, i++) {
+      const side = i % 2 === 0 ? 4 : -4;
+      const [x, y] = ept(cx, cy, RX + side, RY + side * RY / RX, a);
+      d += circle(r1(x), r1(y), 2.3, { fill: hi ? C.coral : C.ink, stroke: 'none', width: 0, opacity: 0.85 });
+    }
+  }
+  if (connectAt !== undefined) { const [x0, y0] = ept(cx, cy, rx, ry, connectAt), [x1, y1] = ept(cx, cy, rx + 13, ry + 11, connectAt); d += line(r1(x0), r1(y0), r1(x1), r1(y1), { color: stroke, width: 2 }); }
+  return d;
+}
+function smoothER(paths, hi) {
+  const stroke = hi ? C.coral : STYLE['endoplasmic-reticulum'].stroke;
+  return paths.map(p => path(p, { stroke, width: hi ? 3.2 : 2.4 })).join('');
+}
+function centrioles(cx, cy) {
+  const s = STYLE.extra;
+  const tube = (x, y, w, h) => rect(x, y, w, h, { fill: C.white, stroke: C.ink, width: 1.6, rx: 2 }) + [0.3, 0.5, 0.7].map(f => w > h ? line(x + 2, y + h * f, x + w - 2, y + h * f, { color: C.ink, width: 0.9, opacity: 0.6 }) : line(x + w * f, y + 2, x + w * f, y + h - 2, { color: C.ink, width: 0.9, opacity: 0.6 })).join('');
+  return group(tube(cx - 16, cy - 4, 26, 9) + tube(cx + 12, cy - 12, 9, 26), { 'data-extra': 'centrioles' }) + circle(cx + 4, cy + 2, 0, { fill: s.fill, stroke: 'none', width: 0 });
+}
+function label(n, name, x, y, color, hi, opts = {}) {
+  const tx = opts.tx ?? (opts.side === 'left' ? x - 17 : x + 17), ty = opts.ty ?? y + 4.5, anchor = opts.side === 'left' ? 'end' : 'start';
+  let d = '';
+  if (opts.lead) d += line(x, y, opts.lead[0], opts.lead[1], { color: hi ? C.coral : color, width: 1.4, opacity: 0.9 });
+  if (hi) {
+    const w = Math.round(name.length * 7.8 + 20), rx0 = anchor === 'end' ? tx - w + 9 : tx - 9;
+    d += rect(rx0, ty - 16, w, 24, { fill: C.coral, stroke: C.white, width: 1.5, rx: 12 });
+    d += text(tx, ty, name, { color: C.white, size: 13.5, weight: 700, anchor, cls: 'cell-callout' });
+    d += circle(x, y, 12, { fill: C.coral, stroke: C.white, width: 2 });
+    d += text(x, y + 4.5, String(n), { color: C.white, size: 12.5, weight: 700 });
+  } else {
+    d += circle(x, y, 11, { fill: C.white, stroke: color, width: 2 });
+    d += text(x, y + 4.2, String(n), { color: C.ink, size: 12, weight: 700 });
+    d += text(tx, ty, name, { color: C.ink, size: 13, weight: 600, anchor, cls: 'cell-name' });
+  }
+  return group(d, { class: 'cell-label' });
+}
+const link = (slug, title, inner, hi) => `<a href="/cells/${slug}/" data-organelle="${slug}"${hi ? ' data-highlight="true"' : ''} aria-label="${title}: open the atlas page"><title>${title}</title>${inner}</a>`;
+
+/** Draw one reference cell. Returns SVG inner markup plus the numbered key that goes under it. */
+function drawCell(kind, highlight) {
+  const cell = cellTypes[kind] || cellTypes.animal;
+  const items = [];
+  let n = 0;
+  const parts = [];
+  const add = (slug, inner) => { n += 1; const o = organelles[slug]; items.push({ n, slug, name: o.title, note: o.type, color: STYLE[slug].stroke }); parts.push(link(slug, o.title, inner, highlight === slug)); };
+  const addExtra = ([name, note, short], inner) => { n += 1; items.push({ n, slug: null, name, note: short || note.split(/[;,]/)[0], color: '#9bb4a4' }); parts.push(group(inner, { 'data-extra': name.toLowerCase().replace(/\s+/g, '-') })); };
+  const hi = slug => highlight === slug;
+  const membraneLink = (d, badge) => {
+    const h = hi('cell-membrane');
+    return path(d, { fill: 'none', stroke: 'transparent', width: 18 }) + path(d, { fill: 'none', stroke: h ? C.coral : C.ink, width: h ? 6 : 4.5 }).replace('<path', '<path class="cell-shape"') + path(d, { fill: 'none', stroke: h ? C.hi : C.cream, width: 1.4, opacity: 0.9 }) + badge;
+  };
+  const cytoplasm = kind === 'plant' ? '#fbf7ea' : '#fff8e8';
+  if (kind === 'plant') {
+    const wallD = 'M 60 86 Q 60 40 106 40 L 554 40 Q 600 40 600 86 L 600 374 Q 600 420 554 420 L 106 420 Q 60 420 60 374 Z';
+    const memD = 'M 74 90 Q 74 54 110 54 L 550 54 Q 586 54 586 90 L 586 370 Q 586 406 550 406 L 110 406 Q 74 406 74 370 Z';
+    parts.push(path(wallD, { fill: '#e9f3ea', stroke: 'none', width: 0 }));
+    parts.push(path(memD, { fill: cytoplasm, stroke: 'none', width: 0 }));
+    // central vacuole sits behind everything else
+    const vacD = 'M 240 240 C 240 176 302 140 380 140 C 458 140 520 176 520 240 C 520 304 458 340 380 340 C 302 340 240 304 240 240 Z';
+    const vacInner = path(vacD, { fill: C.sky, stroke: 'none', width: 0, opacity: 0.18 }) + path(vacD, { fill: 'none', stroke: C.sky, width: 2 }) + text(380, 254, 'stores water, ions, pigments and waste', { color: C.skyDark, size: 12, weight: 500 });
+    add('nucleus', nucleus(175, 244, 56, 50, hi('nucleus')) + label(1, 'Nucleus', 146, 222, C.plum, hi('nucleus')));
+    add('mitochondrion', mitochondrion(400, 378, 40, 17, 4, hi('mitochondrion')) + mitochondrion(558, 312, 32, 14, 84, hi('mitochondrion')) + label(2, 'Mitochondrion', 458, 372, C.amber, hi('mitochondrion')));
+    add('chloroplast', chloroplast(334, 84, 44, 20, -6, hi('chloroplast')) + chloroplast(466, 110, 44, 20, 5, hi('chloroplast')) + chloroplast(558, 214, 42, 19, 84, hi('chloroplast')) + label(3, 'Chloroplast', 322, 122, C.leaf, hi('chloroplast')));
+    add('ribosome', ribosomes(548, 100, hi('ribosome')) + label(4, 'Ribosomes', 536, 76, C.ink, hi('ribosome'), { side: 'left' }));
+    add('endoplasmic-reticulum', roughER(175, 244, 56, 50, 205, 300, 2, hi('endoplasmic-reticulum'), 300) + smoothER(['M 112 166 C 100 140 128 128 116 104 S 150 96 172 106', 'M 130 150 C 150 140 160 160 182 148 S 212 124 236 138', 'M 160 122 C 176 110 190 126 208 112 S 232 98 248 110'], hi('endoplasmic-reticulum')) + label(5, 'Endoplasmic reticulum', 116, 78, C.sky, hi('endoplasmic-reticulum')));
+    add('golgi-apparatus', golgi(186, 350, hi('golgi-apparatus')) + label(6, 'Golgi apparatus', 244, 352, C.skyDark, hi('golgi-apparatus')));
+    add('cell-membrane', membraneLink(memD, label(7, 'Cell membrane', 586, 150, C.ink, hi('cell-membrane'), { tx: 602 })));
+    addExtra(cell.extras[0], path(wallD, { fill: 'none', stroke: C.leafDark, width: 10, opacity: 0.85 }) + path(wallD, { fill: 'none', stroke: C.leafLight, width: 2, dash: '10 8', opacity: 0.9 }) + label(8, 'Cell wall', 600, 250, C.leafDark, false, { tx: 616 }));
+    addExtra(cell.extras[1], vacInner + label(9, 'Central vacuole', 300, 176, C.skyDark, false));
+    // the vacuole must sit under the organelles: move it to the front of the list, after the backgrounds
+    const vac = parts.pop(); parts.splice(2, 0, vac);
+  } else {
+    const memD = 'M 92 236 C 92 132 196 62 340 60 C 478 58 598 122 600 224 C 602 320 506 404 356 408 C 206 412 92 344 92 236 Z';
+    parts.push(path(memD, { fill: cytoplasm, stroke: 'none', width: 0 }));
+    add('nucleus', nucleus(250, 218, 78, 68, hi('nucleus')) + label(1, 'Nucleus', 208, 178, C.plum, hi('nucleus')));
+    add('mitochondrion', mitochondrion(505, 340, 50, 22, -20, hi('mitochondrion')) + mitochondrion(285, 96, 34, 15, -8, hi('mitochondrion')) + label(2, 'Mitochondrion', 548, 296, C.amber, hi('mitochondrion'), { side: 'left' }));
+    add('ribosome', ribosomes(473, 118, hi('ribosome')) + label(3, 'Ribosomes', 432, 100, C.ink, hi('ribosome'), { side: 'left' }));
+    add('endoplasmic-reticulum', roughER(250, 218, 78, 68, 118, 250, 3, hi('endoplasmic-reticulum'), 250) + smoothER(['M 158 306 C 150 330 172 340 160 366 S 196 386 214 372', 'M 176 318 C 196 330 188 352 212 356 S 244 346 258 366', 'M 196 300 C 222 306 226 330 250 328 S 270 342 280 326'], hi('endoplasmic-reticulum')) + label(4, 'Endoplasmic reticulum', 232, 372, C.sky, hi('endoplasmic-reticulum')));
+    add('golgi-apparatus', golgi(410, 186, hi('golgi-apparatus')) + label(5, 'Golgi apparatus', 346, 258, C.skyDark, hi('golgi-apparatus')));
+    add('lysosome', lysosome(392, 296, 15, hi('lysosome')) + lysosome(338, 126, 12, hi('lysosome')) + lysosome(488, 270, 11, hi('lysosome')) + label(6, 'Lysosome', 372, 326, '#c9582a', hi('lysosome')));
+    add('cell-membrane', membraneLink(memD, label(7, 'Cell membrane', 440, 397, C.ink, hi('cell-membrane'))));
+    addExtra(cell.extras[0], centrioles(556, 246) + label(8, 'Centrioles', 538, 216, C.ink, false, { side: 'left' }));
+  }
+  return { svg: parts.join(''), items };
+}
+
+const views = (interactive ? ['animal', 'plant'] : [KIND]).map(k => ({ kind: k, ...cellTypes[k], ...drawCell(k, HIGHLIGHT) }));
+const current = cellTypes[KIND];
+const spotlight = HIGHLIGHT ? organelles[HIGHLIGHT] : null;
+const svgLabel = v => `Labeled diagram of ${v.title.toLowerCase()} with numbered organelles${spotlight ? `, highlighting the ${spotlight.title.toLowerCase()}` : ''}`;
+---
+<cell-lab data-kind={KIND} data-highlight={HIGHLIGHT} data-interactive={interactive ? 'true' : undefined}>
+<div class="workbench">
+  <div class="canvas-pane">
+    <div class="canvas-top">
+      <span class="canvas-title"><span aria-hidden="true">◉</span> <span data-kind-title>{current.title}</span> <span class="badge">{spotlight ? 'SPOTLIGHT' : 'INTERACTIVE'}</span></span>
+      {interactive ? <div class="pills cell-toggle" role="group" aria-label="Cell type">{views.map(v => <button type="button" class:list={['pill', { selected: v.kind === KIND }]} data-kind-toggle={v.kind} aria-pressed={v.kind === KIND}>{v.title}</button>)}</div> : <span class="canvas-hint">Click any organelle to open its page</span>}
+    </div>
+    {interactive && <noscript><style is:inline>cell-lab [data-cell][hidden],cell-lab [data-key][hidden],cell-lab [data-describe][hidden]{display:block!important}cell-lab .cell-toggle{display:none}</style>JavaScript is off, so the animal cell and the plant cell are both shown below; the toggle needs scripting. Every numbered organelle is still a link.</noscript>}
+    {views.map(v => <div class="graph cell-stage" data-cell={v.kind} hidden={v.kind !== KIND}><svg viewBox="0 0 720 460" role="group" aria-label={svgLabel(v)} set:html={v.svg}/></div>)}
+    <div class="graph-caption"><div class="legend"><span>Numbers match the key below</span>{spotlight && <span class="orange">Coral outline: {spotlight.title.toLowerCase()}</span>}</div><span>Not to scale: organelles are enlarged for clarity</span></div>
+    {views.map(v => <ol class="cell-key" data-key={v.kind} hidden={v.kind !== KIND} aria-label={`${v.title} key`}>{v.items.map(item => <li>{item.slug ? <a href={`/cells/${item.slug}/`} data-key-item={item.slug} class:list={{ 'is-current': item.slug === HIGHLIGHT }} aria-current={item.slug === HIGHLIGHT ? 'page' : undefined}><span class="cell-num" style={`border-color:${item.color}`}>{item.n}</span><span class="cell-key-text"><strong>{item.name}</strong><small>{item.note}</small></span></a> : <span class="cell-key-extra"><span class="cell-num" style={`border-color:${item.color}`}>{item.n}</span><span class="cell-key-text"><strong>{item.name}</strong><small>{item.note}</small></span></span>}</li>)}</ol>)}
+  </div>
+  <div class="controls">
+    {views.map(v => <div data-describe={v.kind} hidden={v.kind !== KIND}><h3>{v.title}: what you are looking at</h3><p class="small-note cell-lead">{v.description}</p>{v.extras.map(([name, desc]) => <p class="small-note"><strong>{name}.</strong> {desc}</p>)}</div>)}
+    <div class="divider"></div>
+    {spotlight
+      ? <p class="small-note cell-lead">The <strong>{spotlight.title.toLowerCase()}</strong> is outlined in coral; it occurs in {spotlight.foundIn.map(s => s.toLowerCase()).join(', ')}. Hover or tab through the key to light up the other structures, and click any of them to open its page.</p>
+      : <p class="small-note cell-lead">Hover or tab through the key to light up each structure. Every numbered organelle opens a page with its membranes, size, functions, a worked example, and a common misconception.</p>}
+    {spotlight ? <a class="secondary full-width cell-cta" href="/cells/">Compare all eight organelles ↗</a> : <a class="secondary full-width cell-cta" href="/printable-diagrams/">Print a cell to label ↗</a>}
+  </div>
+</div>
+</cell-lab>
+<style is:global>
+cell-lab .cell-stage svg{max-height:560px;min-height:260px}
+cell-lab .cell-stage svg text{font-family:'DM Sans',sans-serif}
+cell-lab .cell-name,cell-lab .cell-stage text.cell-name{paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+cell-lab a[data-organelle]{cursor:pointer}
+cell-lab a[data-organelle] .cell-shape{transition:stroke-width .15s,stroke .15s}
+cell-lab a[data-organelle]:hover .cell-shape,cell-lab a[data-organelle]:focus-visible .cell-shape,cell-lab a[data-organelle].is-lit .cell-shape{stroke:#e2703a;stroke-width:4px}
+cell-lab a[data-organelle]:hover,cell-lab a[data-organelle]:focus-visible,cell-lab a[data-organelle].is-lit{filter:drop-shadow(0 0 6px rgba(226,112,58,.55))}
+cell-lab a[data-organelle]:focus-visible{outline:none}
+cell-lab a[data-organelle][data-highlight]{filter:drop-shadow(0 0 7px rgba(226,112,58,.6))}
+cell-lab .cell-toggle{gap:6px;flex-wrap:nowrap}
+cell-lab .cell-toggle .pill{min-height:36px;white-space:nowrap}
+cell-lab .cell-key{list-style:none;margin:0;padding:12px 18px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 12px;border-top:1px solid var(--line);background:#fff}
+cell-lab .cell-key li{margin:0}
+cell-lab .cell-key a,cell-lab .cell-key-extra{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;min-height:44px;transition:background .15s}
+cell-lab .cell-key a:hover,cell-lab .cell-key a.is-lit,cell-lab .cell-key a:focus-visible{background:#fff1e8}
+cell-lab .cell-key a.is-current{background:#e6f2e8}
+cell-lab .cell-num{flex:0 0 26px;width:26px;height:26px;border-radius:50%;border:2px solid var(--green);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink);background:#fff}
+cell-lab .cell-key-extra .cell-num{border-style:dashed}
+cell-lab .cell-key-text{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+cell-lab .cell-key-text strong{font-size:14px;color:var(--ink)}
+cell-lab .cell-key-text small{font-size:12px;color:var(--muted)}
+cell-lab .controls h3{margin-bottom:10px}
+cell-lab .controls .cell-lead{margin-top:0}
+cell-lab .controls p strong{color:var(--ink)}
+cell-lab .cell-cta{display:block;text-align:center;margin-top:18px;font-weight:600}
+cell-lab noscript{margin:0;border-bottom:1px solid var(--line);font-size:14px}
+@media(max-width:700px){cell-lab .canvas-top{flex-wrap:wrap}cell-lab .cell-key{grid-template-columns:1fr 1fr;padding:10px 12px 14px}cell-lab .cell-key a,cell-lab .cell-key-extra{padding:5px 6px;gap:8px}}
+@media(max-width:460px){cell-lab .cell-key{grid-template-columns:1fr}}
+@media print{cell-lab .cell-key{display:grid}cell-lab .controls{display:block!important;border:0}}
+</style>
+<script>
+class CellLab extends HTMLElement {
+  connectedCallback() {
+    const buttons = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-kind-toggle]'));
+    const show = (kind: string) => {
+      this.dataset.kind = kind;
+      this.querySelectorAll<HTMLElement>('[data-cell],[data-key],[data-describe]').forEach(el => { const k = el.dataset.cell || el.dataset.key || el.dataset.describe; el.hidden = k !== kind; });
+      buttons.forEach(b => { const on = b.dataset.kindToggle === kind; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      const title = this.querySelector('[data-kind-title]');
+      const active = buttons.find(b => b.dataset.kindToggle === kind);
+      if (title && active) title.textContent = active.textContent;
+    };
+    buttons.forEach(b => b.addEventListener('click', () => show(b.dataset.kindToggle || 'animal')));
+    // Hovering or focusing a key row lights up the matching organelle (in every pre-rendered cell), and vice versa.
+    const groups = Array.from(this.querySelectorAll<SVGAElement>('a[data-organelle]'));
+    const rows = Array.from(this.querySelectorAll<HTMLAnchorElement>('[data-key-item]'));
+    const light = (slug: string | null) => {
+      groups.forEach(g => g.classList.toggle('is-lit', g.dataset.organelle === slug));
+      rows.forEach(r => r.classList.toggle('is-lit', r.dataset.keyItem === slug));
+    };
+    const wire = (el: Element, slug: string) => {
+      el.addEventListener('mouseenter', () => light(slug));
+      el.addEventListener('mouseleave', () => light(null));
+      el.addEventListener('focus', () => light(slug));
+      el.addEventListener('blur', () => light(null));
+    };
+    rows.forEach(r => wire(r, r.dataset.keyItem || ''));
+    groups.forEach(g => wire(g, g.dataset.organelle || ''));
+  }
+}
+customElements.define('cell-lab', CellLab);
+</script>

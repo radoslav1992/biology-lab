@@ -1,0 +1,31 @@
+---
+import Faq from '../components/Faq.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import PunnettSquare from '../components/PunnettSquare.astro';
+const classics = [
+  ['Aa × Aa', '1 AA : 2 Aa : 1 aa', '3 dominant : 1 recessive', '25%'],
+  ['Aa × aa (test cross)', '1 Aa : 1 aa', '1 : 1', '50%'],
+  ['AA × aa', 'All Aa', 'All dominant', '0%'],
+  ['AaBb × AaBb', '1 : 2 : 1 : 2 : 4 : 2 : 1 : 2 : 1', '9 : 3 : 3 : 1', '1/16 = 6.25%'],
+  ['AaBb × aabb (test cross)', '1 : 1 : 1 : 1', '1 : 1 : 1 : 1', '25%'],
+  ['AO × BO (blood type)', '1 AB : 1 AO : 1 BO : 1 OO', 'A : B : AB : O = 1 : 1 : 1 : 1', 'Type O 25%'],
+];
+---
+<Layout title="Punnett Square Calculator — Monohybrid, Dihybrid & Blood Type" section="Punnett square" description="Build monohybrid, dihybrid, and ABO/Rh blood-type Punnett squares. See genotype and phenotype ratios, the chance of each offspring, and every worked step.">
+<div class="intro"><div><div class="eyebrow">Genetics, one cross at a time</div><h1>Punnett Square Calculator</h1><p>Type two parent genotypes. We’ll form the gametes, fill the square, and count the odds for every child.</p></div></div>
+<PunnettSquare/>
+<div class="explanation">
+  <h2>How to read a Punnett square</h2>
+  <p>A Punnett square lists every way one gamete from each parent can meet. Parent 1’s gametes run down the side and parent 2’s across the top, so each box is one equally likely fertilization. For Aa × Aa the four boxes hold AA, Aa, Aa, and aa: count identical genotypes to get the <strong>genotype ratio</strong> (1 : 2 : 1), then group the boxes by appearance to get the <strong>phenotype ratio</strong> (3 : 1). Because Aa shows the dominant trait just like AA, three boxes out of four look dominant.</p>
+  <p>The square gives a probability for each child, not a guaranteed count. “1 in 4” means every child of two Aa parents has a 25% chance of the recessive phenotype, whether they are the first child or the fifth, and four children could easily include zero or three affected. That is why real families of Aa × Aa parents rarely show an exact 3 : 1 split, and why Mendel needed hundreds of pea plants before the ratio became obvious.</p>
+  <h2>Monohybrid, dihybrid, and blood-type crosses</h2>
+  <p>A <strong>monohybrid</strong> cross follows one gene, so each parent makes at most two kinds of gamete and the square has 2 × 2 = 4 boxes. A <strong>dihybrid</strong> cross follows two genes on different chromosomes. Independent assortment lets an AaBb parent make four gamete types (AB, Ab, aB, ab), the square grows to 4 × 4 = 16 boxes, and two heterozygous parents give the famous 9 : 3 : 3 : 1 phenotype ratio. You can also reach any dihybrid result with the product rule: the chance of aabb from AaBb × AaBb is ¼ × ¼ = 1/16, exactly one box in sixteen.</p>
+  <p><strong>ABO blood type</strong> breaks the simple dominant–recessive pattern. The gene has three alleles: I<sup>A</sup> and I<sup>B</sup> are codominant, so an AB person shows both antigens, while i (O) is recessive to both. Two type A parents can therefore have a type O child if both are AO, and an AB × OO cross can never produce type O or type AB children. Tick “Include the Rh factor” to add the second gene: D is dominant, so DD and Dd are Rh-positive and only dd is Rh-negative.</p>
+  <h2>Classic crosses at a glance</h2>
+  <div class="fact-table-wrap"><table class="fact-table"><thead><tr><th scope="col">Cross</th><th scope="col">Genotype ratio</th><th scope="col">Phenotype ratio</th><th scope="col">Chance of recessive child</th></tr></thead><tbody>{classics.map(([cross, g, p, r]) => <tr><td>{cross}</td><td>{g}</td><td>{p}</td><td>{r}</td></tr>)}</tbody></table></div>
+  <h2>When a Punnett square is not enough</h2>
+  <p>This calculator assumes <strong>complete dominance</strong> and <strong>independent assortment</strong>, the rules Mendel worked out in peas. Real inheritance sometimes bends them. In incomplete dominance (pink snapdragons from red × white) the heterozygote has its own phenotype, so the phenotype ratio equals the genotype ratio, 1 : 2 : 1. Genes that sit close together on one chromosome are linked and do not assort independently, so a dihybrid test cross gives more parental-type offspring than the 1 : 1 : 1 : 1 the square predicts. Sex-linked traits such as red–green color blindness need X and Y chromosomes in the square, and polygenic traits such as height depend on many genes plus the environment. When your observed counts disagree with the predicted ratio, the <a class="text-link" href="/tools/chi-square-test/">chi-square test</a> tells you whether the gap is chance or a sign that one of these exceptions is at work.</p>
+</div>
+<div class="related"><a href="/learn/mendelian-inheritance/">Mendelian inheritance explained ↗</a><a href="/tools/chi-square-test/">Test your ratio with chi-square ↗</a><a href="/learn/hardy-weinberg-principle/">From crosses to populations: Hardy-Weinberg ↗</a><a href="/hardy-weinberg-calculator/">Hardy-Weinberg calculator ↗</a><a href="/practice/">Practice genetics questions ↗</a><a href="/printable-diagrams/">Print a blank Punnett grid ↗</a></div>
+<Faq items={faqs['punnett-square-calculator']} title="Punnett square questions"/></Layout>

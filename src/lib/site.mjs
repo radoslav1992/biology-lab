@@ -8,5 +8,5 @@ export const site = {
   // Google Analytics 4 measurement ID (for example "G-XXXXXXXXXX"). Leave empty to omit the tag entirely.
   analyticsId: '',
   defaultTitle: 'Biology Lab',
-  defaultDescription: 'Free interactive biology tools: cross parents in a Punnett square, translate DNA into protein, model population growth, explore the cell, and practice with instant explanations.',
+  defaultDescription: 'Free interactive biology tools: build Punnett squares, translate DNA into protein, model population growth, explore the cell, and practice with explanations.',
 };

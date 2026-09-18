@@ -1,0 +1,33 @@
+---
+import Faq from '../components/Faq.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import PopulationGrowth from '../components/PopulationGrowth.astro';
+const comparison = [
+  ['Equation', 'dN/dt = rN, so N(t) = N₀e^(rt)', 'dN/dt = rN(1 − N/K), so N(t) = K / (1 + ((K − N₀)/N₀)e^(−rt))'],
+  ['Curve shape', 'J-shaped: steeper and steeper', 'S-shaped (sigmoid): levels off at K'],
+  ['Key assumption', 'Unlimited resources, no crowding', 'Resources are finite, so per-capita growth falls as N rises'],
+  ['Growth rate dN/dt', 'Keeps rising with N', 'Largest at N = K/2 (equal to rK/4), zero at N = K'],
+  ['Doubling time', 'Constant: ln 2 / r', 'Only while N is far below K; doublings take longer near K'],
+  ['Typical examples', 'Bacteria in fresh broth, a species newly introduced to an island, the human population in the 20th century', 'Yeast in a flask, sheep in Tasmania, most lab cultures once the log phase ends'],
+];
+const doublings = [[0.5, 139], [1, 69], [1.1, 63], [2, 35], [3, 23], [7, 10]];
+---
+<Layout title="Population Growth Calculator — Exponential & Logistic Models" section="Population growth" description="Model exponential and logistic population growth: enter N₀, r, K and t to get the population size, doubling time, growth rate and a J- or S-curve with steps.">
+<div class="intro"><div><div class="eyebrow">Ecology, one time step at a time</div><h1>Watch a population grow, then meet its limits.</h1><p>Enter a starting size, a growth rate and a time. We draw the exponential J-curve or the logistic S-curve, find the doubling time and the growth rate, and show every substitution along the way.</p></div></div>
+<PopulationGrowth/>
+<section class="explanation" aria-labelledby="growth-models-heading">
+  <h2 id="growth-models-heading">Exponential vs logistic growth at a glance</h2>
+  <p>Both models start from the same idea: the change in population size, dN/dt, depends on how many individuals are already there. Exponential growth keeps the per-capita rate r fixed no matter how crowded things get, which is only realistic while food, space and mates are plentiful. Logistic growth multiplies r by the “room left” factor (1 − N/K), so growth fades as the population nears the carrying capacity K. Switch between the two tabs above with the same numbers to see how much difference that single factor makes.</p>
+  <div class="fact-table-wrap"><table class="fact-table"><thead><tr><th scope="col">Feature</th><th scope="col">Exponential growth</th><th scope="col">Logistic growth</th></tr></thead><tbody>{comparison.map(([feature, exp, log]) => <tr><td>{feature}</td><td>{exp}</td><td>{log}</td></tr>)}</tbody></table></div>
+  <h3>Reading r, the per-capita growth rate</h3>
+  <p>r is the birth rate minus the death rate per individual per unit of time, written as a decimal. A value of 0.1 per hour means each individual adds, on average, 0.1 new individuals every hour. Because growth compounds continuously, the population multiplies by e^0.1 ≈ 1.105 each hour, a 10.5% rise rather than exactly 10%. A negative r describes a shrinking population, and r = 0 means births and deaths balance. Keep r and t in the same time unit: a rate per day paired with a time in hours gives nonsense.</p>
+  <h3>Doubling time and the rule of 70</h3>
+  <p>For exponential growth the doubling time is T₂ = ln 2 / r ≈ 0.693 / r. If you know the growth rate as a percentage, divide 69.3 by it (usually rounded to the “rule of 70”): a population growing at 1.1% per year doubles in about 63 years, and one growing at 2% doubles in about 35. The world population grew fastest, at roughly 2.1% per year, in the late 1960s, a pace that doubles a population every 33 years; the rate has since fallen below 1%.</p>
+  <div class="fact-table-wrap"><table class="fact-table"><thead><tr><th scope="col">Growth rate per year</th><th scope="col">Doubling time (ln 2 / r)</th></tr></thead><tbody>{doublings.map(([rate, years]) => <tr><td>{rate}%</td><td>about {years} years</td></tr>)}</tbody></table></div>
+  <h3>Carrying capacity in the real world</h3>
+  <p>K is set by whatever runs out first: food, nesting sites, water, or the reach of predators and disease. Sheep introduced to Tasmania in the early 1800s followed a textbook S-curve, leveling off near 1.7 million by the 1850s. Populations can also overshoot: 25 reindeer released on St. Paul Island, Alaska, in 1911 grew to about 2,000 by 1938, stripped the lichen they depended on, and crashed to 8 animals by 1950. K is not a fixed number either; it moves with the seasons, rainfall and the arrival of competitors, which is why real curves wobble around the smooth line this calculator draws.</p>
+</section>
+<div class="related"><a href="/learn/population-growth/">Population growth explained ↗</a><a href="/tools/predator-prey/">Predator–prey cycles (Lotka–Volterra) ↗</a><a href="/tools/bacterial-growth/">Bacterial growth &amp; doubling time ↗</a><a href="/practice/">Practice ecology questions ↗</a></div>
+<Faq items={faqs['population-growth-calculator']} title="Population growth questions"/>
+</Layout>

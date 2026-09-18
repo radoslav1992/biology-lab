@@ -7,7 +7,8 @@ const toolSections = ['Punnett square', 'DNA translator', 'Population growth', '
 const activeSection = toolSections.includes(section) ? 'Tools' : section;
 const url = new URL(Astro.url.pathname, Astro.site);
 const isHome = Astro.url.pathname === '/';
-const pageTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
+// Append the brand only while the tag stays within typical search-snippet width.
+const pageTitle = title === site.defaultTitle || title.length + site.name.length + 3 > 70 ? title : `${title} | ${site.name}`;
 const nav = [['Explore', '/'], ['Tools', '/tools/'], ['Cells', '/cells/'], ['Practice', '/practice/'], ['Printables', '/printable-diagrams/'], ['Learn', '/learn/']];
 const org = { '@type': 'Organization', name: site.name, url: site.url + '/' };
 const schema = schemaType === 'Article'

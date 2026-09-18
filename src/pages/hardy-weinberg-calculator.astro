@@ -1,0 +1,31 @@
+---
+import Faq from '../components/Faq.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import HardyWeinberg from '../components/HardyWeinberg.astro';
+const table = [
+  ['0.9', '0.1', '0.81', '0.18', '0.01'],
+  ['0.7', '0.3', '0.49', '0.42', '0.09'],
+  ['0.5', '0.5', '0.25', '0.50', '0.25'],
+  ['0.3', '0.7', '0.09', '0.42', '0.49'],
+  ['0.1', '0.9', '0.01', '0.18', '0.81'],
+];
+---
+<Layout title="Hardy-Weinberg Calculator — Allele & Genotype Frequencies" section="Hardy-Weinberg" description="Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².">
+<div class="intro"><div><div class="eyebrow">Population genetics, made visible</div><h1>Hardy-Weinberg Equilibrium Calculator</h1><p>Start from p, from how common a recessive trait is, or from real genotype counts. We’ll find every frequency and test whether the population is evolving.</p></div></div>
+<HardyWeinberg/>
+<div class="explanation">
+  <h2>What the Hardy-Weinberg equation says</h2>
+  <p>For a gene with two alleles, call the frequency of the dominant allele <strong>p</strong> and the frequency of the recessive allele <strong>q</strong>. Every allele in the gene pool is one or the other, so <strong>p + q = 1</strong>. If gametes pair at random, the chance that a zygote receives two A alleles is p × p, the chance of two a alleles is q × q, and the chance of one of each is 2pq (A from the egg and a from the sperm, or the reverse). That gives the genotype frequencies <strong>p² + 2pq + q² = 1</strong>, and, in the absence of evolutionary forces, both allele and genotype frequencies stay the same from one generation to the next. Hardy-Weinberg equilibrium is the null model of evolution: the population that is <em>not</em> changing.</p>
+  <h2>The five conditions</h2>
+  <p>A population stays in equilibrium only while all of these hold: (1) a very large population, so allele frequencies do not drift by chance; (2) random mating with respect to the gene; (3) no mutation creating or destroying alleles; (4) no migration bringing alleles in or out; (5) no natural selection, so every genotype survives and reproduces equally well. Real populations violate at least one, which is exactly why the equation is useful. Measure the genotypes, compare them with p², 2pq, and q², and any significant gap points to a force worth investigating.</p>
+  <h2>Worked example: how many carriers?</h2>
+  <p>Cystic fibrosis is recessive and affects about 1 in 2,500 newborns of European ancestry. Only aa individuals are affected, so q² = 1/2,500 = 0.0004 and q = √0.0004 = 0.02. Then p = 1 − 0.02 = 0.98, and the carrier frequency is 2pq = 2 × 0.98 × 0.02 = 0.0392, roughly 1 person in 25. Notice the asymmetry: the disease is rare, but carriers are nearly a hundred times more common than affected people, because a recessive allele hides in heterozygotes. This is why recessive alleles are almost impossible to eliminate by selection against the affected phenotype alone.</p>
+  <h2>Allele frequency versus genotype frequency</h2>
+  <div class="fact-table-wrap"><table class="fact-table"><thead><tr><th scope="col">p (A)</th><th scope="col">q (a)</th><th scope="col">p² (AA)</th><th scope="col">2pq (Aa)</th><th scope="col">q² (aa)</th></tr></thead><tbody>{table.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</tbody></table></div>
+  <p>Heterozygotes are most common when p = q = 0.5, where 2pq reaches its maximum of 0.50. As either allele becomes rare, almost every copy of it sits inside a heterozygote: at q = 0.1, only 1% of the population is aa but 18% carries the allele.</p>
+  <h2>Reading the chi-square verdict</h2>
+  <p>In “observed counts” mode the calculator estimates p directly from the sample by counting alleles: each AA individual contributes two A alleles and each Aa contributes one, so p = (2 × AA + Aa) / 2n. It then predicts the counts expected under equilibrium (p²n, 2pqn, q²n) and computes χ² = Σ (O − E)² / E. There are three genotype classes, but one degree of freedom is lost to the total and another to estimating p from the same data, so df = 1 and the α = 0.05 critical value is 3.841. A χ² above 3.841 means the observed genotypes would arise by chance less than 5% of the time if the population were in equilibrium. A heterozygote deficit often signals inbreeding or population structure; a heterozygote excess can point to heterozygote advantage, as with the sickle-cell allele in malaria regions.</p>
+</div>
+<div class="related"><a href="/learn/hardy-weinberg-principle/">The Hardy-Weinberg principle explained ↗</a><a href="/learn/mendelian-inheritance/">Back to Mendelian inheritance ↗</a><a href="/tools/chi-square-test/">Chi-square test for genetics ↗</a><a href="/punnett-square-calculator/">Punnett square calculator ↗</a><a href="/practice/">Practice genetics questions ↗</a><a href="/printable-diagrams/">Printable diagrams ↗</a></div>
+<Faq items={faqs['hardy-weinberg-calculator']} title="Hardy-Weinberg questions"/></Layout>

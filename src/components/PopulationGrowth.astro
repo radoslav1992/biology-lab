@@ -1,0 +1,185 @@
+---
+// Population growth lab: exponential N(t) = N₀e^(rt) and logistic N(t) = K / (1 + ((K − N₀)/N₀)e^(−rt)) growth,
+// with the doubling time, the instantaneous rate dN/dt, the time to reach K/2, and a live curve.
+const modes = [['exponential', 'Exponential growth'], ['logistic', 'Logistic growth']];
+const units = ['hours', 'days', 'years'];
+---
+<growth-lab>
+<div class="tabs" role="group" aria-label="Growth model">{modes.map(([id, label]) => <button data-mode={id} class:list={['tab', { active: id === 'exponential' }]} aria-pressed={id === 'exponential' ? 'true' : 'false'}>{label}</button>)}</div>
+<div class="workbench">
+  <div class="canvas-pane">
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">↗</span> Growth curve <span class="badge" data-badge>EXPONENTIAL</span></span><span class="canvas-hint" data-hint>J-shaped: N multiplies by the same factor every time unit</span></div>
+    <div class="graph"><svg viewBox="0 0 720 410" role="img" aria-label="Line chart of population size against time for the selected growth model, with the population at time t marked and, in logistic mode, the carrying capacity line"><g data-drawing></g></svg></div>
+    <div class="graph-caption"><div class="legend"><span data-legend-model>Exponential N(t)</span><span class="orange">N at time t</span><span class="growth-lab-k" data-legend-k hidden>Carrying capacity K</span><span class="growth-lab-faint" data-legend-faint hidden>Exponential, for comparison</span></div><span data-summary>N₀ = 100 · r = 0.1 per hour</span></div>
+    <div class="result-grid" data-metrics aria-live="polite"></div>
+  </div>
+  <div class="controls">
+    <h3>Describe your population</h3>
+    <label class="field">Starting population N₀<input type="number" data-n0 min="1" max="1000000000000" step="any" value="100"/></label>
+    <label class="field">Growth rate r <span class="unit-toggle" data-r-unit>(per hour, as a decimal)</span><input type="number" data-r min="-10" max="10" step="any" value="0.1"/></label>
+    <div data-group="logistic" hidden><label class="field">Carrying capacity K<input type="number" data-k min="1" max="1000000000000" step="any" value="1000"/></label></div>
+    <label class="field">Time t <span class="unit-toggle" data-t-unit>(hours)</span><input type="number" data-t min="0.01" max="10000" step="any" value="10"/></label>
+    <label class="field">Time unit<select data-unit>{units.map(u => <option value={u}>{u}</option>)}</select></label>
+    <div class="pills" data-presets role="group" aria-label="Example populations"></div>
+    <p class="error" data-error role="alert"></p>
+    <div class="divider"></div>
+    <p class="small-note" data-note>r is the per-capita growth rate (births minus deaths per individual per time unit) written as a decimal: 5% per hour is 0.05. Exponential growth assumes unlimited resources, so it describes only the early, fast phase of a real population.</p>
+    <button class="secondary full-width" data-reset style="margin-top:20px">Reset example</button>
+  </div>
+</div>
+<div class="explanation"><h2>Follow the calculation</h2><div class="formula" data-formula>N(t) = N₀ · e^(rt)</div><ol data-steps></ol></div>
+</growth-lab>
+<noscript>Enable JavaScript to model population growth. Worked example: with N₀ = 100, r = 0.1 per hour and t = 10 hours, exponential growth gives N = 100 × e^1 ≈ 272. With a carrying capacity K = 1,000 the logistic model gives N = 1,000 / (1 + 9e^−1) ≈ 232, and the doubling time is ln 2 / 0.1 ≈ 6.93 hours.</noscript>
+<script>
+import { exponential, logistic, doublingTime, growthRate, formatCount } from '../lib/population.mjs';
+import { fmt, pct, palette } from '../lib/format.mjs';
+import { chart, curve, line, polyline, circle, text } from '../lib/svg.mjs';
+type Mode = 'exponential' | 'logistic';
+type Unit = 'hours' | 'days' | 'years';
+interface Values { n0: number; r: number; k: number; t: number }
+interface Preset { label: string; mode: Mode; unit: Unit; values: Values }
+const DEFAULTS: Values = { n0: 100, r: 0.1, k: 1000, t: 10 };
+const PRESETS: Preset[] = [
+  { label: 'Bacteria in broth', mode: 'exponential', unit: 'hours', values: { n0: 1000, r: 0.693, k: 1000000000, t: 12 } },
+  { label: 'Rabbits on an island', mode: 'logistic', unit: 'years', values: { n0: 24, r: 1, k: 2000, t: 15 } },
+  { label: 'Human population 1.1%/yr', mode: 'exponential', unit: 'years', values: { n0: 7000000000, r: 0.011, k: 10000000000, t: 63 } },
+];
+const SINGULAR: Record<Unit, string> = { hours: 'hour', days: 'day', years: 'year' };
+const NOTES: Record<Mode, string> = {
+  exponential: 'r is the per-capita growth rate (births minus deaths per individual per time unit) written as a decimal: 5% per hour is 0.05. Exponential growth assumes unlimited resources, so it describes only the early, fast phase of a real population.',
+  logistic: 'K is the carrying capacity: the largest population the environment can sustain. Growth is fastest at N = K/2 and slows to zero as N approaches K. A population that starts above K shrinks toward it. The faint dashed curve shows what unlimited exponential growth would have done.',
+};
+const HINTS: Record<Mode, string> = { exponential: 'J-shaped: N multiplies by the same factor every time unit', logistic: 'S-shaped: growth slows as N approaches K' };
+const FORMULAS: Record<Mode, string> = { exponential: 'N(t) = N₀ · e^(rt)', logistic: 'N(t) = K / (1 + ((K − N₀) / N₀) · e^(−rt))' };
+const count = (n: number) => formatCount(n, Math.abs(n) >= 1000 ? 0 : 3);
+const factor = (f: number) => formatCount(f, f >= 100 ? 1 : 3);
+const withUnit = (n: number, unit: Unit) => { const s = fmt(n, 3); return `${s} ${s === '1' ? SINGULAR[unit] : unit}`; };
+const compact = (v: number) => { const a = Math.abs(v); if (a >= 1e15) return formatCount(v); if (a >= 1e12) return fmt(v / 1e12, 2) + 'T'; if (a >= 1e9) return fmt(v / 1e9, 2) + 'B'; if (a >= 1e6) return fmt(v / 1e6, 2) + 'M'; if (a >= 1e4) return fmt(v / 1e3, 1) + 'k'; return fmt(v, 2); };
+const niceMax = (v: number) => { const m = Math.max(1e-9, v) * 1.06; const mag = 10 ** Math.floor(Math.log10(m)); return ([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find(s => s * mag >= m) || 10) * mag; };
+const niceTicks = (max: number) => [6, 5, 4, 8, 10, 3].find(n => Math.abs(max / n - Math.round(max / n)) < 1e-9) || 5;
+const within = (v: number, lo: number, hi: number, name: string) => { if (!Number.isFinite(v) || v < lo || v > hi) throw new Error(`${name}: enter a value from ${lo.toLocaleString('en-US')} to ${hi.toLocaleString('en-US')}.`); };
+class GrowthLab extends HTMLElement {
+  connectedCallback() {
+    let mode: Mode = 'exponential';
+    const q = <T extends Element>(sel: string) => this.querySelector<T>(sel)!;
+    const inputs = { n0: q<HTMLInputElement>('[data-n0]'), r: q<HTMLInputElement>('[data-r]'), k: q<HTMLInputElement>('[data-k]'), t: q<HTMLInputElement>('[data-t]') };
+    const unitSelect = q<HTMLSelectElement>('[data-unit]');
+    const num = (i: HTMLInputElement) => i.value === '' ? NaN : Number(i.value);
+    const read = (): Values => ({ n0: num(inputs.n0), r: num(inputs.r), k: num(inputs.k), t: num(inputs.t) });
+    const draw = (v: Values, N: number, tHalf: number | null, unit: Unit) => {
+      const box = { left: 84, top: 30, width: 606, height: 300 };
+      const top = niceMax(mode === 'logistic' ? Math.max(v.k, v.n0, N) : Math.max(v.n0, N));
+      const xTicks = niceTicks(v.t), xDecimals = Math.max(0, Math.ceil(-Math.log10(v.t / xTicks)) + 1);
+      const c = chart({ box, x: [0, v.t], y: [0, top], xTicks, yTicks: 5, xLabel: `Time (${unit})`, yLabel: 'Population size N', xFormat: (x: number) => fmt(x, xDecimals), yFormat: compact });
+      let out = c.grid;
+      const fn = mode === 'logistic' ? (tt: number) => logistic(v.n0, v.r, v.k, tt) : (tt: number) => exponential(v.n0, v.r, tt);
+      if (mode === 'logistic') {
+        out += line(box.left, c.py(v.k), box.left + box.width, c.py(v.k), { color: palette.muted, width: 1.5, dash: '7 6' }) + text(box.left + box.width - 6, c.py(v.k) - 7, `K = ${compact(v.k)}`, { size: 12, anchor: 'end', weight: 600, color: palette.ink });
+        const ghost: number[][] = [];
+        for (let i = 0; i <= 240; i++) { const tt = v.t * i / 240, e = v.n0 * Math.exp(v.r * tt); if (!Number.isFinite(e) || e > top) break; ghost.push([c.px(tt), c.py(e)]); }
+        if (ghost.length > 1) out += polyline(ghost, { stroke: palette.leafLight, width: 2, dash: '5 5' });
+        if (tHalf !== null && tHalf > 0 && tHalf <= v.t) {
+          const hx = c.px(tHalf), hy = c.py(v.k / 2), right = hx > box.left + box.width * 0.65;
+          out += line(hx, hy, hx, box.top + box.height, { color: palette.leafLight, width: 1, dash: '3 4' }) + circle(hx, hy, 5, { fill: palette.white, stroke: palette.leafDark, width: 2 }) + text(hx + (right ? -9 : 9), hy + 18, `K/2 at t = ${fmt(tHalf, 2)}`, { size: 12, anchor: right ? 'end' : 'start', color: palette.leafDark, weight: 600 });
+        }
+      }
+      out += polyline(curve(fn, [0, v.t], c.px, c.py, 240), { stroke: palette.leaf, width: 3 });
+      const X = c.px(v.t), Y = c.py(N);
+      out += circle(X, Y, 6, { fill: palette.coral, stroke: palette.white, width: 2 });
+      out += text(X - 10, Y < box.top + 24 ? Y + 22 : Y - 12, `N = ${count(N)}`, { size: 13, anchor: 'end', weight: 700, color: palette.coralDark });
+      q('[data-drawing]').innerHTML = out;
+    };
+    const render = () => {
+      const errorBox = q<HTMLElement>('[data-error]'), metrics = q<HTMLElement>('[data-metrics]'), steps = q<HTMLElement>('[data-steps]');
+      const unit = unitSelect.value as Unit, per = SINGULAR[unit];
+      try {
+        const v = read();
+        within(v.n0, 1, 1e12, 'Starting population N₀');
+        within(v.r, -10, 10, 'Growth rate r');
+        within(v.t, 0.01, 10000, 'Time t');
+        if (mode === 'logistic') within(v.k, 1, 1e12, 'Carrying capacity K');
+        const N = mode === 'logistic' ? logistic(v.n0, v.r, v.k, v.t) : exponential(v.n0, v.r, v.t);
+        const rate = growthRate(mode, N, v.r, v.k);
+        const A = (v.k - v.n0) / v.n0;
+        const tHalf = mode === 'logistic' && v.r > 0 && A > 1 ? Math.log(A) / v.r : null;
+        const dbl = v.r > 0 ? doublingTime(v.r) : null;
+        errorBox.textContent = '';
+        draw(v, N, tHalf, unit);
+        q<HTMLElement>('[data-summary]').textContent = `N₀ = ${count(v.n0)} · r = ${fmt(v.r, 4)} per ${per}${mode === 'logistic' ? ` · K = ${count(v.k)}` : ''}`;
+        const dblTile: [string, string] = dbl !== null ? [mode === 'logistic' ? 'Doubling time while N ≪ K' : 'Doubling time', withUnit(dbl, unit)] : v.r < 0 ? ['Halving time', withUnit(Math.LN2 / -v.r, unit)] : ['Doubling time', 'Never (r = 0)'];
+        const tiles: [string, string][] = [[`N after ${withUnit(v.t, unit)}`, count(N)]];
+        if (mode === 'logistic') tiles.push(['Fraction of K', pct(N / v.k, 1)]); else tiles.push(['Growth factor N / N₀', `${factor(N / v.n0)}×`]);
+        tiles.push(dblTile, ['Growth rate dN/dt at t', `${count(rate)} per ${per}`]);
+        if (mode === 'logistic') {
+          const halfText = A > 1 ? (tHalf !== null ? withUnit(tHalf, unit) : 'Never (r = 0)') : v.n0 > v.k ? (v.r === 0 ? 'Stays above K (r = 0)' : 'Above K: shrinking toward K') : 'Already ≥ K/2 at t = 0';
+          tiles.push(['Time to reach K/2', halfText], ['Fastest growth rK/4 (at N = K/2)', `${count(v.r * v.k / 4)} per ${per}`]);
+        } else tiles.push([`Actual change per ${per} (e^r − 1)`, pct(Math.exp(v.r) - 1, 2)]);
+        metrics.innerHTML = tiles.map(([label, val]) => `<div class="result-tile"><span>${label}</span><strong>${val}</strong></div>`).join('');
+        const out: string[] = [];
+        if (mode === 'exponential') {
+          out.push(`Exponential growth assumes unlimited resources: every individual adds the same per-capita rate r, so dN/dt = rN and the population multiplies by e^r = ${fmt(Math.exp(v.r), 4)} every ${per} (a change of ${pct(Math.exp(v.r) - 1, 2)}).`,
+            `Substitute into N(t) = N₀e^(rt): N(${fmt(v.t)}) = ${count(v.n0)} × e^(${fmt(v.r, 4)} × ${fmt(v.t)}) = ${count(v.n0)} × e^${fmt(v.r * v.t, 3)} = ${count(v.n0)} × ${formatCount(Math.exp(v.r * v.t), 4)} = ${count(N)}.`,
+            dbl !== null ? `Doubling time T₂ = ln 2 / r = 0.6931 / ${fmt(v.r, 4)} = ${withUnit(dbl, unit)}. In ${withUnit(v.t, unit)} the population doubles ${fmt(v.t / dbl, 2)} times, and 2^${fmt(v.t / dbl, 2)} = ${factor(N / v.n0)} matches the growth factor.`
+              : v.r < 0 ? `r is negative, so the population shrinks. Its halving time is ln 2 / |r| = 0.6931 / ${fmt(-v.r, 4)} = ${withUnit(Math.LN2 / -v.r, unit)}, and after ${withUnit(v.t, unit)} it has halved ${fmt(v.t * -v.r / Math.LN2, 2)} times.`
+                : 'With r = 0, births exactly balance deaths: N stays at N₀ and there is no doubling time.',
+            `The growth rate at t is dN/dt = rN = ${fmt(v.r, 4)} × ${count(N)} = ${count(rate)} per ${per}. Because the rate is proportional to N, it climbs with the population: that is the J-shaped curve.`);
+        } else {
+          const decay = Math.exp(-v.r * v.t);
+          out.push(`Logistic growth adds a carrying capacity K: dN/dt = rN(1 − N/K), so the per-capita rate falls as N approaches K. The solution is N(t) = K / (1 + A·e^(−rt)) with A = (K − N₀) / N₀ = (${count(v.k)} − ${count(v.n0)}) / ${count(v.n0)} = ${fmt(A, 4)}.`,
+            `e^(−rt) = e^(−${fmt(v.r, 4)} × ${fmt(v.t)}) = ${fmt(decay, 5)}, so N(${fmt(v.t)}) = ${count(v.k)} / (1 + ${fmt(A, 4)} × ${fmt(decay, 5)}) = ${count(v.k)} / ${fmt(1 + A * decay, 4)} = ${count(N)}, which is ${pct(N / v.k, 1)} of K.`,
+            `Growth rate at t: dN/dt = rN(1 − N/K) = ${fmt(v.r, 4)} × ${count(N)} × (1 − ${fmt(N / v.k, 4)}) = ${count(rate)} per ${per}. The rate peaks at rK/4 = ${count(v.r * v.k / 4)} per ${per} when N = K/2, then falls toward zero.`,
+            v.r === 0 ? 'With r = 0 the population never moves: N stays at N₀ whatever K is.'
+              : tHalf !== null ? `N reaches K/2 when A·e^(−rt) = 1, that is at t = ln A / r = ln(${fmt(A, 4)}) / ${fmt(v.r, 4)} = ${withUnit(tHalf, unit)}. That is the inflection point: before it the curve steepens almost like exponential growth (doubling every ${withUnit(dbl!, unit)} at first); after it growth slows and the curve levels off at K.`
+                : A > 0 ? `Because N₀ is already at least K/2 (A = ${fmt(A, 4)} ≤ 1), the population is past the inflection point at t = 0: growth only slows from here as the curve levels off at K.`
+                  : v.n0 > v.k ? `Because N₀ is above K, the factor (1 − N/K) is negative: the population shrinks toward K instead of growing, and the exponential comparison curve is what it would do without any limit.`
+                    : 'Because N₀ equals K, the factor (1 − N/K) is zero: the population is exactly at carrying capacity and stays there.');
+        }
+        steps.innerHTML = out.map(s => `<li>${s}</li>`).join('');
+      } catch (e) {
+        errorBox.textContent = (e as Error).message + ' The chart keeps the last valid values.';
+        metrics.innerHTML = '';
+        steps.innerHTML = '<li>Correct the values above to follow the calculation.</li>';
+      }
+      syncPills();
+    };
+    const syncPills = () => {
+      const v = read(), unit = unitSelect.value;
+      this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(b => {
+        const p = PRESETS[Number(b.dataset.preset)];
+        const on = p.mode === mode && p.unit === unit && p.values.n0 === v.n0 && p.values.r === v.r && p.values.t === v.t && (mode === 'exponential' || p.values.k === v.k);
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    };
+    const fill = (values: Values) => { inputs.n0.value = String(values.n0); inputs.r.value = String(values.r); inputs.k.value = String(values.k); inputs.t.value = String(values.t); };
+    const syncUnits = () => { const unit = unitSelect.value as Unit; q<HTMLElement>('[data-r-unit]').textContent = `(per ${SINGULAR[unit]}, as a decimal)`; q<HTMLElement>('[data-t-unit]').textContent = `(${unit})`; };
+    const setMode = (m: Mode) => {
+      mode = m;
+      this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => { b.classList.toggle('active', b.dataset.mode === m); b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+      this.querySelectorAll<HTMLElement>('[data-group]').forEach(g => g.hidden = g.dataset.group !== m);
+      q<HTMLElement>('[data-badge]').textContent = m.toUpperCase();
+      q<HTMLElement>('[data-hint]').textContent = HINTS[m];
+      q<HTMLElement>('[data-note]').textContent = NOTES[m];
+      q<HTMLElement>('[data-formula]').textContent = FORMULAS[m];
+      q<HTMLElement>('[data-legend-model]').textContent = m === 'logistic' ? 'Logistic N(t)' : 'Exponential N(t)';
+      q<HTMLElement>('[data-legend-k]').hidden = m !== 'logistic';
+      q<HTMLElement>('[data-legend-faint]').hidden = m !== 'logistic';
+      render();
+    };
+    q<HTMLElement>('[data-presets]').innerHTML = PRESETS.map((p, i) => `<button class="pill" data-preset="${i}" aria-pressed="false">${p.label}</button>`).join('');
+    this.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(b => b.onclick = () => { const p = PRESETS[Number(b.dataset.preset)]; fill(p.values); unitSelect.value = p.unit; syncUnits(); setMode(p.mode); });
+    Object.values(inputs).forEach(i => i.addEventListener('input', render));
+    unitSelect.addEventListener('change', () => { syncUnits(); render(); });
+    this.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode as Mode));
+    q<HTMLButtonElement>('[data-reset]').onclick = () => { fill(DEFAULTS); unitSelect.value = 'hours'; syncUnits(); render(); };
+    syncUnits();
+    setMode('exponential');
+  }
+}
+customElements.define('growth-lab', GrowthLab);
+</script>
+<style is:global>
+growth-lab .legend{flex-wrap:wrap;row-gap:6px}
+growth-lab .legend span.growth-lab-k:before{background:none;width:14px;height:0;border-top:2px dashed #5b6b62;border-radius:0;vertical-align:middle}
+growth-lab .legend span.growth-lab-faint:before{background:#8fcfa5}
+</style>
