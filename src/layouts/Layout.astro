@@ -25,7 +25,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   <title>{pageTitle}</title>
   <meta name="description" content={description}/><link rel="canonical" href={url}/>
   {noindex ? <meta name="robots" content="noindex,follow"/> : <meta name="robots" content="index,follow,max-image-preview:large"/>}
-  <meta name="theme-color" content="#f9f7ef"/>
+  <meta name="theme-color" content="#123e2e"/>
   <meta property="og:site_name" content={site.name}/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:url" content={url}/><meta property="og:locale" content="en_US"/>
   <meta name="twitter:card" content="summary"/><meta name="twitter:title" content={title}/><meta name="twitter:description" content={description}/>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
@@ -39,10 +39,10 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
     gtag('config', id);
   </script>}
 </head>
-<body>
+<body class:list={{ 'is-home': isHome }}>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header"><a href="/" class="brand" aria-label={`${site.name} home`}><img src="/favicon.svg" width="37" height="37" alt=""/><span>biology<span class="brand-light">lab</span><small>{site.tagline}</small></span></a><nav aria-label="Main navigation">{nav.map(([label, href]) => <a href={href} class:list={{ active: activeSection === label }} aria-current={activeSection === label ? 'page' : undefined}>{label}</a>)}</nav><a href="/worksheets/" class="header-learn">Worksheets <span aria-hidden="true">↗</span></a></header>
-  <main id="main"><slot/></main>
-  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>A little curiosity. A living picture.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
+  <main id="main" tabindex="-1"><slot/></main>
+  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
 </body>
 </html>

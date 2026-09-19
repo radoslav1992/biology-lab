@@ -2,7 +2,7 @@
 export const site = {
   name: 'Biology Lab',
   shortName: 'biologylab',
-  tagline: 'A PLACE FOR THINGS TO GROW.',
+  tagline: 'EXPLORE THE LIVING WORLD',
   url: 'https://biologylab.net',
   contactEmail: 'info@biologylab.net',
   // Google Analytics 4 measurement ID (for example "G-XXXXXXXXXX"). Leave empty to omit the tag entirely.
