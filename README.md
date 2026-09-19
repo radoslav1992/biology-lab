@@ -40,6 +40,32 @@ The production output is `dist/`. JavaScript is delivered only for interactive c
 
 No advertising scripts are installed. The layout leaves the page structure clean so ad slots can be added later to `src/layouts/Layout.astro` or individual pages.
 
+## Deploy to Cloudflare Workers (Git integration)
+
+This is a static Astro site. The root `wrangler.jsonc` tells Workers to upload `dist/`; it does not need a Worker script or an Astro server adapter. HTML routes use trailing slashes to match Astro's canonical URLs, and missing pages use the generated `404.html`.
+
+Configure the connected Worker with:
+
+- Root directory: repository root (`/`).
+- Build command: `npm run build`.
+- Deploy command: `npx wrangler deploy`.
+- Non-production branch deploy command: `npx wrangler versions upload`.
+- Node.js version: 22 (`NODE_VERSION=22`; also specified in `.nvmrc`).
+
+The configured Worker name is `biology-lab`. If the existing Worker in Cloudflare has a different name, update `name` in `wrangler.jsonc` to match it. Use the branch containing this configuration for preview builds, then merge it into the configured production branch.
+
+To validate the deployment configuration locally without uploading:
+
+```sh
+npm ci
+npm run build
+npx wrangler deploy --dry-run
+```
+
+Both deployment commands read the assets directory from the same configuration. Build first so `dist/` exists. Retrying an old commit without this file will still fail with “Missing entry-point to Worker script or to assets directory”.
+
+References: [Workers static assets configuration](https://developers.cloudflare.com/workers/static-assets/binding/) and [HTML routing](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/).
+
 ## Deploy to Cloudflare Pages
 
 1. Push this source to the GitHub repository.

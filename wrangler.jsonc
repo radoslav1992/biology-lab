@@ -1,0 +1,9 @@
+{
+  "name": "biology-lab",
+  "compatibility_date": "2026-09-18",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "force-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
