@@ -43,7 +43,7 @@ export const learningApps = [
     "id": "biology",
     "name": "Biology Lab",
     "subject": "Biology",
-    "url": "https://biologylab.net",
+    "url": "https://thebiologylab.org",
     "description": "Cross two parents, translate a gene into protein, and watch a population grow.",
     "mark": "ATGC",
     "caption": "the code of life, decoded",

@@ -34,7 +34,7 @@ The production output is `dist/`. JavaScript is delivered only for interactive c
 
 `src/lib/site.mjs` holds the site-wide settings:
 
-- `url`: the canonical production domain. It is currently the placeholder `https://biologylab.net`. Set it to the real domain before deploying so canonical links, Open Graph URLs, robots.txt, and the sitemap agree (also update the `biology` entry in `src/lib/learning-apps.mjs`).
+- `url`: the canonical production domain. The production domain is `https://thebiologylab.org`; canonical links, Open Graph URLs, robots.txt, and the sitemap use it. Keep the `biology` entry in `src/lib/learning-apps.mjs` in sync when changing domains.
 - `analyticsId`: a Google Analytics 4 measurement ID. When it is empty, no analytics script is rendered at all.
 - `contactEmail`: shown in the footer and on the About page.
 

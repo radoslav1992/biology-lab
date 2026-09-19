@@ -370,7 +370,7 @@ function buildSvg(kind: string, paper: string, key: boolean, nameLine: boolean) 
   let top = 26;
   if (nameLine) { body += T(10, 28.5, 'Name: ______________________________        Date: ________________        Class: ____________', { size: 3, color: MUTED }); top = 34; }
   body += kind === 'monohybrid-punnett' ? monohybridSheet(key, top) : kind === 'dihybrid-punnett' ? dihybridSheet(key, top) : kind === 'pedigree-chart' ? pedigreeSheet(key, top) : cellSheet(kind, key, top, H);
-  body += path(`M 10 ${H - 14} v 4 M 10 ${H - 12} h 20 M 30 ${H - 14} v 4`, { stroke: INK, width: 0.4 }) + T(36, H - 11, '20 mm scale check · print at 100%', { size: 3, color: MUTED }) + T(180, H - 11, 'biologylab.net · free to print for classroom use', { size: 2.6, color: MUTED, anchor: 'end' });
+  body += path(`M 10 ${H - 14} v 4 M 10 ${H - 12} h 20 M 30 ${H - 14} v 4`, { stroke: INK, width: 0.4 }) + T(36, H - 11, '20 mm scale check · print at 100%', { size: 3, color: MUTED }) + T(180, H - 11, 'thebiologylab.org · free to print for classroom use', { size: 2.6, color: MUTED, anchor: 'end' });
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(name)} printable">` + rect(0, 0, W, H, { fill: '#fff', stroke: 'none', width: 0 }) + group(body, { 'font-family': "'DM Sans', Helvetica, Arial, sans-serif" }) + '</svg>';
 }
 type Ctrl = HTMLSelectElement | HTMLInputElement;
