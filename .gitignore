@@ -4,3 +4,4 @@ dist/
 .sites-runtime/
 .env
 .DS_Store
+.wrangler/
