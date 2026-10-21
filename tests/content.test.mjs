@@ -14,7 +14,7 @@ const LESSONS = ['cell-theory', 'prokaryotes-vs-eukaryotes', 'cell-transport', '
 const TOOLS = ['cell-size', 'enzyme-kinetics', 'dilution-calculator', 'magnification-calculator', 'water-potential', 'bacterial-growth', 'energy-pyramid', 'chi-square-test', 'predator-prey'];
 const ORGANELLES = ['nucleus', 'mitochondrion', 'chloroplast', 'ribosome', 'endoplasmic-reticulum', 'golgi-apparatus', 'lysosome', 'cell-membrane'];
 const FLAGSHIP = ['/punnett-square-calculator/', '/hardy-weinberg-calculator/', '/dna-transcription-translation/', '/population-growth-calculator/'];
-const STATIC = ['/', '/tools/', '/cells/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/', '/about/'];
+const STATIC = ['/', '/tools/', '/cells/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/', '/about/', '/privacy/'];
 const REFERENCE = ['/codon-chart/'];
 const ROUTES = new Set([...STATIC, ...REFERENCE, ...FLAGSHIP, ...TOOLS.map(s => `/tools/${s}/`), ...ORGANELLES.map(s => `/cells/${s}/`), ...LESSONS.map(s => `/learn/${s}/`)]);
 const resolves = href => { const clean = href.split('#')[0]; return clean === '' || ROUTES.has(clean); };

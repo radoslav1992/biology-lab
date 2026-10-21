@@ -1,4 +1,5 @@
 ---
+import AdSlot from '../components/AdSlot.astro';
 import CodonChart from '../components/CodonChart.astro';
 import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
@@ -29,6 +30,7 @@ const examples = [
   <p>Read a codon from its 5′ end. Find the first base in the left column, the second base in the next column, and the third base along the top. The cell where they meet is the amino acid. {64 - STOP_CODONS.length} codons code for the 20 amino acids and 3 are stop signals.</p>
   <CodonChart/>
 </section>
+<AdSlot type="rectangle" />
 <section class="explanation" aria-labelledby="amino-heading">
   <h2 id="amino-heading">Amino acid to codon table</h2>
   <p>The reverse lookup: every amino acid with its abbreviations, all the mRNA codons that code for it, and its side-chain class. Use it when a question asks which codons could code for a given amino acid, or how many.</p>
@@ -43,6 +45,7 @@ const examples = [
 </section>
 <WorkedExamples items={examples} title="Reading the codon chart: worked examples" intro="Four questions that come up in every genetics unit, worked from the chart above."/>
 <div class="related"><a href="/dna-transcription-translation/">DNA to mRNA to protein converter ↗</a><a href="/learn/transcription-and-translation/">Transcription &amp; translation explained ↗</a><a href="/cells/ribosome/">The ribosome ↗</a><a href="/practice/">Practice molecular biology ↗</a></div>
+<AdSlot type="native" />
 <Faq items={faqs['codon-chart']} title="Codon chart questions"/>
 </Layout>
 <script>

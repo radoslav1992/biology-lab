@@ -1,0 +1,56 @@
+---
+// One Adsterra unit. Space is reserved up front so the page never jumps, and the ad
+// script loads only when the slot nears the viewport on the production hostname.
+// type: 'leaderboard' (728×90 desktop / 320×50 phones), 'rectangle' (300×250) or 'native'.
+const { type = 'leaderboard' } = Astro.props;
+---
+<aside class={`ad-slot ad-${type}`} data-ad={type} aria-label="Advertisement"><span class="ad-label">Advertisement</span><div class="ad-unit"></div></aside>
+<script>
+  import { ads } from '../lib/ads.mjs';
+  // Adsterra banner snippets read one global `atOptions`, so banners load strictly one at a time.
+  let queue = Promise.resolve();
+  const wide = () => matchMedia('(min-width: 800px)').matches;
+  function fill(slot) {
+    const box = slot.querySelector('.ad-unit');
+    if (slot.dataset.ad === 'native') {
+      box.id = `container-${ads.native}`;
+      const script = document.createElement('script');
+      script.async = true;
+      script.dataset.cfasync = 'false';
+      script.src = `${ads.host}/21/${ads.native}`;
+      box.before(script);
+      return;
+    }
+    const [key, width, height] = slot.dataset.ad === 'rectangle' ? [ads.rectangle, 300, 250] : wide() ? [ads.leaderboard, 728, 90] : [ads.mobile, 320, 50];
+    queue = queue.then(() => new Promise(resolve => {
+      const options = document.createElement('script');
+      options.text = `atOptions = ${JSON.stringify({ key, format: 'iframe', height, width, params: {} })};`;
+      const script = document.createElement('script');
+      script.src = `${ads.host}/22/${key}`;
+      script.onload = script.onerror = () => resolve();
+      setTimeout(resolve, 8000);
+      box.append(options, script);
+    }));
+  }
+  const live = location.hostname === ads.domain || location.hostname === `www.${ads.domain}`;
+  const slots = document.querySelectorAll('.ad-slot');
+  if (live && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      observer.unobserve(entry.target);
+      fill(entry.target);
+    }), { rootMargin: '300px 0px' });
+    slots.forEach(slot => observer.observe(slot));
+  } else if (live) slots.forEach(fill);
+</script>
+<style>
+  .ad-slot { display:flex; flex-direction:column; align-items:center; gap:6px; margin:36px auto; max-width:100%; overflow:hidden; }
+  .ad-label { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted, #6b7280); }
+  .ad-unit { display:flex; justify-content:center; max-width:100%; }
+  .ad-leaderboard .ad-unit { width:320px; min-height:50px; }
+  .ad-rectangle .ad-unit { width:300px; min-height:250px; }
+  .ad-native { width:100%; }
+  .ad-native .ad-unit { width:100%; display:block; }
+  @media (min-width: 800px) { .ad-leaderboard .ad-unit { width:728px; min-height:90px; } }
+  @media print { .ad-slot { display:none; } }
+</style>

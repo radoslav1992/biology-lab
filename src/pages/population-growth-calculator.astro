@@ -1,4 +1,5 @@
 ---
+import AdSlot from '../components/AdSlot.astro';
 import Exploration from '../components/Exploration.astro';
 import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
@@ -42,6 +43,7 @@ const examples = [
 {solver && <Exploration tool={solver}/>}
 </section>
 <WorkedExamples items={examples} title="Population growth word problems, solved" intro="The questions students search for most, worked the way a teacher expects to see them. Load any of the first six into the solver above with its preset button."/>
+<AdSlot type="rectangle" />
 <section class="explanation" aria-labelledby="growth-models-heading">
   <h2 id="growth-models-heading">Exponential vs logistic growth at a glance</h2>
   <p>Both models start from the same idea: the change in population size, dN/dt, depends on how many individuals are already there. Exponential growth keeps the per-capita rate r fixed no matter how crowded things get, which is only realistic while food, space and mates are plentiful. Logistic growth multiplies r by the “room left” factor (1 − N/K), so growth fades as the population nears the carrying capacity K. Switch between the two tabs above with the same numbers to see how much difference that single factor makes.</p>
@@ -57,5 +59,6 @@ const examples = [
   <p>K is set by whatever runs out first: food, nesting sites, water, or the reach of predators and disease. Sheep introduced to Tasmania in the early 1800s followed a textbook S-curve, leveling off near 1.7 million by the 1850s. Populations can also overshoot: 25 reindeer released on St. Paul Island, Alaska, in 1911 grew to about 2,000 by 1938, stripped the lichen they depended on, and crashed to 8 animals by 1950. K is not a fixed number either; it moves with the seasons, rainfall and the arrival of competitors, which is why real curves wobble around the smooth line this calculator draws.</p>
 </section>
 <div class="related"><a href="/learn/population-growth/">Exponential vs logistic growth explained ↗</a><a href="/tools/predator-prey/">Predator–prey cycles (Lotka–Volterra) ↗</a><a href="/tools/bacterial-growth/">Bacterial growth &amp; doubling time ↗</a><a href="/practice/">Practice ecology questions ↗</a></div>
+<AdSlot type="native" />
 <Faq items={faqs['population-growth-calculator']} title="Population growth questions"/>
 </Layout>

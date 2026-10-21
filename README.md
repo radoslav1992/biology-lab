@@ -39,7 +39,15 @@ The production output is `dist/`. JavaScript is delivered only for interactive c
 - `analyticsId`: the Google Analytics 4 measurement ID (currently `G-90EH9Q7K6T`). The layout renders Google's gtag snippet on every page; when it is empty, no analytics script is rendered at all.
 - `contactEmail`: shown in the footer and on the About page.
 
-No advertising scripts are installed. The layout leaves the page structure clean so ad slots can be added later to `src/layouts/Layout.astro` or individual pages.
+### Ads
+
+Banner ads come from Adsterra. `src/lib/ads.mjs` holds the production `domain`, the ad `host`, and the four unit keys from the Adsterra publisher dashboard (native banner, 728×90 leaderboard, 320×50 mobile leaderboard, 300×250 rectangle). `src/components/AdSlot.astro` renders one labelled slot with its size reserved up front, so pages do not jump when an ad arrives:
+
+- `leaderboard`: before the footer on every page (728×90 on screens at least 800px wide, 320×50 below). Pass `ads={false}` to the layout to drop it, as the 404 page does.
+- `rectangle` (300×250): on detail pages (tools, cells, lessons, and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), after the interactive tool or the first main content block.
+- `native`: near the end of the longer detail pages (cell organelles and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), before the FAQ. Tool and lesson pages skip it because it would sit right next to another ad.
+
+Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
 
 ## Deploy to Cloudflare Workers (Git integration)
 
