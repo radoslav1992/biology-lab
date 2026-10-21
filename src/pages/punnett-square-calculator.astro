@@ -1,4 +1,5 @@
 ---
+import AdSlot from '../components/AdSlot.astro';
 import Faq from '../components/Faq.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
@@ -15,6 +16,7 @@ const classics = [
 <Layout title="Punnett Square Calculator: Genotype & Phenotype Ratios" section="Punnett square" breadcrumbs={[['Tools', '/tools/'], ['Punnett square calculator', '/punnett-square-calculator/']]} description="Free Punnett square calculator for monohybrid (2x2), dihybrid (4x4), and ABO blood type crosses: genotype and phenotype ratios, probabilities, and steps.">
 <div class="intro"><div><div class="eyebrow">Genetics, one cross at a time</div><h1>Punnett Square Calculator</h1><p>Type two parent genotypes. We’ll form the gametes, fill the square, and count the odds for every child.</p></div></div>
 <PunnettSquare/>
+<AdSlot type="rectangle" />
 <div class="explanation">
   <h2>How to read a Punnett square</h2>
   <p>A Punnett square lists every way one gamete from each parent can meet. Parent 1’s gametes run down the side and parent 2’s across the top, so each box is one equally likely fertilization. For Aa × Aa the four boxes hold AA, Aa, Aa, and aa: count identical genotypes to get the <strong>genotype ratio</strong> (1 : 2 : 1), then group the boxes by appearance to get the <strong>phenotype ratio</strong> (3 : 1). Because Aa shows the dominant trait just like AA, three boxes out of four look dominant.</p>
@@ -28,4 +30,5 @@ const classics = [
   <p>This calculator assumes <strong>complete dominance</strong> and <strong>independent assortment</strong>, the rules Mendel worked out in peas. Real inheritance sometimes bends them. In incomplete dominance (pink snapdragons from red × white) the heterozygote has its own phenotype, so the phenotype ratio equals the genotype ratio, 1 : 2 : 1. Genes that sit close together on one chromosome are linked and do not assort independently, so a dihybrid test cross gives more parental-type offspring than the 1 : 1 : 1 : 1 the square predicts. Sex-linked traits such as red–green color blindness need X and Y chromosomes in the square, and polygenic traits such as height depend on many genes plus the environment. When your observed counts disagree with the predicted ratio, the <a class="text-link" href="/tools/chi-square-test/">chi-square test</a> tells you whether the gap is chance or a sign that one of these exceptions is at work.</p>
 </div>
 <div class="related"><a href="/learn/mendelian-inheritance/">Mendelian inheritance explained ↗</a><a href="/tools/chi-square-test/">Test your ratio with chi-square ↗</a><a href="/learn/hardy-weinberg-principle/">From crosses to populations: Hardy-Weinberg ↗</a><a href="/hardy-weinberg-calculator/">Hardy-Weinberg calculator ↗</a><a href="/practice/">Practice genetics questions ↗</a><a href="/printable-diagrams/">Print a blank Punnett grid ↗</a></div>
+<AdSlot type="native" />
 <Faq items={faqs['punnett-square-calculator']} title="Punnett square questions"/></Layout>
