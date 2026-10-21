@@ -14,10 +14,10 @@ export const duration = m => m < 90 ? `${fmt(m, 1)} min` : m < 2880 ? `${fmt(m /
 export const definition = {
   slug: 'bacterial-growth',
   title: 'Bacterial growth & doubling time',
-  seoTitle: 'Bacterial Growth Calculator — Generations & Doubling Time',
+  seoTitle: 'Bacterial Doubling Time Calculator: Generation Time & Growth',
   category: 'Cells',
   icon: '2ⁿ',
-  description: 'Find how many cells a bacterial culture holds after any number of doublings, or work out the generation time from two counts, with a log-scale growth curve.',
+  description: 'Find bacterial generation (doubling) time from two counts, or the cells after any time with N = N₀ × 2ⁿ, and see exponential growth on a log-scale curve.',
   keywords: 'binary fission generation time doubling time exponential e coli log phase growth rate constant colony forming units',
   meta: 'Binary fission · log-scale curve',
   fields: [

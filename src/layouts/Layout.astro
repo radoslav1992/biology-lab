@@ -2,13 +2,15 @@
 import '../styles/global.css';
 import '../styles/studio.css';
 import { site } from '../lib/site.mjs';
-const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', noindex = false } = Astro.props;
+import { learningApps, currentApp } from '../lib/learning-apps.mjs';
+const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', noindex = false, breadcrumbs = [] } = Astro.props;
 const toolSections = ['Punnett square', 'DNA translator', 'Population growth', 'Hardy-Weinberg'];
 const activeSection = toolSections.includes(section) ? 'Tools' : section;
 const url = new URL(Astro.url.pathname, Astro.site);
+const sisterApps = learningApps.filter(app => app.id !== currentApp && app.url);
 const isHome = Astro.url.pathname === '/';
-// Append the brand only while the tag stays within typical search-snippet width.
-const pageTitle = title === site.defaultTitle || title.length + site.name.length + 3 > 70 ? title : `${title} | ${site.name}`;
+// Append the brand only while the tag stays within typical search-snippet width and the title does not already name it.
+const pageTitle = title.includes(site.name) || title.length + site.name.length + 3 > 70 ? title : `${title} | ${site.name}`;
 const nav = [['Explore', '/'], ['Tools', '/tools/'], ['Cells', '/cells/'], ['Practice', '/practice/'], ['Printables', '/printable-diagrams/'], ['Learn', '/learn/']];
 const org = { '@type': 'Organization', name: site.name, url: site.url + '/' };
 const schema = schemaType === 'Article'
@@ -16,6 +18,8 @@ const schema = schemaType === 'Article'
   : schemaType === 'CollectionPage'
     ? { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: url.href, isAccessibleForFree: true, inLanguage: 'en', publisher: org }
     : { '@context': 'https://schema.org', '@type': 'WebApplication', name: title, url: url.href, description, applicationCategory: 'EducationalApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', isAccessibleForFree: true, inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, publisher: org };
+// breadcrumbs: [[name, path], …] for the trail after Home, e.g. [['Tools', '/tools/'], ['Cell size', '/tools/cell-size/']].
+const trail = breadcrumbs.length ? { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [['Home', '/'], ...breadcrumbs].map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: new URL(path, site.url).href })) } : null;
 const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: site.url + '/', description: site.defaultDescription, inLanguage: 'en', publisher: org };
 ---
 <!doctype html>
@@ -31,6 +35,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   {isHome && <script type="application/ld+json" set:html={JSON.stringify(website)} />}
+  {trail && <script type="application/ld+json" set:html={JSON.stringify(trail)} />}
   {site.analyticsId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${site.analyticsId}`}></script>}
   {site.analyticsId && <script is:inline define:vars={{ id: site.analyticsId }}>
     window.dataLayer = window.dataLayer || [];
@@ -43,6 +48,6 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header"><a href="/" class="brand" aria-label={`${site.name} home`}><img src="/favicon.svg" width="37" height="37" alt=""/><span>biology<span class="brand-light">lab</span><small>{site.tagline}</small></span></a><nav aria-label="Main navigation">{nav.map(([label, href]) => <a href={href} class:list={{ active: activeSection === label }} aria-current={activeSection === label ? 'page' : undefined}>{label}</a>)}</nav><a href="/worksheets/" class="header-learn">Worksheets <span aria-hidden="true">↗</span></a></header>
   <main id="main" tabindex="-1"><slot/></main>
-  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
+  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><nav class="footer-apps" aria-label="More free learning apps"><strong>More free learning apps</strong>{sisterApps.map(app => <a href={app.url + '/'}>{app.name}</a>)}</nav><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
 </body>
 </html>

@@ -17,7 +17,7 @@ const MODE_LABEL = { none: 'No inhibitor', competitive: 'Competitive inhibitor',
 export const definition = {
   slug: 'enzyme-kinetics',
   title: 'Enzyme kinetics explorer (Michaelis–Menten)',
-  seoTitle: 'Michaelis-Menten Enzyme Kinetics Calculator & Km Explorer',
+  seoTitle: 'Michaelis-Menten Calculator: Vmax, Km & Reaction Rate',
   category: 'Molecular',
   icon: '∿',
   description: 'Calculate reaction rate from Vmax, Km, and substrate concentration, then add a competitive or noncompetitive inhibitor and watch the saturation curve change.',

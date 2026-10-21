@@ -229,3 +229,59 @@ test('predator–prey explorer finds the equilibrium, the swing, and the cycle p
   assert.equal(metric(short, 'Cycle period (prey peak to peak)'), 'Longer than this run');
   assert.throws(() => predatorPrey.explore({ ...v, prey0: 10000, predators0: 10000, alpha: 5, beta: 5, delta: 5, gamma: 5 }), /swing too fast/);
 });
+
+test('word-problem helpers solve compound and continuous growth for time, rate and doubling', async () => {
+  const { compoundGrowth, timeToReach, growthRateFromCounts, doublingTimes, afterDoublings } = await import('../src/lib/population.mjs');
+  close(compoundGrowth(20000, 0.12, 10), 20000 * 1.12 ** 10);
+  close(compoundGrowth(500, -0.5, 2), 125);
+  close(timeToReach(20000, 210000, 0.12), Math.log(10.5) / Math.log(1.12));
+  assert.equal(Math.round(timeToReach(20000, 210000, 0.12)), 21);
+  assert.equal(Math.round(timeToReach(2000, 2700, 0.025)), 12);
+  assert.equal(Math.round(timeToReach(4000, 4500, 0.02)), 6);
+  close(timeToReach(100, 200, 0.1, { continuous: true }), Math.LN2 / 0.1);
+  close(timeToReach(1000, 250, -0.5), 2);
+  assert.equal(timeToReach(300, 300, 0.05), 0);
+  assert.throws(() => timeToReach(100, 200, -0.1), /must be positive/);
+  assert.throws(() => timeToReach(200, 100, 0.1), /negative growth rate/);
+  assert.throws(() => timeToReach(100, 200, 0), /never changes/);
+  assert.throws(() => timeToReach(100, 200, -1), /greater than −100%/);
+  const us = growthRateFromCounts(100, 121, 2);
+  close(us.percent, 0.1); close(us.r, Math.log(1.21) / 2);
+  const d = doublingTimes(0.013);
+  close(d.continuous, Math.LN2 / 0.013); close(d.exact, Math.LN2 / Math.log(1.013)); close(d.ruleOf70, 70 / 1.3);
+  assert.throws(() => doublingTimes(0), /greater than 0/);
+  assert.deepEqual(afterDoublings(1100, 60, 180), { doublings: 3, N: 8800 });
+  assert.deepEqual(afterDoublings(67900, 21, 84), { doublings: 4, N: 1086400 });
+  assert.throws(() => afterDoublings(1, 0.01, 100000), /too large/);
+});
+
+test('the embedded word-problem solver answers every preset cleanly and stays off the /tools/ site map', async () => {
+  const solver = await import('../src/lib/tools/population-word-problems.mjs');
+  const { explorations, findExploration, explore, explorationDiagram } = await import('../src/lib/explorations.mjs');
+  const t = solver.definition, d = defaults(solver), modes = t.modes.map(m => m[0]);
+  assert.ok(!explorations.some(e => e.slug === t.slug), 'embedded solver must not get its own /tools/ page');
+  assert.equal(findExploration(t.slug), t);
+  assert.deepEqual(Object.keys(t.fieldsByMode).sort(), [...modes].sort());
+  const BAD = /NaN|Infinity|undefined|(?<![#\da-f])\d(?:\.\d+)?e[-+]?\d/;
+  const clean = (r, label) => {
+    assert.ok(r.metrics.length >= 3 && r.metrics.length <= 6, `${label} metrics`);
+    assert.ok(r.steps.length >= 2 && r.steps.length <= 4, `${label} steps`);
+    for (const m of r.metrics) assert.doesNotMatch(`${m.label} ${m.value}`, BAD, `${label}: ${m.label}`);
+    for (const s of r.steps) assert.doesNotMatch(s, BAD, `${label}: ${s}`);
+    const svg = explorationDiagram(t.slug, r.model);
+    assert.ok(svg.length > 500); assert.doesNotMatch(svg, BAD, `${label} diagram`); assert.doesNotMatch(svg, /font-size:(\d|1[01])px/);
+  };
+  for (const mode of modes) clean(explore(t.slug, d, mode), mode);
+  for (const p of t.presets) clean(explore(t.slug, { ...d, ...p.values }, p.mode), p.label);
+  for (const mode of modes) for (const edge of ['min', 'max']) {
+    const values = { ...d };
+    for (const f of t.fields) if (t.fieldsByMode[mode].includes(f.key)) values[f.key] = f[edge];
+    try { clean(explore(t.slug, values, mode), `${mode} at ${edge}`); } catch (e) { assert.ok(e instanceof Error && e.message.length > 10 && !/assert/i.test(e.name), `${mode} ${edge}: ${e.message}`); }
+  }
+  const metricOf = (r, label) => r.metrics.find(m => m.label === label)?.value;
+  assert.equal(metricOf(explore(t.slug, { ...d, n0: 20000, n: 210000, rate: 12 }, 'time'), 'To the nearest year'), '21 years');
+  assert.equal(metricOf(explore(t.slug, { ...d, n0: 67900, td: 21, t: 84 }, 'doublings'), 'Population after 84 years'), '1,086,400');
+  assert.equal(metricOf(explore(t.slug, { ...d, rate: 1.3 }, 'doubling'), 'Doubling time if r = 0.013 is continuous'), '53.32 years');
+  assert.equal(metricOf(explore(t.slug, { ...d, n0: 100, n: 121, t: 2 }, 'rate'), 'Growth rate per year'), '10%');
+  assert.throws(() => explore(t.slug, { ...d, rate: -5 }, 'doubling'), /greater than 0/);
+});

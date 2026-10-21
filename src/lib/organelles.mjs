@@ -27,6 +27,8 @@ export const organelles = {
   },
   mitochondrion: {
     title: 'Mitochondrion',
+    // Searchers mostly use the plural, so the page title leads with it.
+    seoTitle: 'Mitochondria (Mitochondrion): Structure, Function & Location',
     type: 'Organelle · double membrane',
     foundIn: ['Animal cells', 'Plant cells', 'Fungi', 'Protists'],
     intro: 'Mitochondria run aerobic respiration, converting the energy in glucose and fats into ATP the cell can spend. Their folded inner membrane and their own small genome are relics of free-living bacteria.',
@@ -192,6 +194,28 @@ export const organelles = {
     keywords: 'cell membrane function phospholipid bilayer fluid mosaic selective permeability',
   },
 };
+
+// The organelle chart on /cells/: every structure an introductory course labels, including those without an atlas page.
+// [name, atlas slug or '', main function, in animal cells, in plant cells, membranes]
+export const organelleChart = [
+  ['Nucleus', 'nucleus', 'Stores the DNA and controls which genes are expressed', 'Yes', 'Yes', 'Double (nuclear envelope with pores)'],
+  ['Nucleolus', '', 'Builds ribosomal subunits from rRNA and proteins', 'Yes', 'Yes', 'None (a region inside the nucleus)'],
+  ['Mitochondrion', 'mitochondrion', 'Aerobic respiration: makes most of the cell’s ATP', 'Yes', 'Yes', 'Double'],
+  ['Chloroplast', 'chloroplast', 'Photosynthesis: builds sugar from CO₂ and water using light', 'No', 'Yes', 'Double, plus thylakoids'],
+  ['Ribosome', 'ribosome', 'Translates mRNA into protein', 'Yes', 'Yes', 'None'],
+  ['Rough endoplasmic reticulum', 'endoplasmic-reticulum', 'Folds and modifies proteins made by its ribosomes', 'Yes', 'Yes', 'Single'],
+  ['Smooth endoplasmic reticulum', 'endoplasmic-reticulum', 'Makes lipids, detoxifies drugs, stores calcium', 'Yes', 'Yes', 'Single'],
+  ['Golgi apparatus', 'golgi-apparatus', 'Modifies, sorts, and packages proteins into vesicles', 'Yes', 'Yes', 'Single, stacked cisternae'],
+  ['Lysosome', 'lysosome', 'Digests worn-out parts, food particles, and bacteria', 'Yes', 'Rare (the vacuole digests)', 'Single'],
+  ['Peroxisome', '', 'Breaks down fatty acids and toxic hydrogen peroxide', 'Yes', 'Yes', 'Single'],
+  ['Vacuole', '', 'Stores water, ions, and waste; keeps plant cells turgid', 'Small, temporary', 'One large central vacuole', 'Single (tonoplast)'],
+  ['Vesicles', '', 'Carry materials between organelles and to the surface', 'Yes', 'Yes', 'Single'],
+  ['Cytoskeleton', '', 'Protein filaments that give shape and move organelles', 'Yes', 'Yes', 'None'],
+  ['Centrioles', '', 'Organize the spindle when the cell divides', 'Yes', 'No', 'None'],
+  ['Cytoplasm', '', 'Fluid where glycolysis and many reactions happen', 'Yes', 'Yes', 'None'],
+  ['Cell membrane', 'cell-membrane', 'Controls what enters and leaves the cell', 'Yes', 'Yes', 'Is one: a phospholipid bilayer'],
+  ['Cell wall', '', 'Rigid cellulose layer that supports and protects', 'No', 'Yes', 'None (outside the membrane)'],
+];
 
 // Reference cells drawn by CellDiagram.astro. `organelles` lists the atlas slugs present; `extras` are labeled structures without an atlas page: [name, description, short key note].
 export const cellTypes = {

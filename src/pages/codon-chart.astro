@@ -1,0 +1,87 @@
+---
+import CodonChart from '../components/CodonChart.astro';
+import Faq from '../components/Faq.astro';
+import WorkedExamples from '../components/WorkedExamples.astro';
+import { faqs } from '../lib/faqs.mjs';
+import Layout from '../layouts/Layout.astro';
+import { AMINO_ACIDS, CODON_TABLE, SIDE_CHAIN_TYPES, STOP, STOP_CODONS, codingStrandFrom, transcribe, translate, proteinSummary } from '../lib/molecular.mjs';
+const codonsFor = abbr => Object.entries(CODON_TABLE).filter(([, a]) => a.abbr === abbr).map(([codon]) => codon);
+const rows = [...AMINO_ACIDS, STOP].map(a => ({ ...a, codons: codonsFor(a.abbr) }));
+const leucine = codonsFor('Leu');
+const peptide = proteinSummary(translate('AUGGCAUUCUAG'));
+const tac = transcribe(codingStrandFrom('TAC', 'template'));
+const examples = [
+  { question: 'Which amino acid does the codon UGG code for?', steps: ['First base U picks the top block, second base G the fourth row of that block.', 'Third base G picks the last column: Trp.'], answer: `${CODON_TABLE.UGG.name} (Trp, W). UGG is its only codon.` },
+  { question: 'What amino acid sequence does the mRNA 5′-AUG GCA UUC UAG-3′ code for?', steps: ['AUG = Met (start), GCA = Ala, UUC = Phe.', 'UAG is a stop codon, so the chain ends there.'], answer: `${peptide.abbrs}, a ${peptide.length}-amino-acid peptide (one-letter code ${peptide.letters}).` },
+  { question: 'Which codons code for leucine?', steps: ['Scan the chart for Leu: four in the CU_ row and two in the UU_ row.', 'Only the third base differs within the CU_ group, a typical pattern of the code.'], answer: `${leucine.join(', ')}: ${leucine.length} codons.` },
+  { question: 'The DNA template strand reads 3′-TAC-5′. Which amino acid does it code for?', steps: [`Transcribe first: the complement of TAC with U for T is ${tac}.`, `Look up ${tac} in the chart, not TAC: the chart uses mRNA letters.`], answer: `${CODON_TABLE[tac].name} (${CODON_TABLE[tac].abbr}), the start codon.`, href: '/dna-transcription-translation/', label: 'Convert a longer DNA sequence' },
+];
+---
+<Layout title="Codon Chart: mRNA Codon to Amino Acid Table (All 64 Codons)" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['Codon chart', '/codon-chart/']]} description="Look up any mRNA codon in the genetic code: all 64 codons with their amino acids, the AUG start and three stop codons, and an amino acid to codon table.">
+<div class="intro"><div><div class="eyebrow">The genetic code, in one table</div><h1>Codon chart: mRNA codons to amino acids</h1><p>The codon chart (genetic code table) shows which amino acid each three-letter mRNA codon codes for. Type a codon such as AUG or an amino acid such as leucine to find it, then use the amino acid table to see every codon that codes for it.</p></div></div>
+<codon-lookup class="explanation codon-lookup">
+  <label class="field" for="codon-query">Find a codon or an amino acid</label>
+  <div class="codon-lookup-row"><input id="codon-query" type="search" data-query placeholder="Try AUG, UGG, ATG, Leu, lysine, W or stop" autocomplete="off" spellcheck="false"/></div>
+  <p class="codon-result" data-result aria-live="polite">Type three bases (mRNA or DNA letters) or an amino acid name, three-letter code, or one-letter code.</p>
+</codon-lookup>
+<section class="explanation" aria-labelledby="chart-heading">
+  <h2 id="chart-heading">The standard codon chart</h2>
+  <p>Read a codon from its 5′ end. Find the first base in the left column, the second base in the next column, and the third base along the top. The cell where they meet is the amino acid. {64 - STOP_CODONS.length} codons code for the 20 amino acids and 3 are stop signals.</p>
+  <CodonChart/>
+</section>
+<section class="explanation" aria-labelledby="amino-heading">
+  <h2 id="amino-heading">Amino acid to codon table</h2>
+  <p>The reverse lookup: every amino acid with its abbreviations, all the mRNA codons that code for it, and its side-chain class. Use it when a question asks which codons could code for a given amino acid, or how many.</p>
+  <div class="fact-table-wrap"><table class="fact-table amino-table"><thead><tr><th scope="col">Amino acid</th><th scope="col">3-letter</th><th scope="col">1-letter</th><th scope="col">mRNA codons</th><th scope="col">Codons</th><th scope="col">Side chain</th></tr></thead><tbody>{rows.map(a => <tr><td>{a.name}</td><td>{a.abbr}</td><td>{a.letter}</td><td><code>{a.codons.join(' ')}</code></td><td>{a.codons.length}</td><td>{SIDE_CHAIN_TYPES[a.type]}</td></tr>)}</tbody></table></div>
+</section>
+<section class="explanation" aria-labelledby="start-stop-heading">
+  <h2 id="start-stop-heading">Start codon, stop codons, and DNA codons</h2>
+  <p><strong>Start codon.</strong> AUG codes for methionine and is where ribosomes begin translating, so almost every new protein starts with Met. AUG inside a gene simply adds another methionine.</p>
+  <p><strong>Stop codons.</strong> UAA, UAG, and UGA match no tRNA. A release factor binds instead and the finished chain is let go. A mutation that creates one early is a nonsense mutation.</p>
+  <p><strong>DNA codons.</strong> The chart uses mRNA letters. A coding-strand DNA triplet has the same letters with T for U, so ATG means AUG. A template-strand triplet must be complemented first: 3′-TAC-5′ becomes AUG. The <a class="text-link" href="/dna-transcription-translation/">DNA to mRNA converter</a> does both for a whole gene.</p>
+  <p><strong>Codons and anticodons.</strong> A codon is on the mRNA. The anticodon is the complementary triplet on the tRNA that reads it, written 3′ → 5′: AUG is read by UAC.</p>
+</section>
+<WorkedExamples items={examples} title="Reading the codon chart: worked examples" intro="Four questions that come up in every genetics unit, worked from the chart above."/>
+<div class="related"><a href="/dna-transcription-translation/">DNA to mRNA to protein converter ↗</a><a href="/learn/transcription-and-translation/">Transcription &amp; translation explained ↗</a><a href="/cells/ribosome/">The ribosome ↗</a><a href="/practice/">Practice molecular biology ↗</a></div>
+<Faq items={faqs['codon-chart']} title="Codon chart questions"/>
+</Layout>
+<script>
+import { AMINO_ACIDS, CODON_TABLE, STOP } from '../lib/molecular.mjs';
+class CodonLookup extends HTMLElement {
+  connectedCallback() {
+    const input = this.querySelector<HTMLInputElement>('[data-query]')!;
+    const result = this.querySelector<HTMLElement>('[data-result]')!;
+    const cells = Array.from(document.querySelectorAll<HTMLElement>('.codon-chart td[data-codon]'));
+    const initial = result.textContent;
+    const show = (matches: string[], html: string) => {
+      cells.forEach(c => c.classList.toggle('codon-match', matches.includes(c.dataset.codon!)));
+      result.innerHTML = html;
+    };
+    const update = () => {
+      const raw = input.value.trim();
+      const q = raw.toUpperCase().replace(/[\s-]/g, '');
+      if (!q) { show([], initial || ''); return; }
+      if (/^[ACGTU]{3}$/.test(q)) {
+        const codon = q.replace(/T/g, 'U'), amino = CODON_TABLE[codon];
+        const dna = q.includes('T') ? ` Read as the DNA coding-strand triplet ${q}, which gives the mRNA codon ${codon}.` : '';
+        const role = codon === 'AUG' ? ' It is also the start codon.' : amino.letter === '*' ? ' It ends translation.' : '';
+        show([codon], `<strong>${codon}</strong> → ${amino.letter === '*' ? 'Stop codon' : `${amino.name} (${amino.abbr}, ${amino.letter})`}.${role}${dna}`);
+        return;
+      }
+      const lower = raw.toLowerCase();
+      const amino = lower === 'start' ? AMINO_ACIDS.find(a => a.abbr === 'Met') : ['stop', 'end'].includes(lower) ? STOP : AMINO_ACIDS.find(a => a.abbr.toLowerCase() === lower || (q.length === 1 && a.letter === q) || a.name.toLowerCase() === lower) || (lower.length >= 3 ? AMINO_ACIDS.find(a => a.name.toLowerCase().startsWith(lower)) : undefined);
+      if (!amino) { show([], 'No match. Enter three bases such as GCA, or an amino acid such as alanine, Ala, or A.'); return; }
+      const list = Object.keys(CODON_TABLE).filter(c => CODON_TABLE[c].abbr === amino.abbr);
+      show(list, `<strong>${amino.letter === '*' ? 'Stop' : `${amino.name} (${amino.abbr}, ${amino.letter})`}</strong> → ${list.length} codon${list.length === 1 ? '' : 's'}: ${list.join(', ')}. Highlighted in the chart below.`);
+    };
+    input.addEventListener('input', update);
+  }
+}
+customElements.define('codon-lookup', CodonLookup);
+</script>
+<style>
+.codon-lookup{display:block}
+.codon-lookup-row input{width:100%;max-width:420px;padding:13px 16px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:16px}
+.codon-result{margin:14px 0 0;font-size:16px;color:var(--ink)}
+.amino-table code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.5px}
+</style>

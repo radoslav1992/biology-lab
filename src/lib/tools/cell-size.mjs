@@ -15,7 +15,7 @@ const r1 = v => Math.round(v * 10) / 10;
 export const definition = {
   slug: 'cell-size',
   title: 'Cell size & surface-area-to-volume ratio',
-  seoTitle: 'Surface Area to Volume Ratio Calculator — Why Cells Stay Small',
+  seoTitle: 'Cell Surface Area to Volume Ratio Calculator (Cube & Sphere)',
   category: 'Cells',
   icon: '◫',
   description: 'Enter a cell’s side length or radius to get its surface area, volume, and SA:V ratio with worked steps, and see why doubling the size halves the ratio.',

@@ -1,5 +1,5 @@
 ---
-import { DEFAULT_SEQUENCE, transcribe, translate, proteinSummary, gcContent, meltingTemperature } from '../lib/molecular.mjs';
+import { DEFAULT_SEQUENCE, INPUT_STRANDS, transcribe, translate, proteinSummary, gcContent, meltingTemperature } from '../lib/molecular.mjs';
 import { fmt, pct } from '../lib/format.mjs';
 // Everything below is computed at build time only for the noscript fallback; the live tool runs in the browser.
 const demoRna = transcribe(DEFAULT_SEQUENCE);
@@ -19,10 +19,11 @@ const presets = [['demo', 'Start–stop demo'], ['hbb', 'β-globin (normal GAG)'
     <div class="result-grid" data-metrics aria-live="polite"></div>
   </div>
   <div class="controls">
-    <h3>Type a coding strand. Watch it become protein.</h3>
-    <label class="field" for="dna-sequence" style="margin-bottom:8px">DNA coding strand (5′ → 3′)</label>
+    <h3>Paste DNA or mRNA. Watch it become protein.</h3>
+    <label class="field">What did you paste?<select data-kind>{Object.entries(INPUT_STRANDS).map(([value, label]) => <option value={value}>{label}</option>)}</select></label>
+    <label class="field" for="dna-sequence" style="margin-bottom:8px" data-sequence-label>DNA coding strand, 5′ → 3′</label>
     <textarea id="dna-sequence" data-sequence rows="4" spellcheck="false" autocomplete="off" autocapitalize="characters" aria-describedby="dna-sequence-help" set:text={DEFAULT_SEQUENCE}></textarea>
-    <p class="small-note" id="dna-sequence-help" style="margin-top:8px">Letters A, C, G, T only; spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.</p>
+    <p class="small-note" id="dna-sequence-help" style="margin-top:8px">A template strand printed under the coding strand runs 3′ → 5′ (TAC… becomes mRNA AUG…). Spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.</p>
     <p class="control-label" style="margin-top:16px">Example sequences</p>
     <div class="pills" aria-label="Example sequences">{presets.map(([key, label]) => <button type="button" class:list={['pill', { selected: key === 'demo' }]} data-preset={key} aria-pressed={key === 'demo'}>{label}</button>)}</div>
     <p class="control-label" style="margin-top:16px">Reading frame</p>
@@ -41,7 +42,7 @@ const presets = [['demo', 'Start–stop demo'], ['hbb', 'β-globin (normal GAG)'
 </dna-lab>
 <noscript>Enable JavaScript to translate your own sequence. For the example coding strand {DEFAULT_SEQUENCE} ({DEFAULT_SEQUENCE.length} nt, GC content {demoGc}, Tm about {demoTm} °C), transcription gives the mRNA {demoRna}, and reading frame 1 translates to {demo.abbrs}, stopping at the {demo.stopCodon} codon: a {demo.length}-amino-acid peptide, one-letter code {demo.letters}.</noscript>
 <script>
-import { cleanSequence, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
+import { codingStrandFrom, anticodons, INPUT_STRANDS, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
 import { fmt, pct, escapeHtml } from '../lib/format.mjs';
 type Preset = { dna: string; reference: string; referenceLabel: string; note: string };
 const PRESETS: Record<string, Preset> = {
@@ -56,6 +57,8 @@ class DnaLab extends HTMLElement {
   connectedCallback() {
     const el = <T extends Element>(selector: string) => this.querySelector(selector) as T;
     const textarea = el<HTMLTextAreaElement>('[data-sequence]');
+    const kindSelect = el<HTMLSelectElement>('[data-kind]');
+    type Kind = keyof typeof INPUT_STRANDS;
     const startBox = el<HTMLInputElement>('[data-start]');
     const framePills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-frame]'));
     const presetPills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-preset]'));
@@ -90,8 +93,12 @@ class DnaLab extends HTMLElement {
       return `<strong>Mutation check · vs ${label}</strong>${plural(diff.substitutions.length, 'substitution')} (${subs}).<br/>${changes}.`;
     };
     const render = () => {
-      const dna = cleanSequence(textarea.value);
+      const kind = kindSelect.value as Kind;
+      el<HTMLElement>('[data-sequence-label]').textContent = INPUT_STRANDS[kind];
+      const dna = codingStrandFrom(textarea.value, kind);
       const rna = transcribe(dna), template = templateStrand(dna);
+      const shown12 = (seq: string) => seq.slice(0, 12) + (seq.length > 12 ? '…' : '');
+      const converted = kind === 'coding' ? '' : `<li><strong>Your ${kind === 'mrna' ? 'mRNA' : 'template strand'}.</strong> ${kind === 'mrna' ? `An mRNA already carries the coding strand’s sequence, so the coding strand is the same with every U written as T: 5′-${shown12(dna)}-3′.` : kind === 'template' ? `A template strand written 3′→5′ lines up base by base under the coding strand, so the coding strand is its complement: A↔T and G↔C give 5′-${shown12(dna)}-3′, and the mRNA is that sequence with U for T.` : `A template strand written 5′→3′ runs the other way, so reverse it and take the complement (the reverse complement) to get the coding strand, 5′-${shown12(dna)}-3′.`}</li>`;
       let scanning = '';
       if (startBox.checked) {
         const at = findStartCodon(rna);
@@ -108,7 +115,7 @@ class DnaLab extends HTMLElement {
       const marks = new Map<number, string>();
       if (first && first.codon === START_CODON) [0, 1, 2].forEach(k => marks.set(first.position - 1 + k, 'dna-start'));
       if (summary.terminated && last) [0, 1, 2].forEach(k => marks.set(last.position - 1 + k, 'dna-stop'));
-      el<HTMLElement>('[data-strands]').innerHTML = strand('Coding 5′→3′', '5′', dna, '3′', from, to, new Map()) + strand('Template 3′→5′', '3′', template, '5′', from, to, new Map()) + strand('mRNA 5′→3′', '5′', rna, '3′', from, to, marks);
+      el<HTMLElement>('[data-strands]').innerHTML = strand('Coding 5′→3′', '5′', dna, '3′', from, to, new Map()) + strand('Template 3′→5′', '3′', template, '5′', from, to, new Map()) + strand('mRNA 5′→3′', '5′', rna, '3′', from, to, marks) + strand('Anticodons 3′→5′', '3′', anticodons(rna), '5′', from, to, new Map());
       el<HTMLElement>('[data-chain]').innerHTML = peptide.length
         ? peptide.map((p, i) => `<span class="dna-chip dna-chip-${p.amino.type}${i === 0 && p.codon === START_CODON ? ' dna-chip-start' : ''}" title="${escapeHtml(p.amino.name)} · codon ${p.index} · nucleotides ${p.position}–${p.position + 2}"><b>${p.codon}</b><i>${p.amino.letter === '*' ? 'STOP' : p.amino.abbr}</i><small>${p.amino.letter === '*' ? 'release' : `#${i + 1} · ${p.amino.letter}`}</small></span>`).join('')
         : `<p class="dna-empty">${all.length ? 'No AUG start codon in this mRNA, so nothing is translated. Untick “Begin at first AUG” to read from the first base, or add an ATG to the coding strand.' : 'Add at least three bases in this frame to form a codon.'}</p>`;
@@ -126,10 +133,11 @@ class DnaLab extends HTMLElement {
       const shown = (list: string[], limit: number) => list.slice(0, limit).join(' ') + (list.length > limit ? ' …' : '');
       const leftover = Math.max(0, dna.length - frame - all.length * 3);
       el<HTMLElement>('[data-steps]').innerHTML = `<ol>
+${converted}
 <li><strong>Transcription.</strong> RNA polymerase separates the two strands and reads the template strand 3′→5′ (3′-${template.slice(0, 12)}${template.length > 12 ? '…' : ''}-5′), adding the complementary RNA nucleotide at each step. The new mRNA, 5′-${rna.slice(0, 12)}${rna.length > 12 ? '…' : ''}-3′, has exactly the coding strand’s sequence with U in place of T. The coding strand has ${counts.A} A, ${counts.T} T, ${counts.G} G, and ${counts.C} C, so its GC content is ${pct(gc, 1)}.</li>
 ${scanning}
 <li><strong>Reading frame ${frame + 1}.</strong> Starting at nucleotide ${frame + 1}, the ${dna.length}-nt mRNA divides into ${plural(all.length, 'complete codon')}${leftover ? ` with ${plural(leftover, 'leftover base')} at the 3′ end` : ''}: ${all.length ? shown(all, 8) : 'none'}.</li>
-<li><strong>Translation.</strong> ${peptide.length ? `At the ribosome, each codon is matched by a tRNA whose anticodon pairs with it and which carries the amino acid the code assigns. ${first && first.codon === START_CODON ? 'The AUG start codon brings in methionine, so the chain begins Met.' : `Translation here begins at ${first ? first.codon : ''} (${first ? first.amino.abbr : ''}) rather than at an AUG, which real ribosomes would not do.`} The growing chain reads ${summary.length ? summary.abbrs.split('-').slice(0, 12).join('-') + (summary.length > 12 ? '-…' : '') : '(no residues)'}.` : 'No codons were translated.'}</li>
+<li><strong>Translation.</strong> ${peptide.length ? `At the ribosome, each codon is matched by a tRNA whose anticodon pairs with it (the bottom row above: ${first ? `${first.codon} pairs with anticodon 3′-${anticodons(first.codon)}-5′` : 'A with U, G with C'}) and which carries the amino acid the code assigns. ${first && first.codon === START_CODON ? 'The AUG start codon brings in methionine, so the chain begins Met.' : `Translation here begins at ${first ? first.codon : ''} (${first ? first.amino.abbr : ''}) rather than at an AUG, which real ribosomes would not do.`} The growing chain reads ${summary.length ? summary.abbrs.split('-').slice(0, 12).join('-') + (summary.length > 12 ? '-…' : '') : '(no residues)'}.` : 'No codons were translated.'}</li>
 <li><strong>${summary.terminated ? 'Termination' : 'No stop yet'}.</strong> ${summary.terminated ? `${summary.stopCodon} at codon ${summary.stopIndex} has no matching tRNA. A release factor binds instead, the ribosome hydrolyzes the last peptidyl-tRNA bond, and the finished chain of ${plural(summary.length, 'amino acid')} is released: ${summary.letters || '(empty)'} in one-letter code.` : peptide.length ? `None of the ${plural(all.length, 'codon')} in frame ${frame + 1} is UAA, UAG, or UGA, so the reading frame stays open and a ribosome would run off the end of this sequence with ${plural(summary.length, 'amino acid')} attached (${summary.letters}).` : 'Nothing to terminate.'}</li>
 </ol>`;
       el<HTMLElement>('[data-revcomp]').textContent = reverseComplement(dna);
@@ -151,11 +159,12 @@ ${scanning}
       }
     };
     textarea.addEventListener('input', () => { presetKey = ''; run(); });
+    kindSelect.addEventListener('change', () => { presetKey = ''; run(); });
     framePills.forEach(b => b.addEventListener('click', () => { frame = Number(b.dataset.frame); run(); }));
-    presetPills.forEach(b => b.addEventListener('click', () => { const preset = PRESETS[b.dataset.preset!]; presetKey = b.dataset.preset!; referenceKey = preset.reference; textarea.value = preset.dna; frame = 0; run(); }));
+    presetPills.forEach(b => b.addEventListener('click', () => { const preset = PRESETS[b.dataset.preset!]; presetKey = b.dataset.preset!; referenceKey = preset.reference; textarea.value = preset.dna; kindSelect.value = 'coding'; frame = 0; run(); }));
     startBox.addEventListener('change', run);
     el<HTMLButtonElement>('[data-translate]').addEventListener('click', run);
-    el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; run(); });
+    el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; kindSelect.value = 'coding'; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; run(); });
     run();
   }
 }

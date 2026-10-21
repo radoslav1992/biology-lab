@@ -8,9 +8,13 @@ import * as bacterialGrowth from './tools/bacterial-growth.mjs';
 import * as energyPyramid from './tools/energy-pyramid.mjs';
 import * as chiSquare from './tools/chi-square-test.mjs';
 import * as predatorPrey from './tools/predator-prey.mjs';
+import * as wordProblems from './tools/population-word-problems.mjs';
 const modules = [cellSize, enzymeKinetics, dilution, magnification, waterPotential, bacterialGrowth, energyPyramid, chiSquare, predatorPrey];
-const bySlug = new Map(modules.map(m => [m.definition.slug, m]));
+// Embedded explorers render inside a flagship page instead of getting their own /tools/<slug>/ route and catalog card.
+const embedded = [wordProblems];
+const bySlug = new Map([...modules, ...embedded].map(m => [m.definition.slug, m]));
 export const explorations = modules.map(m => m.definition);
+export const findExploration = slug => bySlug.get(slug)?.definition;
 export const defaultMode = tool => tool.modes?.[0]?.[0] ?? '';
 export const activeKeys = (tool, mode) => tool.fieldsByMode?.[mode] ?? tool.fields.map(f => f.key);
 export function validateFields(tool, values, mode = defaultMode(tool)) {

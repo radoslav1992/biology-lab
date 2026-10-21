@@ -69,7 +69,7 @@ export function cleanSequence(input, alphabet = 'ACGT') {
   if (raw.length > MAX_LENGTH) throw new Error(`That sequence is ${raw.length.toLocaleString('en-US')} nucleotides long. Paste ${MAX_LENGTH.toLocaleString('en-US')} nucleotides or fewer.`);
   for (const ch of raw) {
     if (allowed.has(ch)) continue;
-    const hint = ch === 'U' && !allowed.has('U') ? ' This box expects DNA: if you have an mRNA sequence, swap each U for T.'
+    const hint = ch === 'U' && !allowed.has('U') ? ' This box expects DNA: for an mRNA sequence, choose mRNA as the input or swap each U for T.'
       : ch === 'T' && !allowed.has('T') ? ' RNA uses U in place of T.'
         : ch === 'N' ? ' N marks an unknown base, which cannot be paired or translated.' : '';
     throw new Error(`"${ch}" is not a valid base here. Use only ${listLetters(letters)}.${hint}`);
@@ -93,6 +93,26 @@ export const templateStrand = codingStrand => complement(codingStrand);
 
 /** Back-transcription: turn an mRNA sequence into the coding strand of DNA (U → T). */
 export const toCodingStrand = rna => cleanSequence(rna, 'ACGU').replace(/U/g, 'T');
+
+/** The strand types the translator accepts. Templates are often printed 3′→5′ under the coding strand (TAC… → AUG…). */
+export const INPUT_STRANDS = Object.freeze({
+  coding: 'DNA coding strand, 5′ → 3′',
+  template: 'DNA template strand, 3′ → 5′',
+  template53: 'DNA template strand, 5′ → 3′',
+  mrna: 'mRNA, 5′ → 3′',
+});
+
+/** Convert whichever strand a student has into the coding strand (5′→3′), the form every other helper expects. */
+export function codingStrandFrom(input, kind = 'coding') {
+  if (kind === 'mrna') return toCodingStrand(input);
+  if (kind === 'template') return complement(input);
+  if (kind === 'template53') return reverseComplement(input);
+  if (kind === 'coding') return cleanSequence(input);
+  throw new Error('Choose which strand you entered: coding, template, or mRNA.');
+}
+
+/** tRNA anticodons written 3′→5′ under the mRNA, so each base pairs with the codon base above it (AUG → UAC). */
+export const anticodons = rna => cleanSequence(rna, 'ACGU').replace(/[ACGU]/g, base => ({ A: 'U', U: 'A', C: 'G', G: 'C' })[base]);
 
 const checkFrame = frame => { if (![0, 1, 2].includes(frame)) throw new Error('Choose reading frame 1, 2, or 3.'); };
 

@@ -9,10 +9,10 @@ const sentences = s => s.split(/(?<=[.!?])\s+/);
 // These two helpers mirror the title and meta-description rules in src/pages/cells/[slug].astro; keep them in sync.
 const TAILS = ['Structure, functions, size, and a common misconception.', 'Structure, functions, and a common misconception.', 'Structure and function.'];
 const describe = o => { const first = sentences(o.intro)[0]; return o.intro.length <= 160 ? o.intro : TAILS.map(t => `${first} ${t}`).find(d => d.length <= 160) || first; };
-const pageTitle = o => { const full = `${o.title}: Structure, Function & Location in the Cell`; return full.length <= 65 ? full : `${o.title}: Structure, Function & Location`; };
+const pageTitle = o => { if (o.seoTitle) return o.seoTitle; const full = `${o.title}: Structure, Function & Location in the Cell`; return full.length <= 65 ? full : `${o.title}: Structure, Function & Location`; };
 // Copied from src/pages/cells/index.astro.
-const INDEX_TITLE = 'Cell Organelles: Interactive Diagram, Functions & Comparison';
-const INDEX_DESCRIPTION = 'Explore a labeled animal and plant cell, then compare eight organelles by membranes, location, and job, from the nucleus and mitochondria to the cell membrane.';
+const INDEX_TITLE = 'Cell Organelles and Their Functions: Labeled Diagram & Chart';
+const INDEX_DESCRIPTION = 'A labeled animal and plant cell diagram plus a chart of cell organelles and their functions, from the nucleus and mitochondria to ribosomes, ER, and Golgi.';
 
 test('slugs are in the fixed order with the fixed lessons', () => {
   assert.deepEqual(Object.keys(organelles), ORDER);

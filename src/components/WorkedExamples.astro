@@ -1,0 +1,10 @@
+---
+// Worked word problems as prerendered cards: the question as students phrase it, then the working and the answer.
+interface Example { question: string; steps: string[]; answer: string; href?: string; label?: string }
+interface Props { items: Example[]; title: string; intro?: string; id?: string; eyebrow?: string }
+const { items = [], title, intro, id = 'worked-examples', eyebrow = 'Worked examples' } = Astro.props;
+---
+<section class="worked-section" aria-labelledby={`${id}-heading`} id={id}>
+  <div class="section-heading"><div><div class="eyebrow">{eyebrow}</div><h2 id={`${id}-heading`}>{title}</h2>{intro && <p>{intro}</p>}</div></div>
+  <div class="worked-grid">{items.map((item, i) => <article class="worked-card"><span class="worked-number">Example {i + 1}</span><h3>{item.question}</h3><ol>{item.steps.map(step => <li>{step}</li>)}</ol><p class="worked-answer"><strong>Answer:</strong> {item.answer}</p>{item.href && <a class="text-link" href={item.href}>{item.label} <span aria-hidden="true">↗</span></a>}</article>)}</div>
+</section>
