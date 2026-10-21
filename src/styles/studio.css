@@ -353,3 +353,5 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
 .page-jump a { margin:4px 8px 4px 0; }
 @media(max-width:700px) { .worked-grid { grid-template-columns:1fr; } .worked-card { padding:20px; } }
 @media print { .page-jump { display:none; } }
+.footer-apps { width:100%; display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 18px; }
+.footer-apps strong { color:var(--ink); font-weight:700; }
