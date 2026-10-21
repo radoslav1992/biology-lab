@@ -6,7 +6,7 @@ export const site = {
   url: 'https://thebiologylab.org',
   contactEmail: 'info@thebiologylab.org',
   // Google Analytics 4 measurement ID (for example "G-XXXXXXXXXX"). Leave empty to omit the tag entirely.
-  analyticsId: '',
+  analyticsId: 'G-90EH9Q7K6T',
   defaultTitle: 'Biology Lab',
   defaultDescription: 'Free interactive biology tools: build Punnett squares, translate DNA into protein, model population growth, explore the cell, and practice with explanations.',
 };
