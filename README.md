@@ -36,7 +36,7 @@ The production output is `dist/`. JavaScript is delivered only for interactive c
 `src/lib/site.mjs` holds the site-wide settings:
 
 - `url`: the canonical production domain. The production domain is `https://thebiologylab.org`; canonical links, Open Graph URLs, robots.txt, and the sitemap use it. Keep the `biology` entry in `src/lib/learning-apps.mjs` in sync when changing domains.
-- `analyticsId`: a Google Analytics 4 measurement ID. When it is empty, no analytics script is rendered at all.
+- `analyticsId`: the Google Analytics 4 measurement ID (currently `G-90EH9Q7K6T`). The layout renders Google's gtag snippet on every page; when it is empty, no analytics script is rendered at all.
 - `contactEmail`: shown in the footer and on the About page.
 
 No advertising scripts are installed. The layout leaves the page structure clean so ad slots can be added later to `src/layouts/Layout.astro` or individual pages.

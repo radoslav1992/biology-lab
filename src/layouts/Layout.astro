@@ -37,12 +37,13 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   {isHome && <script type="application/ld+json" set:html={JSON.stringify(website)} />}
   {trail && <script type="application/ld+json" set:html={JSON.stringify(trail)} />}
   {site.analyticsId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${site.analyticsId}`}></script>}
-  {site.analyticsId && <script is:inline define:vars={{ id: site.analyticsId }}>
+  {/* Rendered without define:vars so gtag stays global, as in Google's snippet. */}
+  {site.analyticsId && <script is:inline set:html={`
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', id);
-  </script>}
+    gtag('config', ${JSON.stringify(site.analyticsId)});
+  `} />}
 </head>
 <body class:list={{ 'is-home': isHome }}>
   <a class="skip" href="#main">Skip to content</a>
