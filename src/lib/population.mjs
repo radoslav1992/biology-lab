@@ -68,6 +68,59 @@ export function growthSeries(model, { N0, r, K } = {}, tMax, steps = 200) {
   return Array.from({ length: steps + 1 }, (_, i) => { const tt = tMax * i / steps; return [tt, N(tt)]; });
 }
 
+// Word-problem helpers. A percentage rate p is a fraction per time period (12% per year → 0.12) compounded once per
+// period, N(t) = N₀(1 + p)^t; the same number read as a continuous rate r gives N₀e^(rt), which grows slightly faster.
+const percentRate = p => check(isNum(p) && p > -1, 'The growth rate must be greater than −100%.');
+
+/** Discrete (compound) growth at a fixed percentage per period: N(t) = N₀(1 + p)^t. */
+export function compoundGrowth(N0, p, t) {
+  positiveNumber(N0, 'The starting population N₀');
+  percentRate(p);
+  nonNegativeNumber(t, 'Time t');
+  const N = N0 * (1 + p) ** t;
+  check(Number.isFinite(N), 'That growth overflows the calculator: use a smaller rate or a shorter time.');
+  return N;
+}
+
+/**
+ * Time for a population to go from N₀ to N at a fixed rate: t = ln(N/N₀) / ln(1 + p) when the rate is a percentage
+ * compounded each period, or t = ln(N/N₀) / r when it is a continuous rate. A falling target needs a negative rate.
+ */
+export function timeToReach(N0, N, rate, { continuous = false } = {}) {
+  positiveNumber(N0, 'The starting population N₀');
+  positiveNumber(N, 'The target population N');
+  if (continuous) finiteNumber(rate, 'The growth rate r'); else percentRate(rate);
+  check(rate !== 0, 'With a growth rate of 0 the population never changes, so it never reaches a different size.');
+  check(N === N0 || (N > N0) === (rate > 0), N > N0 ? 'The target is larger than N₀, so the growth rate must be positive.' : 'The target is smaller than N₀, so the population has to shrink: enter a negative growth rate.');
+  return Math.log(N / N0) / (continuous ? rate : Math.log1p(rate));
+}
+
+/** Average growth rate between two counts t periods apart: percentage p = (N/N₀)^(1/t) − 1 and continuous r = ln(N/N₀) / t. */
+export function growthRateFromCounts(N0, N, t) {
+  positiveNumber(N0, 'The starting population N₀');
+  positiveNumber(N, 'The later population N');
+  positiveNumber(t, 'The time between the counts');
+  const r = Math.log(N / N0) / t;
+  return { percent: Math.expm1(r), r };
+}
+
+/** Doubling time at a percentage rate p: exact ln 2 / ln(1 + p), continuous ln 2 / p, and the rule of 70 estimate 70 / (100p). */
+export function doublingTimes(p) {
+  check(isNum(p) && p > 0, 'A doubling time only exists when the growth rate is greater than 0.');
+  return { exact: Math.LN2 / Math.log1p(p), continuous: Math.LN2 / p, ruleOf70: 0.7 / p };
+}
+
+/** A population that doubles every Td: after t it has doubled t / Td times, so N = N₀ × 2^(t/Td). */
+export function afterDoublings(N0, Td, t) {
+  positiveNumber(N0, 'The starting population N₀');
+  positiveNumber(Td, 'The doubling time');
+  nonNegativeNumber(t, 'Time t');
+  const doublings = t / Td;
+  const N = N0 * 2 ** doublings;
+  check(Number.isFinite(N), 'That population is too large to calculate. Use fewer doublings.');
+  return { doublings, N };
+}
+
 /** Binary fission: after elapsed/generation doublings, N = N₀ · 2^generations. Generations may be fractional. */
 export function bacterialGrowth(N0, generationMinutes, elapsedMinutes) {
   positiveNumber(N0, 'The starting number of cells');

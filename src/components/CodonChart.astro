@@ -1,0 +1,27 @@
+---
+// The standard genetic code as the classic 4 × 4 × 4 chart: first base picks the row group, second base the row,
+// third base the column. Every cell carries data-codon and data-amino so a lookup can highlight it.
+import { CODON_TABLE } from '../lib/molecular.mjs';
+const bases = ['U', 'C', 'A', 'G'];
+const chart = bases.map(first => ({ first, rows: bases.map(second => ({ second, cells: bases.map(third => { const codon = first + second + third; return { codon, ...CODON_TABLE[codon] }; }) })) }));
+---
+<div class="fact-table-wrap"><table class="fact-table codon-chart">
+  <caption class="codon-caption">All 64 mRNA codons of the standard genetic code, read 5′ → 3′, with three-letter and one-letter amino acid codes. Green: the AUG start codon. Orange: the three stop codons.</caption>
+  <thead><tr><th scope="col">1st base (5′)</th><th scope="col">2nd base</th><th scope="col">3rd base: U</th><th scope="col">3rd base: C</th><th scope="col">3rd base: A</th><th scope="col">3rd base: G</th></tr></thead>
+  {chart.map(group => <tbody>{group.rows.map((row, i) => <tr>{i === 0 && <th scope="rowgroup" rowspan="4" class="codon-first">{group.first}</th>}<th scope="row">{row.second}</th>{row.cells.map(c => <td data-codon={c.codon} data-amino={c.abbr} class:list={{ 'codon-stop': c.letter === '*', 'codon-start': c.codon === 'AUG' }}><code>{c.codon}</code> {c.letter === '*' ? 'Stop' : c.abbr}{c.letter !== '*' && <span class="codon-letter"> ({c.letter})</span>}</td>)}</tr>)}</tbody>)}
+</table></div>
+<style is:global>
+.codon-chart{font-size:14px}
+.codon-chart th,.codon-chart td{padding:11px 12px;vertical-align:top}
+.codon-chart thead th{font-size:13px;white-space:nowrap}
+.codon-chart th[scope=row]{font-weight:700;color:var(--muted);width:72px}
+.codon-chart .codon-first{font-family:Manrope,sans-serif;font-size:24px;font-weight:800;color:var(--green);text-align:center;vertical-align:middle;width:96px;background:#f5f9f4}
+.codon-chart td{white-space:nowrap}
+.codon-chart td code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--muted);margin-right:4px}
+.codon-chart .codon-letter{color:var(--muted);font-size:12px}
+.codon-chart .codon-stop{background:#fff1ec;color:#9a3d1b;font-weight:700}
+.codon-chart .codon-start{background:#e1f4eb;color:#226b45;font-weight:700}
+.codon-chart td.codon-match{background:#fff3c4;color:var(--ink);box-shadow:inset 0 0 0 2px #e0a92e}
+.codon-caption{caption-side:bottom;text-align:left;padding:12px 4px 0;font-size:13px;color:var(--muted)}
+@media(max-width:600px){.codon-chart th,.codon-chart td{padding:8px}.codon-chart .codon-first{font-size:20px;width:56px}.codon-chart th[scope=row]{width:44px}}
+</style>

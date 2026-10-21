@@ -12,10 +12,10 @@ const visible = activeKeys(tool, firstMode);
 <div class="explanation"><h2>{tool.explanationTitle || 'Why it works'}</h2><div class="formula">{tool.formula}</div><ol data-steps></ol></div>
 </exploration-lab><noscript>Enable JavaScript for the interactive diagram and calculations. Key relationship: {tool.formula}. The linked concept note explains the method with a worked example.</noscript>
 <script>
-import { explorations, explore, explorationDiagram, activeKeys, defaultMode } from '../lib/explorations.mjs';
+import { findExploration, explore, explorationDiagram, activeKeys, defaultMode } from '../lib/explorations.mjs';
 class ExplorationLab extends HTMLElement {
   connectedCallback() {
-    const tool = explorations.find(t => t.slug === this.dataset.slug)!;
+    const tool = findExploration(this.dataset.slug!)!;
     let mode = defaultMode(tool);
     const inputs = Array.from(this.querySelectorAll<HTMLInputElement>('[data-field]'));
     const update = () => {

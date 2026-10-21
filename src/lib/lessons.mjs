@@ -1,7 +1,8 @@
 // Concept notes for /learn/ and /learn/<slug>/. Sixteen lessons in the site-map order fixed by the spec.
 // Each entry: slug, title (≤ 37 chars so "— Key Idea & Worked Example" fits a 65-char SEO title), subtitle, formula (key equation or
 // one-line principle), body (3–4 sentences), example (worked numbers), pitfall (a real misconception and its correction),
-// href + cta (the tool that makes the idea move), icon (one character), keywords, related (two other lesson slugs).
+// href + cta (the tool that makes the idea move), icon (one character), keywords, related (two other lesson slugs), and an
+// optional seoTitle (≤ 65 chars) that replaces the generated page title where searchers use different words.
 export const lessons = [
   {
     slug: 'cell-theory',
@@ -62,6 +63,7 @@ export const lessons = [
   {
     slug: 'transcription-and-translation',
     title: 'Transcription & translation',
+    seoTitle: 'Transcription and Translation: DNA to mRNA to Protein',
     subtitle: 'From a gene to a working protein, in two steps.',
     formula: 'DNA → mRNA (transcription) → protein (translation)',
     body: 'In transcription, RNA polymerase binds a promoter, unzips the DNA, and builds a single strand of messenger RNA complementary to the template strand, working 5′→3′ and using uracil in place of thymine. In eukaryotes the pre-mRNA receives a 5′ cap and a poly-A tail and has its introns spliced out before it leaves the nucleus. In translation, a ribosome reads the mRNA three bases at a time; each codon is matched by a transfer RNA whose anticodon is complementary and which carries one specific amino acid, and the ribosome joins those amino acids with peptide bonds. Translation begins at the start codon AUG (methionine) and ends at a stop codon — UAA, UAG, or UGA — which has no matching tRNA and releases the finished polypeptide.',
@@ -104,6 +106,7 @@ export const lessons = [
   {
     slug: 'hardy-weinberg-principle',
     title: 'The Hardy-Weinberg principle',
+    seoTitle: 'Hardy-Weinberg Principle: What p and q Mean, With Example',
     subtitle: 'The baseline of a population that isn’t evolving.',
     formula: 'p + q = 1 · p² + 2pq + q² = 1',
     body: 'For a gene with two alleles, let p be the frequency of the dominant allele A and q the frequency of the recessive allele a, so p + q = 1. Hardy and Weinberg showed independently in 1908 that if a population is very large, mates at random, and experiences no mutation, no migration (gene flow), and no natural selection, then allele frequencies stay constant from generation to generation and the genotypes settle at p² (AA), 2pq (Aa), and q² (aa). Because heterozygotes hide inside the dominant phenotype, the recessive phenotype frequency, q², is the usual starting point for any calculation. A population whose genotype frequencies drift away from these values is telling you that at least one of the five assumptions is being broken — in other words, that it is evolving.',
@@ -174,6 +177,7 @@ export const lessons = [
   {
     slug: 'population-growth',
     title: 'Population growth models',
+    seoTitle: 'Exponential vs Logistic Population Growth Models Explained',
     subtitle: 'Exponential with no limits, logistic with them.',
     formula: 'dN/dt = rN · dN/dt = rN(1 − N/K)',
     body: 'When resources are unlimited a population grows exponentially: the per-capita growth rate r (births minus deaths per individual per unit time) stays constant, N(t) = N₀eʳᵗ, and the doubling time is ln 2 / r ≈ 0.693 / r, giving a J-shaped curve. Real populations run into limits, so the logistic model multiplies rN by (1 − N/K), where K is the carrying capacity the environment can support; growth is fastest at N = K/2, slows as N approaches K, and the curve becomes S-shaped. Density-dependent factors — food, disease, predation, competition — are what set K, while density-independent factors such as drought or frost strike regardless of how crowded the population is. Species built for rapid growth (r-selected, like insects) and species that hold steady near K (K-selected, like elephants) ride these curves in different ways.',
@@ -202,6 +206,7 @@ export const lessons = [
   {
     slug: 'surface-area-to-volume',
     title: 'Surface area to volume ratio',
+    seoTitle: 'Surface Area to Volume Ratio in Cells: Formula & Examples',
     subtitle: 'The geometry that keeps cells small.',
     formula: 'Cube: SA : V = 6s² : s³ = 6 / s',
     body: 'A cell takes in oxygen and nutrients and expels waste across its surface, but the demand for those exchanges comes from its whole volume. For a cube of side s the surface area is 6s² and the volume s³, so the ratio SA : V = 6/s — for a sphere it is 3/r — which means the ratio falls as the cell grows. Fick’s law says the rate of diffusion is proportional to surface area times concentration gradient divided by distance, so a large cell has too little surface for its volume and too far for molecules to travel to its center; most cells therefore stay between 10 and 100 µm. Living things get around the limit by dividing into many cells, by flattening or elongating, by folding membranes (microvilli in the gut, cristae in mitochondria), and, in large animals, by building dedicated exchange surfaces such as the roughly 70 m² of alveoli in a pair of human lungs.',

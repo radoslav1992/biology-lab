@@ -5,16 +5,17 @@ A complete static Astro website for interactive biology. All calculations run in
 ## Tools
 
 - Punnett square calculator: monohybrid, dihybrid, and ABO/Rh blood-type crosses with color-coded grids, genotype and phenotype ratios, and worked steps. A compact version lives on the homepage.
-- DNA transcription and translation: coding strand → template strand → mRNA → codons → amino acids, with reading frames, start-codon option, GC content, melting temperature, reverse complement, and a full 64-codon genetic code chart.
-- Population growth calculator: exponential and logistic models with a live graph, doubling time, growth rate, and carrying-capacity milestones.
+- DNA to mRNA converter (`/dna-transcription-translation/`): accepts a coding strand, a template strand written either way, or an mRNA, then shows coding strand → template strand → mRNA → tRNA anticodons → codons → amino acids, with reading frames, start-codon option, GC content, melting temperature, reverse complement, a full 64-codon genetic code chart, a step-by-step transcription guide, and worked exam questions.
+- Codon chart (`/codon-chart/`): the genetic code table with a codon / amino-acid lookup that highlights matching cells, an amino acid → codons table, start and stop codons, and worked examples.
+- Population growth calculator: exponential and logistic models with a live graph, doubling time, growth rate, and carrying-capacity milestones, plus an embedded word-problem solver (years to reach a target at a % rate, population after t, doubling time and the rule of 70, doubling every Td, growth rate from two counts) and eight worked word problems.
 - Hardy–Weinberg calculator: allele and genotype frequencies from p, q², or observed counts, with a chi-square equilibrium test.
 - Nine additional explorers: cell size (surface-area-to-volume), enzyme kinetics (Michaelis–Menten with inhibitors), dilutions (C₁V₁ = C₂V₂ and serial dilutions), magnification and scale bars, water potential and osmosis, bacterial growth and doubling time, energy pyramids and the 10% rule, chi-square tests for genetic ratios, and a predator–prey (Lotka–Volterra) simulator.
-- Cell atlas: an interactive animal/plant cell diagram and eight organelle guides, each with structure, functions, a worked example, a common misconception, related organelles, and FAQs.
+- Cell atlas: an interactive animal/plant cell diagram, a 17-structure organelle function chart (animal vs plant, membranes), and eight organelle guides, each with structure, functions, a worked example, a common misconception, related organelles, and FAQs.
 - Sixteen concept notes with a key equation, explanation, worked example, and pitfall, plus three guided learning paths.
 - Practice studio: eight-question rounds drawn from 100 questions across cells, genetics, molecular biology, ecology, and physiology, with explanations, mistake review, focused retries, and device-local best scores.
 - Worksheet builder with 8, 12, or 20 questions and an optional answer key.
 - Printable diagrams: animal and plant cells to label, Punnett square grids, and a pedigree chart, with answer keys, SVG download, and print/PDF.
-- Searchable catalog of every tool and collection, and prerendered FAQs (with FAQPage structured data) on the homepage, every calculator, every organelle page, and the printables page.
+- Searchable catalog of every tool and collection, and prerendered FAQs (with FAQPage structured data) on the homepage, every calculator, the codon chart, the cell atlas, every organelle page, and the printables page. Tool, organelle, lesson, and flagship pages also emit BreadcrumbList structured data.
 
 ## Development
 
@@ -86,7 +87,7 @@ Google Fonts supplies DM Sans and Manrope; system fonts are fallbacks. Calculato
 ## Source structure
 
 - `src/lib/genetics.mjs`, `molecular.mjs`, `population.mjs`: independently tested biology calculations.
-- `src/lib/tools/*.mjs`: one module per generic explorer (`definition`, `explore`, `diagram`), registered in `src/lib/explorations.mjs`.
+- `src/lib/tools/*.mjs`: one module per generic explorer (`definition`, `explore`, `diagram`), registered in `src/lib/explorations.mjs`. Explorers listed there as `embedded` (the population word-problem solver) render inside a flagship page and get no `/tools/` route or catalog card.
 - `src/lib/organelles.mjs`, `lessons.mjs`, `practice.mjs`, `faqs.mjs`, `catalog.mjs`: editorial content and site map.
 - `src/lib/format.mjs`, `svg.mjs`: shared formatting, validation, palette, and SVG chart helpers.
 - `src/components`: Astro markup and progressively enhanced custom elements.

@@ -168,3 +168,18 @@ test('the insulin B chain fragment translates to Met-Phe-Val-Asn-Gln-His…', ()
   assert.equal(summary.letters, 'MFVNQHLCGSHLVEAL');
   assert.equal(summary.terminated, false);
 });
+
+test('any strand a student has converts to the coding strand, and anticodons pair with codons', async () => {
+  const { codingStrandFrom, anticodons, transcribe, translate, proteinSummary, codons, INPUT_STRANDS } = await import('../src/lib/molecular.mjs');
+  assert.deepEqual(Object.keys(INPUT_STRANDS), ['coding', 'template', 'template53', 'mrna']);
+  assert.equal(codingStrandFrom('atg gcc', 'coding'), 'ATGGCC');
+  assert.equal(transcribe(codingStrandFrom('TAC', 'template')), 'AUG'); // template 3'-TAC-5' → mRNA 5'-AUG-3'
+  assert.equal(transcribe(codingStrandFrom('AGT', 'template')), 'UCA'); // the classic exam question: template AGT → codon UCA
+  assert.equal(transcribe(codingStrandFrom('CAT', 'template53')), 'AUG'); // the same template read 5'→3'
+  assert.equal(codingStrandFrom('AUGUGG', 'mrna'), 'ATGTGG');
+  assert.equal(codons(transcribe(codingStrandFrom('TACGGTAGTACC', 'template'))).length, 4);
+  assert.equal(proteinSummary(translate(transcribe(codingStrandFrom('AACUAUGUGGCAU', 'mrna')), { fromStartCodon: true, frame: 1 })).abbrs, 'Met-Trp-His');
+  assert.equal(anticodons('AUGGCU'), 'UACCGA');
+  assert.throws(() => codingStrandFrom('ATG', 'protein'), /coding, template, or mRNA/);
+  assert.throws(() => codingStrandFrom('AUG', 'template'), /choose mRNA as the input/);
+});

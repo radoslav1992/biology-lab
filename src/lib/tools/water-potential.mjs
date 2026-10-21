@@ -18,10 +18,10 @@ const r1 = v => Math.round(v * 10) / 10;
 export const definition = {
   slug: 'water-potential',
   title: 'Water potential & osmosis calculator',
-  seoTitle: 'Water Potential Calculator (Ψ = Ψs + Ψp) — Osmosis Direction',
+  seoTitle: 'Water Potential Calculator: Solute Potential Ψs = −iCRT',
   category: 'Cells',
   icon: '≋',
-  description: 'Calculate solute potential (−iCRT) and water potential in MPa from molarity, temperature, and pressure, then compare two cells to see which way water moves.',
+  description: 'Calculate solute potential with Ψs = −iCRT and water potential Ψ = Ψs + Ψp in MPa or bars, then compare two cells to see which way water moves by osmosis.',
   keywords: 'water potential calculator solute potential pressure potential osmosis icrt megapascals turgor plasmolysis',
   meta: 'Ψ = Ψs + Ψp · compare cells',
   fields: [
@@ -73,10 +73,11 @@ export function explore(values, mode = 'single') {
       { label: 'Water potential Ψ', value: `${mpa(s.psi)} MPa` },
       { label: 'Osmotic pressure (iCRT)', value: `${num(-s.psiS)} MPa` },
       { label: 'Temperature', value: `${num(T)} K` },
+      { label: 'Ψs in bars (R = 0.0831)', value: `${mpa(s.psiS * 10)} bar` },
     ];
     const steps = [
       tempStep,
-      `${showS(s, T)}. ${s.c === 0 ? 'Pure water has no solute, so Ψs = 0.' : 'Dissolved particles lower the free energy of water, so Ψs is always negative; more particles (higher i × C) make it more negative.'}`,
+      `${showS(s, T)}, which is ${mpa(s.psiS * 10)} bar (1 MPa = 10 bar; AP Biology uses R = 0.0831 L·bar/mol·K to get bars directly). ${s.c === 0 ? 'Pure water has no solute, so Ψs = 0.' : 'Dissolved particles lower the free energy of water, so Ψs is always negative; more particles (higher i × C) make it more negative.'}`,
       `Ψ = Ψs + Ψp = ${mpa(s.psiS)} + (${mpa(s.p)}) = ${mpa(s.psi)} MPa.`,
       s.psi < -5e-4
         ? `Pure water in an open container has Ψ = 0 MPa. Because ${mpa(s.psi)} MPa is lower, water would move by osmosis from pure water into this solution — or into a cell with these values, which would swell (an animal cell) or become turgid (a plant cell, whose wall pushes back and raises Ψp).`

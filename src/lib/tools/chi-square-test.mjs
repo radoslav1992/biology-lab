@@ -16,7 +16,7 @@ const field = (key, label, value) => ({ key, label, value, min: 0, max: 1000000,
 export const definition = {
   slug: 'chi-square-test',
   title: 'Chi-square test for genetics',
-  seoTitle: 'Chi-Square Test Calculator for Genetics — Punnett Ratios',
+  seoTitle: 'Chi-Square Test Calculator for Genetics: χ², df & p-Value',
   category: 'Genetics',
   icon: 'χ²',
   description: 'Test whether observed offspring counts fit a 3:1, 1:1, 1:2:1 or 9:3:3:1 Mendelian ratio: χ², degrees of freedom, critical value, p-value and verdict.',

@@ -341,3 +341,15 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
   .faq-answer { display:block!important; }
   .faq-indicator { display:none; }
 }
+/* Worked examples: exam-style questions with the working, used on calculators and the codon chart */
+.worked-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:0 0 8px; }
+.worked-card { padding:24px 26px; border:1px solid var(--line); border-radius:16px; background:#fff; }
+.worked-card h3 { font-size:18px; line-height:1.45; letter-spacing:-.01em; margin:8px 0 12px; }
+.worked-card ol { padding-left:20px; margin:0 0 12px; display:grid; gap:6px; }
+.worked-card li { font-size:15px; line-height:1.65; color:var(--muted); overflow-wrap:anywhere; }
+.worked-number { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--green); }
+.worked-answer { margin:0 0 6px; padding:10px 14px; border-radius:10px; background:#e6f2e8; font-size:15px; line-height:1.6; color:var(--ink); }
+.page-jump { margin:-8px 0 26px; }
+.page-jump a { margin:4px 8px 4px 0; }
+@media(max-width:700px) { .worked-grid { grid-template-columns:1fr; } .worked-card { padding:20px; } }
+@media print { .page-jump { display:none; } }
