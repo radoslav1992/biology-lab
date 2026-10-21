@@ -45,7 +45,7 @@ Banner ads come from Adsterra. `src/lib/ads.mjs` holds the production `domain`, 
 
 - `leaderboard`: before the footer on every page (728×90 on screens at least 800px wide, 320×50 below). Pass `ads={false}` to the layout to drop it, as the 404 page does.
 - `rectangle` (300×250): on detail pages (tools, cells, lessons, and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), after the interactive tool or the first main content block.
-- `native`: on those same pages near the end, before the FAQ (lessons: before the related links).
+- `native`: near the end of the longer detail pages (cell organelles and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), before the FAQ. Tool and lesson pages skip it because it would sit right next to another ad.
 
 Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
 
