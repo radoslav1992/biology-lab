@@ -32,7 +32,8 @@ const { type = 'leaderboard' } = Astro.props;
       box.append(options, script);
     }));
   }
-  const live = location.hostname === ads.domain || location.hostname === `www.${ads.domain}`;
+  // Visitors from a school platform get no ads (see AdFree.astro).
+  const live = (location.hostname === ads.domain || location.hostname === `www.${ads.domain}`) && !document.documentElement.classList.contains('ad-free');
   const slots = document.querySelectorAll('.ad-slot');
   if (live && 'IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -52,5 +53,6 @@ const { type = 'leaderboard' } = Astro.props;
   .ad-native { width:100%; }
   .ad-native .ad-unit { width:100%; display:block; }
   @media (min-width: 800px) { .ad-leaderboard .ad-unit { width:728px; min-height:90px; } }
+  :global(.ad-free) .ad-slot { display:none; }
   @media print { .ad-slot { display:none; } }
 </style>

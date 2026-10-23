@@ -47,7 +47,7 @@ Banner ads come from Adsterra. `src/lib/ads.mjs` holds the production `domain`, 
 - `rectangle` (300×250): on detail pages (tools, cells, lessons, and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), after the interactive tool or the first main content block.
 - `native`: near the end of the longer detail pages (cell organelles and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), before the FAQ. Tool and lesson pages skip it because it would sit right next to another ad.
 
-Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
+Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. Students who arrive from Google Classroom, Canvas, or Schoology (or through a link carrying `?classroom`) browse ad-free on that device for 30 days: `src/components/AdFree.astro` runs in the page head and marks the page `ad-free` before anything renders, so `AdSlot` neither shows nor loads ads. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
 
 ## Deploy to Cloudflare Workers (Git integration)
 
