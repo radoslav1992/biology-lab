@@ -4,6 +4,7 @@ import '../styles/studio.css';
 import { site } from '../lib/site.mjs';
 import { learningApps, currentApp } from '../lib/learning-apps.mjs';
 import AdSlot from '../components/AdSlot.astro';
+import AdFree from '../components/AdFree.astro';
 const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', noindex = false, breadcrumbs = [], ads = true } = Astro.props;
 const toolSections = ['Punnett square', 'DNA translator', 'Population growth', 'Hardy-Weinberg'];
 const activeSection = toolSections.includes(section) ? 'Tools' : section;
@@ -26,7 +27,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><AdFree/>
   <title>{pageTitle}</title>
   <meta name="description" content={description}/><link rel="canonical" href={url}/>
   {noindex ? <meta name="robots" content="noindex,follow"/> : <meta name="robots" content="index,follow,max-image-preview:large"/>}
