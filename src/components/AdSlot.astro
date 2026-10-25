@@ -35,14 +35,23 @@ const { type = 'leaderboard' } = Astro.props;
   // Visitors from a school platform get no ads (see AdFree.astro).
   const live = (location.hostname === ads.domain || location.hostname === `www.${ads.domain}`) && !document.documentElement.classList.contains('ad-free');
   const slots = document.querySelectorAll('.ad-slot');
-  if (live && 'IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      observer.unobserve(entry.target);
-      fill(entry.target);
-    }), { rootMargin: '300px 0px' });
-    slots.forEach(slot => observer.observe(slot));
-  } else if (live) slots.forEach(fill);
+  let started = false;
+  function start() {
+    if (started) return;
+    started = true;
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        fill(entry.target);
+      }), { rootMargin: '300px 0px' });
+      slots.forEach(slot => observer.observe(slot));
+    } else slots.forEach(fill);
+  }
+  // In consent regions ads wait for Accept (see ConsentDefaults.astro / ConsentBanner.astro).
+  const consent = document.documentElement.classList;
+  if (live && !consent.contains('consent-pending') && !consent.contains('consent-denied')) start();
+  else if (live) addEventListener('consentchange', event => { if ((event as CustomEvent).detail === 'granted') start(); });
 </script>
 <style>
   .ad-slot { display:flex; flex-direction:column; align-items:center; gap:6px; margin:36px auto; max-width:100%; overflow:hidden; }
@@ -53,6 +62,6 @@ const { type = 'leaderboard' } = Astro.props;
   .ad-native { width:100%; }
   .ad-native .ad-unit { width:100%; display:block; }
   @media (min-width: 800px) { .ad-leaderboard .ad-unit { width:728px; min-height:90px; } }
-  :global(.ad-free) .ad-slot { display:none; }
+  :global(.ad-free) .ad-slot, :global(.consent-pending) .ad-slot, :global(.consent-denied) .ad-slot { display:none; }
   @media print { .ad-slot { display:none; } }
 </style>
