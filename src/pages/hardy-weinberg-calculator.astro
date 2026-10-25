@@ -1,5 +1,6 @@
 ---
 import AdSlot from '../components/AdSlot.astro';
+import ClassroomStrip from '../components/ClassroomStrip.astro';
 import Faq from '../components/Faq.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
@@ -15,6 +16,7 @@ const table = [
 <Layout title="Hardy-Weinberg Calculator — Allele & Genotype Frequencies" section="Hardy-Weinberg" breadcrumbs={[['Tools', '/tools/'], ['Hardy-Weinberg calculator', '/hardy-weinberg-calculator/']]} description="Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².">
 <div class="intro"><div><div class="eyebrow">Population genetics, made visible</div><h1>Hardy-Weinberg Equilibrium Calculator</h1><p>Start from p, from how common a recessive trait is, or from real genotype counts. We’ll find every frequency and test whether the population is evolving.</p></div></div>
 <HardyWeinberg/>
+<ClassroomStrip/>
 <AdSlot type="rectangle" />
 <div class="explanation">
   <h2>What the Hardy-Weinberg equation says</h2>

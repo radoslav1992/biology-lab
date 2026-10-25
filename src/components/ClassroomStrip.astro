@@ -1,0 +1,9 @@
+---
+// Teacher box under a tool or lesson: the tool's printable activity (when it has one), Share to Google Classroom for this
+// page, and the teacher hub. href is the tool whose activity to offer; it defaults to the current page.
+import ClassroomShare from './ClassroomShare.astro';
+import { activityFor } from '../lib/activities.mjs';
+const { href = Astro.url.pathname } = Astro.props;
+const act = activityFor(href);
+---
+<aside class="classroom-strip no-print" aria-label="For teachers"><div><span class="strip-label">Teaching this?</span><p>{act ? <>Print the one-page <a class="text-link" href={act.path}>{act.title}</a> ({act.grade.toLowerCase()}, about {act.minutes} minutes), or share this page with your class.</> : <>Share this page with your class, or find printable activities and answer keys on the teacher page.</>} Students who open it from Google Classroom see no ads.</p></div><div class="classroom-actions">{act && <a class="secondary" href={act.path}>Activity <span aria-hidden="true">↗</span></a>}<ClassroomShare/><a class="text-link" href="/teachers/">For teachers</a></div></aside>

@@ -1,0 +1,5 @@
+---
+// An activity's results table: blank for students, filled in the answer key with the tool's own readouts (see activities.mjs).
+const { act, answers = false } = Astro.props;
+---
+<div class="record-wrap"><table class="record-table"><thead><tr><th scope="col">{act.table.setting}</th>{act.table.columns.map(h => <th scope="col">{h}</th>)}</tr></thead><tbody>{act.table.rows.map(([label, cells]) => <tr><th scope="row">{label}</th>{cells.map(cell => <td>{answers ? cell : ''}</td>)}</tr>)}</tbody></table></div>

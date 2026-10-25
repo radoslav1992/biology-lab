@@ -1,5 +1,6 @@
 ---
 import AdSlot from '../components/AdSlot.astro';
+import ClassroomStrip from '../components/ClassroomStrip.astro';
 import Exploration from '../components/Exploration.astro';
 import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
@@ -42,6 +43,7 @@ const examples = [
 <div class="section-heading"><div><div class="eyebrow">Solve for time, rate or doubling</div><h2 id="word-problems-heading">Population growth word-problem solver</h2><p>Pick the question your problem asks: how long until the population reaches a number, what it will be after t years, how long it takes to double, or what growth rate turns one count into another. Percentages compound once a year; the continuous-rate answer is shown alongside.</p></div></div>
 {solver && <Exploration tool={solver}/>}
 </section>
+<ClassroomStrip/>
 <WorkedExamples items={examples} title="Population growth word problems, solved" intro="The questions students search for most, worked the way a teacher expects to see them. Load any of the first six into the solver above with its preset button."/>
 <AdSlot type="rectangle" />
 <section class="explanation" aria-labelledby="growth-models-heading">

@@ -15,6 +15,8 @@ A complete static Astro website for interactive biology. All calculations run in
 - Practice studio: eight-question rounds drawn from 100 questions across cells, genetics, molecular biology, ecology, and physiology, with explanations, mistake review, focused retries, and device-local best scores.
 - Worksheet builder with 8, 12, or 20 questions and an optional answer key.
 - Printable diagrams: animal and plant cells to label, Punnett square grids, and a pedigree chart, with answer keys, SVG download, and print/PDF.
+- Classroom kit: a teacher hub at `/teachers/` and twelve printable one-page student activities, at `/tools/<slug>/activity/` for explorers, `/<calculator>/activity/` for the five top-level calculators and the codon chart, and `/cells/activity/` for the cell atlas. Each has a goal, grade band, time, steps that use the tool's own presets, a results table, and 5–7 questions. Teacher answer keys live at `/teachers/answers/<id>/` (noindex, out of the sitemap, no ads, linked only from the hub). Activity content is in `src/lib/activities.mjs`: answer-key tables are the tools' own readouts, and `tests/activities.test.mjs` checks every number printed in a question or answer against the calculation modules and every preset a step names against the tool. NGSS connections are listed only where an activity clearly fits.
+- Share to Google Classroom links (`src/components/ClassroomShare.astro`) on tools, calculators, the cell atlas, lessons, activities, and the teacher hub, inside a teacher strip (`ClassroomStrip.astro`) that also links the tool's activity. They are plain links to `classroom.google.com/share?url=…` with `?classroom=1` added to the shared URL; canonical tags stay clean.
 - Searchable catalog of every tool and collection, and prerendered FAQs (with FAQPage structured data) on the homepage, every calculator, the codon chart, the cell atlas, every organelle page, and the printables page. Tool, organelle, lesson, and flagship pages also emit BreadcrumbList structured data.
 
 ## Development
@@ -47,7 +49,7 @@ Banner ads come from Adsterra. `src/lib/ads.mjs` holds the production `domain`, 
 - `rectangle` (300×250): on detail pages (tools, cells, lessons, and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), after the interactive tool or the first main content block.
 - `native`: near the end of the longer detail pages (cell organelles and the Punnett, DNA, codon chart, population growth, and Hardy–Weinberg calculators), before the FAQ. Tool and lesson pages skip it because it would sit right next to another ad.
 
-Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. Students who arrive from Google Classroom, Canvas, or Schoology (or through a link carrying `?classroom`) browse ad-free on that device for 30 days: `src/components/AdFree.astro` runs in the page head and marks the page `ad-free` before anything renders, so `AdSlot` neither shows nor loads ads. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
+Ad scripts load only on the production hostname (so local and preview builds stay ad-free), only when a slot nears the viewport, and one banner at a time, because Adsterra's banner snippets share a global `atOptions`. Slots are hidden when printing. Students who arrive from Google Classroom, Canvas, or Schoology (or through a link carrying `?classroom`, which the Share to Google Classroom links add) browse ad-free on that device for 30 days: `src/components/AdFree.astro` runs in the page head and marks the page `ad-free` before anything renders, so `AdSlot` neither shows nor loads ads. The teacher hub and answer keys pass `ads={false}`, so they never show ads; activity pages show only the layout's leaderboard, on screen and never in print. `/privacy/` explains analytics and advertising to visitors; update it if ad partners change.
 
 ## Deploy to Cloudflare Workers (Git integration)
 
@@ -97,6 +99,7 @@ Google Fonts supplies DM Sans and Manrope; system fonts are fallbacks. Calculato
 - `src/lib/genetics.mjs`, `molecular.mjs`, `population.mjs`: independently tested biology calculations.
 - `src/lib/tools/*.mjs`: one module per generic explorer (`definition`, `explore`, `diagram`), registered in `src/lib/explorations.mjs`. Explorers listed there as `embedded` (the population word-problem solver) render inside a flagship page and get no `/tools/` route or catalog card.
 - `src/lib/organelles.mjs`, `lessons.mjs`, `practice.mjs`, `faqs.mjs`, `catalog.mjs`: editorial content and site map.
+- `src/lib/activities.mjs`: classroom activities and answer keys, computed with the same modules as the tools.
 - `src/lib/format.mjs`, `svg.mjs`: shared formatting, validation, palette, and SVG chart helpers.
 - `src/components`: Astro markup and progressively enhanced custom elements.
 - `src/pages`: prerendered routes.

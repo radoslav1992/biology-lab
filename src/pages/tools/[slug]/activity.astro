@@ -1,0 +1,8 @@
+---
+import ActivitySheet from '../../../components/ActivitySheet.astro';
+import { activities } from '../../../lib/activities.mjs';
+// Activities for the /tools/<slug>/ explorers live at /tools/<slug>/activity/.
+export function getStaticPaths() { return activities.filter(act => act.path.startsWith('/tools/')).map(act => ({ params: { slug: act.path.split('/')[2] }, props: { act } })); }
+const { act } = Astro.props;
+---
+<ActivitySheet act={act}/>

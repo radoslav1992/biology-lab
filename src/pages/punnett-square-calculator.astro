@@ -1,5 +1,6 @@
 ---
 import AdSlot from '../components/AdSlot.astro';
+import ClassroomStrip from '../components/ClassroomStrip.astro';
 import Faq from '../components/Faq.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
@@ -16,6 +17,7 @@ const classics = [
 <Layout title="Punnett Square Calculator: Genotype & Phenotype Ratios" section="Punnett square" breadcrumbs={[['Tools', '/tools/'], ['Punnett square calculator', '/punnett-square-calculator/']]} description="Free Punnett square calculator for monohybrid (2x2), dihybrid (4x4), and ABO blood type crosses: genotype and phenotype ratios, probabilities, and steps.">
 <div class="intro"><div><div class="eyebrow">Genetics, one cross at a time</div><h1>Punnett Square Calculator</h1><p>Type two parent genotypes. We’ll form the gametes, fill the square, and count the odds for every child.</p></div></div>
 <PunnettSquare/>
+<ClassroomStrip/>
 <AdSlot type="rectangle" />
 <div class="explanation">
   <h2>How to read a Punnett square</h2>
