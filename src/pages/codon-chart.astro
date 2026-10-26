@@ -1,5 +1,6 @@
 ---
 import AdSlot from '../components/AdSlot.astro';
+import ClassroomStrip from '../components/ClassroomStrip.astro';
 import CodonChart from '../components/CodonChart.astro';
 import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
@@ -30,6 +31,7 @@ const examples = [
   <p>Read a codon from its 5′ end. Find the first base in the left column, the second base in the next column, and the third base along the top. The cell where they meet is the amino acid. {64 - STOP_CODONS.length} codons code for the 20 amino acids and 3 are stop signals.</p>
   <CodonChart/>
 </section>
+<ClassroomStrip/>
 <AdSlot type="rectangle" />
 <section class="explanation" aria-labelledby="amino-heading">
   <h2 id="amino-heading">Amino acid to codon table</h2>

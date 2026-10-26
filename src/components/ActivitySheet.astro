@@ -1,0 +1,18 @@
+---
+// A printable one-page student activity (activities.mjs), shared by the tool, calculator and cell-atlas activity routes.
+// On screen it shows the Layout's leaderboard only; print CSS reduces the page to the sheet itself.
+import Layout from '../layouts/Layout.astro';
+import ActivityTable from './ActivityTable.astro';
+import ClassroomShare from './ClassroomShare.astro';
+import { standards } from '../lib/activities.mjs';
+import { site } from '../lib/site.mjs';
+const { act } = Astro.props;
+const url = new URL(act.path, Astro.site).href;
+const host = new URL(site.url).hostname;
+const inCells = act.tool.href === '/cells/';
+const crumbs = inCells ? [['Cell organelles', '/cells/']] : [['Tools', '/tools/'], [act.tool.name, act.tool.href]];
+const description = `Free printable ${act.title.replace(/ Activity$/, '')} activity for ${act.grade.toLowerCase()}: ${act.minutes} minutes with our interactive tool, a results table and ${act.questions.length} questions. No sign-up.`;
+const schema = { '@context': 'https://schema.org', '@type': 'LearningResource', name: act.title, description: act.goal, url, learningResourceType: 'Worksheet', educationalLevel: act.grade, timeRequired: `PT${act.minutes}M`, isAccessibleForFree: true, inLanguage: 'en', publisher: { '@type': 'Organization', name: site.name, url: site.url + '/' }, ...(act.standards.length ? { educationalAlignment: act.standards.map(code => ({ '@type': 'AlignmentObject', alignmentType: 'educationalSubject', educationalFramework: 'Next Generation Science Standards', targetName: code, description: standards[code] })) } : {}) };
+---
+<Layout title={`${act.title}: Free Printable for Class`} description={description} section={inCells ? 'Cells' : 'Tools'} schema={schema} breadcrumbs={[...crumbs, ['Classroom activity', act.path]]}><article class="activity-sheet"><div class="breadcrumb"><a href={act.tool.href}>{act.tool.name}</a> / Classroom activity</div><header class="activity-head"><div><div class="eyebrow">Student activity · {act.grade} · about {act.minutes} minutes</div><h1>{act.title}</h1></div><div class="name-lines" aria-hidden="true"><span>Name</span><span>Class</span><span>Date</span></div></header><p class="activity-goal"><strong>Goal:</strong> {act.goal}</p><p class="activity-meta">Open the tool at <strong>{host}{act.tool.href}</strong>{act.standards.length > 0 && <span> · Connects to NGSS {act.standards.join(', ')}</span>}</p><div class="activity-actions no-print"><button class="primary" type="button" data-print>Print activity</button><a class="secondary" href={act.tool.href}>Open the tool <span aria-hidden="true">↗</span></a><ClassroomShare url={url}/></div><h2>What to do</h2><ol class="activity-steps">{act.steps.map(step => <li>{step}</li>)}</ol><h2>Record your results</h2><ActivityTable act={act}/><h2>Questions</h2><ol class="activity-questions">{act.questions.map(q => <li><p>{q.q}</p><div class="write-lines" aria-hidden="true">{Array.from({ length: q.lines }, () => <span/>)}</div></li>)}</ol><p class="activity-foot">Free from {site.name} · {host}{act.standards.length > 0 && <span class="no-print"> · {act.standards.map(code => `${code}: ${standards[code]}`).join(' ')}</span>}</p></article></Layout>
+<script>document.querySelector('[data-print]')?.addEventListener('click', () => print());</script>

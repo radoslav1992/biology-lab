@@ -1,0 +1,9 @@
+---
+import ActivitySheet from '../../components/ActivitySheet.astro';
+import { activities } from '../../lib/activities.mjs';
+// Activities for the top-level calculators (e.g. /punnett-square-calculator/) live at /<calculator>/activity/.
+// Tool and cell-atlas activities have their own routes.
+export function getStaticPaths() { return activities.filter(act => act.path.split('/').length === 4 && !act.path.startsWith('/cells/')).map(act => ({ params: { calculator: act.path.split('/')[1] }, props: { act } })); }
+const { act } = Astro.props;
+---
+<ActivitySheet act={act}/>

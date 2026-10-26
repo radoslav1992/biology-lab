@@ -5,7 +5,9 @@ import { site } from '../lib/site.mjs';
 import { learningApps, currentApp } from '../lib/learning-apps.mjs';
 import AdSlot from '../components/AdSlot.astro';
 import AdFree from '../components/AdFree.astro';
-const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', noindex = false, breadcrumbs = [], ads = true } = Astro.props;
+import ConsentDefaults from '../components/ConsentDefaults.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
+const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', schema: customSchema, noindex = false, breadcrumbs = [], ads = true } = Astro.props;
 const toolSections = ['Punnett square', 'DNA translator', 'Population growth', 'Hardy-Weinberg'];
 const activeSection = toolSections.includes(section) ? 'Tools' : section;
 const url = new URL(Astro.url.pathname, Astro.site);
@@ -13,13 +15,14 @@ const sisterApps = learningApps.filter(app => app.id !== currentApp && app.url);
 const isHome = Astro.url.pathname === '/';
 // Append the brand only while the tag stays within typical search-snippet width and the title does not already name it.
 const pageTitle = title.includes(site.name) || title.length + site.name.length + 3 > 70 ? title : `${title} | ${site.name}`;
-const nav = [['Explore', '/'], ['Tools', '/tools/'], ['Cells', '/cells/'], ['Practice', '/practice/'], ['Printables', '/printable-diagrams/'], ['Learn', '/learn/']];
+const nav = [['Explore', '/'], ['Tools', '/tools/'], ['Cells', '/cells/'], ['Practice', '/practice/'], ['Printables', '/printable-diagrams/'], ['Learn', '/learn/'], ['Teachers', '/teachers/']];
 const org = { '@type': 'Organization', name: site.name, url: site.url + '/' };
-const schema = schemaType === 'Article'
+// schema: a page's own JSON-LD object (e.g. a LearningResource) in place of the one built from schemaType.
+const schema = customSchema ?? (schemaType === 'Article'
   ? { '@context': 'https://schema.org', '@type': 'Article', headline: title, description, url: url.href, mainEntityOfPage: url.href, author: org, publisher: org, isAccessibleForFree: true, inLanguage: 'en' }
   : schemaType === 'CollectionPage'
     ? { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: url.href, isAccessibleForFree: true, inLanguage: 'en', publisher: org }
-    : { '@context': 'https://schema.org', '@type': 'WebApplication', name: title, url: url.href, description, applicationCategory: 'EducationalApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', isAccessibleForFree: true, inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, publisher: org };
+    : { '@context': 'https://schema.org', '@type': 'WebApplication', name: title, url: url.href, description, applicationCategory: 'EducationalApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', isAccessibleForFree: true, inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, publisher: org });
 // breadcrumbs: [[name, path], …] for the trail after Home, e.g. [['Tools', '/tools/'], ['Cell size', '/tools/cell-size/']].
 const trail = breadcrumbs.length ? { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [['Home', '/'], ...breadcrumbs].map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: new URL(path, site.url).href })) } : null;
 const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: site.url + '/', description: site.defaultDescription, inLanguage: 'en', publisher: org };
@@ -27,7 +30,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><AdFree/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><AdFree/><ConsentDefaults/>
   <title>{pageTitle}</title>
   <meta name="description" content={description}/><link rel="canonical" href={url}/>
   {noindex ? <meta name="robots" content="noindex,follow"/> : <meta name="robots" content="index,follow,max-image-preview:large"/>}
@@ -52,6 +55,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   <header class="site-header"><a href="/" class="brand" aria-label={`${site.name} home`}><img src="/favicon.svg" width="37" height="37" alt=""/><span>biology<span class="brand-light">lab</span><small>{site.tagline}</small></span></a><nav aria-label="Main navigation">{nav.map(([label, href]) => <a href={href} class:list={{ active: activeSection === label }} aria-current={activeSection === label ? 'page' : undefined}>{label}</a>)}</nav><a href="/worksheets/" class="header-learn">Worksheets <span aria-hidden="true">↗</span></a></header>
   <main id="main" tabindex="-1"><slot/></main>
   {ads && <AdSlot type="leaderboard" />}
-  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/privacy/">Privacy</a><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><nav class="footer-apps" aria-label="More free learning apps"><strong>More free learning apps</strong>{sisterApps.map(app => <a href={app.url + '/'}>{app.name}</a>)}</nav><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
+  <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/teachers/">For teachers</a><a href="/privacy/">Privacy</a><button type="button" class="footer-link-button" data-cookie-settings>Cookie settings</button><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><nav class="footer-apps" aria-label="More free learning apps"><strong>More free learning apps</strong>{sisterApps.map(app => <a href={app.url + '/'}>{app.name}</a>)}</nav><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
+  <ConsentBanner/>
 </body>
 </html>
