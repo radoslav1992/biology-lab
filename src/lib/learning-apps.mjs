@@ -73,6 +73,18 @@ export const learningApps = [
     "color": "#7c4733",
     "tint": "#f9e4d5",
     "path": "M16 49Q35 5 64 49 M16 49h48 M52 42l12 7-2-13"
+  },
+  {
+    "id": "earth",
+    "name": "Earth Science Lab",
+    "subject": "Earth science",
+    "url": "https://earthsciencelab.org",
+    "description": "Find an earthquake, move plates, carve a river, and follow water and rock through Earth’s cycles.",
+    "mark": "8.4",
+    "caption": "km per second of S–P lag",
+    "color": "#9a4424",
+    "tint": "#f5e4d6",
+    "path": "M12 40h12l4-14 6 26 5-36 6 30 4-12 4 6h15"
   }
 ];
 // Keyed by lesson slug. Only link to pages that are known to exist on the destination site.
@@ -120,6 +132,13 @@ export const relatedLearning = {
       "title": "Follow the light back to its source",
       "description": "Every leaf runs on sunlight. Explore the Sun, seasons, and day length that set how much energy reaches a plant.",
       "label": "Visit the Astronomy Lab"
+    },
+    {
+      "app": "earth",
+      "path": "/tools/water-cycle/",
+      "title": "Where does the water a plant drinks go next?",
+      "description": "Plants pull water up from the soil and release it as vapor through their leaves. Follow a droplet through transpiration and the rest of the water cycle in Earth Science Lab.",
+      "label": "Follow a water droplet"
     }
   ]
 };
