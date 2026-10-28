@@ -1,0 +1,50 @@
+---
+import AdSlot from '../../components/AdSlot.astro';
+import Cell3D from '../../components/Cell3D.astro';
+import ClassroomStrip from '../../components/ClassroomStrip.astro';
+import Faq from '../../components/Faq.astro';
+import Layout from '../../layouts/Layout.astro';
+import { faqs } from '../../lib/faqs.mjs';
+import { organelles, cellTypes } from '../../lib/organelles.mjs';
+// tests/cell3d.test.mjs checks these two against the snippet limits.
+const title = '3D Animal and Plant Cell Model: Interactive Organelles';
+const description = 'Turn a 3D animal and plant cell, pull it apart to watch each organelle float out with its label, and tap the nucleus or a chloroplast to learn what it does.';
+const prop = (slug, key) => organelles[slug].properties.find(p => p[0] === key)[1];
+---
+<Layout title={title} section="Cells" description={description} breadcrumbs={[['Cell organelles', '/cells/'], ['3D cell', '/cells/3d/']]}>
+<div class="breadcrumb"><a href="/cells/">Cell atlas</a> / 3D cell</div>
+<div class="intro"><div><div class="eyebrow">The cell atlas in 3D</div><h1>3D animal and plant cell</h1><p>An interactive cell model you can turn in your hands. Pull it apart and every organelle floats out with its name, open a window through the membrane to look inside, and tap any part to learn what it does. Switch to the plant cell to watch the wall, the central vacuole, and the chloroplasts appear.</p></div></div>
+<Cell3D/>
+<ClassroomStrip href="/cells/"/>
+<section class="explanation c3d-how"><h2>How to use the 3D cell</h2><ol>
+  <li><strong>Turn it.</strong> Drag the cell, or click it and use the arrow keys. Pinch or scroll to zoom once you have clicked the model; on a phone, swipe sideways to turn and up or down to keep scrolling the page.</li>
+  <li><strong>Pull it apart.</strong> Slide <em>Explode</em> to the right. The membrane opens like a shell, each kind of organelle drifts out in its own direction, and a dashed line shows where it came from.</li>
+  <li><strong>Look inside.</strong> <em>Cutaway</em> removes the slice of membrane (and cell wall) facing you and opens the nucleus, so you can see the nucleolus without pulling anything apart.</li>
+  <li><strong>Learn a part.</strong> Tap an organelle, or pick it from the list beside the model, to light it up and read its job, its size, and how many a cell holds, with a link to its full page.</li>
+  <li><strong>Share what you see.</strong> <em>Copy share link</em> saves the cell, the selected organelle, and the explode setting, so a link can open straight onto the chloroplast of a half-exploded plant cell.</li>
+</ol></section>
+<section class="explanation"><h2>Animal cell vs plant cell in 3D</h2><p>{cellTypes.animal.description} {cellTypes.plant.description} Here is what to look for when you switch between the two models.</p><ul>
+  <li><strong>Shape.</strong> The animal cell is a soft, slightly lumpy ball; the plant cell is a box with rounded corners, because its wall fixes its outline and lets it fit its neighbors like a brick.</li>
+  <li><strong>Cell wall.</strong> The green outer box is the cellulose wall, typically 0.1–10 µm thick, outside the membrane. Explode the plant cell and the wall lifts away separately from the thin membrane inside it.</li>
+  <li><strong>Central vacuole.</strong> The big glassy blue sac in the middle of the plant cell can fill 80–90% of its volume. Its pressure against the wall (turgor) is what holds a plant upright, and it pushes everything else into a thin layer of cytoplasm.</li>
+  <li><strong>Chloroplasts.</strong> Green lens shapes line the plant cell’s cytoplasm. Each is cut open on one side to show what is inside: {prop('chloroplast', 'Membranes').charAt(0).toLowerCase() + prop('chloroplast', 'Membranes').slice(1)}. A leaf cell has {prop('chloroplast', 'Number per cell').match(/\d+–\d+/)[0]} of them.</li>
+  <li><strong>Centrioles and lysosomes.</strong> Only the animal cell has the pair of centrioles at right angles beside the nucleus and the scattered coral-colored lysosomes. Plant cells divide without centrioles and digest mostly inside the vacuole.</li>
+  <li><strong>What both share.</strong> A nucleus wrapped in rough ER, smooth ER tubules, mitochondria, ribosomes, and the Golgi apparatus. The plant cell shows two small Golgi stacks because plant cells have {prop('golgi-apparatus', 'Number per cell').split('; ')[1].replace(' in plant cells', '')} instead of one ribbon.</li>
+</ul></section>
+<AdSlot type="rectangle" />
+<section class="explanation"><h2>What the 3D model simplifies</h2><p>A model has to bend the truth to fit on a screen. Knowing where it does is part of reading it well.</p><ul>
+  <li><strong>It is not to scale.</strong> A ribosome is about 20–30 nm across and the cell membrane only 7–8 nm thick, while an animal cell is 10–30 µm wide, roughly 300 to 1,500 times the width of a ribosome. Drawn to scale, the ribosomes would be invisible specks and the membrane a line far thinner than a hair on the screen.</li>
+  <li><strong>The numbers are cut down.</strong> The model shows a handful of mitochondria and a few hundred ribosomes. A real liver cell holds about 1,000–2,000 mitochondria, a mammalian cell several million ribosomes, and a leaf cell 30–100 chloroplasts.</li>
+  <li><strong>The colors are a code.</strong> Inside a living cell most organelles are close to colorless, which is why biologists stain them. The colors here match the site’s 2D diagram so you can move between the two. Chloroplasts are the honest exception: chlorophyll really is green.</li>
+  <li><strong>The ER is one piece.</strong> Rough and smooth ER are drawn as separate parts so you can pull them apart, but in a cell they are regions of one continuous membrane, and the outer membrane of the nuclear envelope runs straight into the rough ER.</li>
+  <li><strong>Nothing in a real cell sits still.</strong> Organelles are carried along the cytoskeleton, vesicles shuttle between the ER, Golgi, and membrane, and the lipids of the membrane drift so fast that one can travel the length of a bacterium in about a second.</li>
+  <li><strong>Some parts are left out.</strong> The cytoskeleton, peroxisomes, and most transport vesicles are missing, and the cytoplasm is far more crowded than the open space in the model.</li>
+  <li><strong>No one can open a cell like this.</strong> The cutaway and the explode slider are imaginary. Biologists see inside cells by cutting very thin slices and photographing them with an electron microscope, which is how the ER was first seen in 1945 and ribosomes in 1955.</li>
+</ul></section>
+<div class="related"><a href="/cells/">See the labeled 2D cell diagram ↗</a><a href="/printable-diagrams/">Print a cell to label ↗</a><a href="/tools/cell-size/">Why cells stay small: surface area to volume ↗</a><a href="/learn/cell-theory/">Read the lesson: cell theory ↗</a><a href="/practice/">Practice cell questions ↗</a></div>
+<Faq items={faqs['cells-3d']} title="3D cell model: common questions"/>
+</Layout>
+<style>
+.c3d-how ol{padding-left:22px}
+.c3d-how li,.explanation li{margin-bottom:8px}
+</style>

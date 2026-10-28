@@ -1,0 +1,346 @@
+---
+// The explodable 3D animal and plant cell on /cells/3d/. The labeled 2D CellDiagram is the poster until the 3D model
+// loads, and stays as the fallback when WebGL is unavailable. Three.js and the models load with a dynamic import when
+// the viewer is about to be seen (or on the Load button), so the page's own script stays small.
+// Everything in the list and the info card is rendered here from organelles.mjs (via cell3d.mjs), so it also works
+// without the 3D model.
+import CellDiagram from './CellDiagram.astro';
+import { CELL_KINDS, cellStructures, structureInfo } from '../lib/cell3d.mjs';
+import { cellTypes } from '../lib/organelles.mjs';
+const { kind = 'animal' } = Astro.props;
+const KIND = CELL_KINDS.includes(kind) ? kind : 'animal';
+const lists = CELL_KINDS.map(k => ({ kind: k, title: cellTypes[k].title, items: cellStructures(k) }));
+const ids = [...new Set(lists.flatMap(l => l.items.map(s => s.id)))];
+const infos = ids.map(id => structureInfo(id));
+const canvasLabel = k => `Interactive 3D model of ${k === 'plant' ? 'a plant' : 'an animal'} cell. Drag to turn it, or focus it and use the arrow keys; plus and minus zoom; Enter steps through the organelles; Escape clears the selection.`;
+---
+<cell-3d class="c3d" data-state="poster" data-cell={KIND}>
+  <div class="c3d-bench">
+    <div class="c3d-main">
+      <div class="c3d-top">
+        <span class="canvas-title"><span aria-hidden="true">◉</span> <span data-c3d-title>{cellTypes[KIND].title}</span> <span class="badge">3D</span></span>
+        <div class="pills c3d-kinds" role="group" aria-label="Cell type">{lists.map(l => <button type="button" class:list={['pill', { selected: l.kind === KIND }]} data-kind={l.kind} aria-pressed={String(l.kind === KIND)}>{l.title}</button>)}</div>
+      </div>
+      <div class="c3d-viewport">
+        <div class="c3d-stage" data-stage>
+          <div class="c3d-poster" data-poster><CellDiagram poster interactive kind={KIND}/></div>
+          <canvas class="c3d-canvas" data-canvas tabindex="0" role="img" aria-label={canvasLabel(KIND)} hidden></canvas>
+          <div class="c3d-labels" data-labels aria-hidden="true"></div>
+          <p class="c3d-hint" data-hint aria-hidden="true">Drag to turn · pinch or scroll to zoom · tap an organelle</p>
+          <p class="c3d-keys" aria-hidden="true">Arrows turn · + and − zoom · Enter: next organelle · Esc: clear</p>
+          <div class="c3d-gate" data-gate>
+            <button type="button" class="c3d-load" data-load><span aria-hidden="true">▶</span> Load the 3D cell</button>
+            <p class="c3d-msg c3d-msg-loading" role="status" data-loading-msg>Building the cell…</p>
+            <p class="c3d-msg c3d-msg-nogl">This browser can’t draw 3D graphics right now (WebGL is turned off or not supported), so here is the labeled diagram instead. Tap any numbered organelle to open its page, or pick one from the list to read about it.</p>
+          </div>
+          <noscript><style is:inline>.c3d-gate,.c3d-toolbar .c3d-range,.c3d-toolbar .c3d-toggles,.c3d-hint{display:none!important}</style><p class="c3d-noscript">The 3D model needs JavaScript. The labeled diagram still works: every numbered organelle links to its own page.</p></noscript>
+        </div>
+        <div class="c3d-card" data-card hidden>
+          {infos.map(s => <article class="c3d-info" data-info={s.id} data-name={s.name} data-type={s.type} hidden aria-labelledby={`c3d-info-${s.id}`}>
+            <div class="c3d-info-head"><span class="c3d-swatch" style={`--c:${s.color}`} aria-hidden="true"></span><div><h3 id={`c3d-info-${s.id}`}>{s.title}</h3><p class="c3d-type">{s.type}</p></div></div>
+            <p class="c3d-intro">{s.intro}</p>
+            <dl class="c3d-rows">{s.rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+            <a class="text-link c3d-more" href={s.href}>{s.cta} →</a>
+          </article>)}
+          <button type="button" class="c3d-close" data-close aria-label="Close the organelle card">×</button>
+        </div>
+      </div>
+      <div class="c3d-toolbar" data-toolbar>
+        <label class="c3d-range"><span>Explode</span><input type="range" min="0" max="1" step="0.01" value="0" data-explode aria-valuetext="Assembled" disabled/></label>
+        <div class="c3d-toggles">
+          <button type="button" class="pill selected" data-cut aria-pressed="true" disabled>Cutaway</button>
+          <button type="button" class="pill selected" data-labels-toggle aria-pressed="true" disabled>Labels</button>
+          <button type="button" class="pill" data-reset disabled>Reset view</button>
+          <button type="button" class="pill" data-share>Copy share link</button>
+        </div>
+        <span class="c3d-copied" data-copied role="status"></span>
+      </div>
+    </div>
+    <div class="c3d-side">
+      <h2 class="c3d-side-title">Organelles in this cell</h2>
+      <p class="small-note">Pick one to highlight it in the model and read what it does.</p>
+      {lists.map(l => <ul class="c3d-list" data-list={l.kind} hidden={l.kind !== KIND} aria-label={`${l.title} structures`}>{l.items.map(s => <li><button type="button" data-select={s.id} data-name={s.name} data-color={s.color} aria-pressed="false"><span class="c3d-swatch" style={`--c:${s.color}`} aria-hidden="true"></span><span class="c3d-item"><strong>{s.name}</strong><small>{s.slug ? s.type.split('·')[0].trim() : 'Not in the atlas'}</small></span></button></li>)}</ul>)}
+    </div>
+  </div>
+  <p class="c3d-sr" aria-live="polite" data-live></p>
+</cell-3d>
+<style is:global>
+.c3d{display:block;--c3d-stage-h:clamp(420px,64vh,640px)}
+.c3d-bench{display:grid;grid-template-columns:minmax(0,1fr) 300px;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 8px 32px #17322608}
+.c3d-main{min-width:0;display:flex;flex-direction:column}
+.c3d-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.c3d-kinds{gap:6px;flex-wrap:nowrap}
+.c3d-kinds .pill{min-height:38px;white-space:nowrap}
+.c3d-viewport{position:relative}
+.c3d-stage{position:relative;height:var(--c3d-stage-h);overflow:hidden;background:radial-gradient(ellipse 70% 65% at 50% 45%,#215c42 0%,#153f2f 55%,#0d2b20 100%);color:#f4faef}
+.c3d-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none;cursor:grab;opacity:0;transition:opacity .6s}
+.c3d-canvas:active{cursor:grabbing}
+.c3d-canvas:focus-visible{box-shadow:inset 0 0 0 3px #de793f}
+.c3d[data-state=ready] .c3d-canvas{opacity:1}
+.c3d-poster{position:absolute;inset:22px;display:grid;place-items:center;transition:opacity .5s}
+.c3d-poster .cell-poster{width:100%;height:100%;display:grid;place-items:center}
+.c3d-poster .cell-poster[hidden]{display:none}
+.c3d-poster svg{width:100%;height:100%;max-height:100%;background:#f8fbf9;border-radius:14px;box-shadow:0 10px 40px #04140d55}
+.c3d-poster svg text{fill:var(--ink)}
+.c3d-poster a[data-organelle].is-lit .cell-shape{stroke:#e2703a;stroke-width:4px}
+.c3d-poster a[data-organelle].is-lit{filter:drop-shadow(0 0 6px rgba(226,112,58,.6))}
+.c3d[data-state=ready] .c3d-poster{opacity:0;visibility:hidden;transition:opacity .5s,visibility 0s .5s}
+.c3d[data-state=loading] .c3d-poster{opacity:.45}
+.c3d-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.c3d[data-state=nogl] .c3d-labels{display:none}
+.c3d[data-state=poster] .c3d-labels,.c3d[data-state=loading] .c3d-labels{visibility:hidden}
+.c3d-label{position:absolute;left:0;top:0;display:inline-flex;align-items:center;gap:6px;min-height:0;height:auto;margin:0;padding:4px 10px 4px 7px;border-radius:999px;border:1px solid #ffffff;background:#ffffffeb;color:#173226;font:600 12.5px/1.2 'DM Sans',sans-serif;white-space:nowrap;box-shadow:0 3px 12px #03120b40;pointer-events:auto;cursor:pointer;transition:opacity .2s;will-change:transform}
+.c3d-callouts{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.c3d-callouts path{fill:none;stroke:#f4faef;stroke-width:1.4;stroke-opacity:.8;stroke-linejoin:round}
+.c3d-callouts circle{fill:#f4faef;stroke:#123e2e;stroke-width:1}
+.c3d-callouts .is-selected path{stroke:#ffb48a;stroke-width:2;stroke-opacity:1}
+.c3d-callouts .is-selected circle{fill:#e2703a;stroke:#fff}
+.c3d-label:hover,.c3d-label.is-hovered{background:#fff}
+.c3d-label.is-selected{background:#e2703a;border-color:#fff;color:#fff}
+.c3d-dot,.c3d-swatch{flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 0 1.5px #ffffffcc,0 0 0 2.5px #17322633}
+.c3d-label.is-selected .c3d-dot{box-shadow:0 0 0 1.5px #fff}
+.c3d-hint,.c3d-keys{position:absolute;left:16px;top:14px;margin:0;padding:6px 11px;border-radius:999px;background:#0b241acc;color:#e6f2e8;font-size:12px;line-height:1.3;pointer-events:none;transition:opacity .4s;max-width:calc(100% - 32px)}
+.c3d-keys{opacity:0}
+.c3d-canvas:focus-visible~.c3d-keys{opacity:1}
+.c3d-canvas:focus-visible~.c3d-hint,.c3d.is-touched .c3d-hint,.c3d:not([data-state=ready]) .c3d-hint,.c3d-viewport:has(.c3d-card:not([hidden])) .c3d-hint{opacity:0}
+.c3d-gate{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;padding:20px;text-align:center;pointer-events:none}
+.c3d-gate>*{pointer-events:auto}
+.c3d-load{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;padding:14px 24px;background:#d0ed9a;color:#123e2e;font-size:16px;font-weight:700;box-shadow:0 10px 30px #04140d70}
+.c3d-load:hover{background:#e0f5b8}
+.c3d-msg{margin:0;max-width:440px;padding:12px 16px;border-radius:12px;background:#0b241ae6;color:#f4faef;font-size:14px;line-height:1.55}
+.c3d-msg-loading,.c3d-msg-nogl{display:none}
+.c3d[data-state=loading] .c3d-msg-loading{display:block}
+.c3d[data-state=loading] .c3d-load,.c3d[data-state=ready] .c3d-gate,.c3d[data-state=nogl] .c3d-load{display:none}
+.c3d[data-state=nogl] .c3d-gate{place-content:end center;padding-bottom:16px}
+.c3d[data-state=nogl] .c3d-msg-nogl{display:block;background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px #0b241a30}
+.c3d[data-state=nogl] .c3d-stage{background:#eef5ee;height:auto;min-height:var(--c3d-stage-h)}
+.c3d[data-state=nogl] .c3d-poster{position:relative;inset:auto;padding:18px 18px 130px}
+.c3d[data-state=nogl] .c3d-poster svg{box-shadow:none;border:1px solid var(--line)}
+.c3d-stage noscript{display:contents}
+.c3d-noscript{position:absolute;left:16px;right:16px;bottom:16px;margin:0;padding:10px 14px;border-radius:10px;background:#fff;color:var(--ink);font-size:14px}
+.c3d-card{position:absolute;left:14px;bottom:14px;z-index:2;width:min(360px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 18px 50px #03120b59;padding:18px 18px 16px;color:var(--ink)}
+.c3d-card[hidden]{display:none}
+.c3d-info-head{display:flex;gap:11px;align-items:flex-start;padding-right:26px}
+.c3d-info-head .c3d-swatch{width:14px;height:14px;margin-top:6px}
+.c3d-info h3{margin:0;font-size:19px;letter-spacing:-.02em;line-height:1.25}
+.c3d-type{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.c3d-intro{margin:12px 0 10px;font-size:14px;line-height:1.6;color:var(--ink)}
+.c3d-rows{margin:0 0 12px;display:grid;gap:7px}
+.c3d-rows div{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:13px;line-height:1.45;padding-top:7px;border-top:1px solid #e3ece4}
+.c3d-rows dt{font-weight:700;color:var(--ink)}
+.c3d-rows dd{margin:0;color:var(--muted)}
+.c3d-more{font-weight:700}
+.c3d-close{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:20px;line-height:1}
+.c3d-close:hover{border-color:var(--green);color:var(--green)}
+.c3d-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding:14px 22px;border-top:1px solid var(--line);background:#f8faf5}
+.c3d-range{display:flex;align-items:center;gap:12px;flex:1 1 240px;font-size:14px;font-weight:700;color:var(--ink)}
+.c3d-range input{flex:1;min-width:0;accent-color:#2f8a5b;height:28px}
+.c3d-toggles{display:flex;flex-wrap:wrap;gap:7px}
+.c3d-toggles .pill{min-height:38px}
+.c3d-toggles .pill:disabled,.c3d-range input:disabled{opacity:.5;cursor:default}
+.c3d-copied{font-size:13px;color:var(--green);font-weight:600;min-height:1em}
+.c3d-copied input{width:min(100%,360px);font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px}
+.c3d[data-state=nogl] [data-explode],.c3d[data-state=nogl] .c3d-range,.c3d[data-state=nogl] [data-cut],.c3d[data-state=nogl] [data-labels-toggle],.c3d[data-state=nogl] [data-reset]{display:none}
+.c3d-side{padding:20px 18px;border-left:1px solid var(--line);background:#f8faf5;min-width:0}
+.c3d-side-title{font-size:16px;letter-spacing:0;margin:0}
+.c3d-side .small-note{margin:6px 0 14px}
+.c3d-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.c3d-list[hidden]{display:none}
+.c3d-list button{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:7px 10px;min-height:44px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);transition:background .15s,border-color .15s}
+.c3d-list button:hover{background:#fff;border-color:var(--line)}
+.c3d-list button[aria-pressed=true]{background:#fff1e8;border-color:#e2703a}
+.c3d-item{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.c3d-item strong{font-size:14px}
+.c3d-item small{font-size:11.5px;color:var(--muted)}
+.c3d-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media(max-width:1000px){.c3d-bench{grid-template-columns:minmax(0,1fr) 250px}}
+@media(max-width:800px){
+  .c3d{--c3d-stage-h:min(112vw,470px)}
+  .c3d-bench{grid-template-columns:1fr}
+  .c3d-top{padding:12px 14px}
+  .c3d-kinds{width:100%}
+  .c3d-kinds .pill{flex:1}
+  .c3d-card{position:relative;left:auto;bottom:auto;width:auto;max-height:none;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line);padding:16px}
+  .c3d-hint,.c3d-keys{left:10px;top:10px;font-size:11.5px;max-width:calc(100% - 20px)}
+  .c3d-toolbar{padding:12px 14px;gap:10px}
+  .c3d-toggles{width:100%}
+  .c3d-toggles .pill{flex:1 1 auto}
+  .c3d-side{border-left:0;border-top:1px solid var(--line);padding:16px 14px}
+  .c3d-list{grid-template-columns:1fr 1fr}
+  .c3d-poster{inset:12px}
+  .c3d-label{font-size:11.5px;padding:3px 8px 3px 6px}
+}
+@media(max-width:380px){.c3d-list{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.c3d-canvas,.c3d-poster,.c3d-label{transition:none}}
+@media print{.c3d-stage{background:#fff;height:auto}.c3d-canvas,.c3d-labels,.c3d-gate,.c3d-hint,.c3d-keys,.c3d-toolbar,.c3d-card{display:none!important}.c3d-poster{position:static;opacity:1!important;visibility:visible!important}}
+</style>
+<script>
+import { parseShareState, serializeShareState, CELLS } from '../lib/cell3d-share.mjs';
+
+type Kind = 'animal' | 'plant';
+interface ViewerState { cell: Kind; explode: number; cut: boolean; labels: boolean; focus: string | null }
+interface Viewer {
+  setCell(kind: Kind): void; setExplode(v: number): void; setCut(on: boolean): void; setLabels(on: boolean): void;
+  select(id: string | null, opts?: { flyTo?: boolean }): void; resetView(): void; stopAutoRotate(): void; setInset(px: number): void;
+}
+// Analytics: the layout's global gtag, when present. Events carry only the cell, the structure, and the explode amount.
+const track = (name: string, params: Record<string, string | number>) => { try { (window as any).gtag?.('event', name, params); } catch { /* analytics must never break the page */ } };
+const debounce = <A extends unknown[]>(fn: (...a: A) => void, ms: number) => { let t: ReturnType<typeof setTimeout>; return (...a: A) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const idle = (fn: () => void) => ('requestIdleCallback' in window ? (window as any).requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 250));
+function hasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = (c.getContext('webgl2') || c.getContext('webgl')) as WebGLRenderingContext | null;
+    if (!gl) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch { return false; }
+}
+const explodeText = (v: number) => (v <= 0.001 ? 'Assembled' : v >= 0.999 ? 'Fully pulled apart' : `${Math.round(v * 100)}% pulled apart`);
+
+class Cell3DElement extends HTMLElement {
+  connectedCallback() {
+    const q = <T extends Element>(s: string) => this.querySelector(s) as T;
+    const qa = <T extends Element>(s: string) => Array.from(this.querySelectorAll(s)) as T[];
+    const stage = q<HTMLElement>('[data-stage]'), canvas = q<HTMLCanvasElement>('[data-canvas]'), labelLayer = q<HTMLElement>('[data-labels]');
+    const card = q<HTMLElement>('[data-card]'), live = q<HTMLElement>('[data-live]'), copied = q<HTMLElement>('[data-copied]');
+    const slider = q<HTMLInputElement>('[data-explode]'), cutBtn = q<HTMLButtonElement>('[data-cut]'), labelsBtn = q<HTMLButtonElement>('[data-labels-toggle]');
+    const kindBtns = qa<HTMLButtonElement>('[data-kind]'), selectBtns = qa<HTMLButtonElement>('[data-select]');
+    const panels = qa<HTMLElement>('[data-info]');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const initial = parseShareState(location.search);
+    const state: ViewerState = { cell: initial.cell as Kind, explode: initial.explode, cut: initial.cut, labels: true, focus: initial.focus };
+    const structures = Object.fromEntries((['animal', 'plant'] as Kind[]).map(k => [k, qa<HTMLButtonElement>(`[data-list="${k}"] [data-select]`).map(b => ({ id: b.dataset.select!, name: b.dataset.name!, color: b.dataset.color! }))]));
+    let viewer: Viewer | null = null, loading = false;
+    // On wide screens the card floats over the left of the stage, so the model shifts right to stay in view.
+    const updateInset = () => { viewer?.setInset(!card.hidden && getComputedStyle(card).position === 'absolute' ? card.offsetWidth + 14 : 0); };
+    addEventListener('resize', debounce(updateInset, 150));
+
+    // Keep the address bar shareable once the visitor changes something (other query parameters are left alone).
+    const syncUrl = debounce(() => {
+      const params = new URLSearchParams(location.search);
+      ['cell', 'focus', 'explode', 'cut'].forEach(k => params.delete(k));
+      new URLSearchParams(serializeShareState(state).slice(1)).forEach((v, k) => params.set(k, v));
+      history.replaceState(history.state, '', `${location.pathname}?${params}${location.hash}`);
+    }, 350);
+    const trackFocus = debounce((id: string) => track('cell3d_focus', { organelle: id, cell: state.cell }), 1200);
+    const trackExplode = debounce((v: number) => track('cell3d_explode', { value: Math.round(v * 10) / 10, cell: state.cell }), 1500);
+
+    const showCell = (kind: Kind) => {
+      this.dataset.cell = kind;
+      kindBtns.forEach(b => { const on = b.dataset.kind === kind; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      qa<HTMLElement>('[data-poster] [data-cell]').forEach(el => { el.hidden = el.dataset.cell !== kind; });
+      qa<HTMLElement>('[data-list]').forEach(el => { el.hidden = el.dataset.list !== kind; });
+      const active = kindBtns.find(b => b.dataset.kind === kind);
+      q<HTMLElement>('[data-c3d-title]').textContent = active?.textContent || '';
+      canvas.setAttribute('aria-label', canvas.getAttribute('aria-label')!.replace(/of an? \w+ cell/, `of ${kind === 'plant' ? 'a plant' : 'an animal'} cell`));
+    };
+    const showFocus = (id: string | null) => {
+      selectBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.select === id)));
+      panels.forEach(p => { p.hidden = p.dataset.info !== id; });
+      card.hidden = !id;
+      updateInset();
+      qa<SVGAElement>('[data-poster] a[data-organelle]').forEach(a => a.classList.toggle('is-lit', !!id && (a.dataset.organelle === id || (id.endsWith('-er') && a.dataset.organelle === 'endoplasmic-reticulum'))));
+      const panel = panels.find(p => p.dataset.info === id);
+      live.textContent = panel ? `${panel.dataset.name} selected: ${panel.dataset.type}.` : '';
+    };
+    const choose = (id: string | null, how = 'list') => {
+      if (id && !CELLS[state.cell].includes(id)) id = null;
+      if (id === state.focus && how !== 'list') return;
+      state.focus = id;
+      showFocus(id);
+      viewer?.select(id, { flyTo: how === 'list' || how === 'key' });
+      if (id) trackFocus(id);
+      syncUrl();
+    };
+    const chooseCell = (kind: Kind) => {
+      if (kind === state.cell) return;
+      state.cell = kind;
+      showCell(kind);
+      if (state.focus && !CELLS[kind].includes(state.focus)) { state.focus = null; showFocus(null); }
+      viewer?.setCell(kind);
+      viewer?.select(state.focus, { flyTo: false });
+      syncUrl();
+    };
+    const setReady = () => {
+      this.dataset.state = 'ready';
+      slider.disabled = cutBtn.disabled = labelsBtn.disabled = false;
+      q<HTMLButtonElement>('[data-reset]').disabled = false;
+      track('cell3d_open', { cell: state.cell });
+    };
+
+    // Controls that work with or without the 3D model.
+    kindBtns.forEach(b => b.addEventListener('click', () => chooseCell(b.dataset.kind as Kind)));
+    selectBtns.forEach(b => b.addEventListener('click', () => choose(b.getAttribute('aria-pressed') === 'true' ? null : b.dataset.select!, 'list')));
+    q<HTMLButtonElement>('[data-close]').addEventListener('click', () => {
+      const id = state.focus;
+      choose(null, 'list');
+      selectBtns.find(b => b.dataset.select === id && !b.closest('[hidden]'))?.focus();
+    });
+    slider.value = String(state.explode);
+    slider.setAttribute('aria-valuetext', explodeText(state.explode));
+    slider.addEventListener('input', () => {
+      state.explode = Number(slider.value);
+      slider.setAttribute('aria-valuetext', explodeText(state.explode));
+      viewer?.setExplode(state.explode);
+      trackExplode(state.explode);
+      syncUrl();
+    });
+    const setToggle = (btn: HTMLButtonElement, on: boolean) => { btn.setAttribute('aria-pressed', String(on)); btn.classList.toggle('selected', on); };
+    setToggle(cutBtn, state.cut);
+    cutBtn.addEventListener('click', () => { state.cut = !state.cut; setToggle(cutBtn, state.cut); viewer?.setCut(state.cut); syncUrl(); });
+    labelsBtn.addEventListener('click', () => { state.labels = !state.labels; setToggle(labelsBtn, state.labels); viewer?.setLabels(state.labels); });
+    q<HTMLButtonElement>('[data-reset]').addEventListener('click', () => viewer?.resetView());
+    q<HTMLButtonElement>('[data-share]').addEventListener('click', async () => {
+      const url = `${location.origin}${location.pathname}${serializeShareState(state)}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        copied.textContent = 'Link copied. It opens this cell, organelle and explode setting.';
+      } catch {
+        copied.innerHTML = '';
+        const input = Object.assign(document.createElement('input'), { value: url, readOnly: true });
+        input.setAttribute('aria-label', 'Share link');
+        copied.append(input);
+        input.select();
+      }
+    });
+    showCell(state.cell);
+    showFocus(state.focus);
+
+    // Load the 3D model when the viewer is about to be seen (or on request, e.g. with Data Saver on).
+    const load = async () => {
+      if (viewer || loading) return;
+      loading = true;
+      this.dataset.state = 'loading';
+      if (!hasWebGL()) { this.dataset.state = 'nogl'; return; }
+      try {
+        const { createViewer } = await import('../lib/cell3d-viewer.mjs');
+        canvas.hidden = false;
+        viewer = createViewer({
+          canvas, stage, labelLayer, structures, reducedMotion: reduced,
+          state: { ...state },
+          onSelect: (id: string | null, how: string) => choose(id, how),
+          onInteract: () => this.classList.add('is-touched'),
+          onReady: () => { setReady(); updateInset(); },
+          onError: () => { this.dataset.state = 'nogl'; canvas.hidden = true; },
+        }) as Viewer;
+      } catch (err) {
+        console.error(err);
+        canvas.hidden = true;
+        this.dataset.state = 'nogl';
+      }
+    };
+    q<HTMLButtonElement>('[data-load]').addEventListener('click', load);
+    const saveData = (navigator as any).connection?.saveData === true;
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        if (!entries.some(e => e.isIntersecting)) return;
+        io.disconnect();
+        if (!saveData) idle(load);
+      }, { rootMargin: '200px 0px' });
+      io.observe(stage);
+    } else if (!saveData) idle(load);
+  }
+}
+customElements.define('cell-3d', Cell3DElement);
+</script>
