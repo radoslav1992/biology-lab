@@ -183,7 +183,7 @@ type Kind = 'animal' | 'plant';
 interface ViewerState { cell: Kind; explode: number; cut: boolean; labels: boolean; focus: string | null }
 interface Viewer {
   setCell(kind: Kind): void; setExplode(v: number): void; setCut(on: boolean): void; setLabels(on: boolean): void;
-  select(id: string | null, opts?: { flyTo?: boolean }): void; resetView(): void; stopAutoRotate(): void; setInset(px: number): void;
+  select(id: string | null): void; resetView(): void; stopAutoRotate(): void; setInset(px: number): void;
 }
 // Analytics: the layout's global gtag, when present. Events carry only the cell, the structure, and the explode amount.
 const track = (name: string, params: Record<string, string | number>) => { try { (window as any).gtag?.('event', name, params); } catch { /* analytics must never break the page */ } };
@@ -251,7 +251,7 @@ class Cell3DElement extends HTMLElement {
       if (id === state.focus && how !== 'list') return;
       state.focus = id;
       showFocus(id);
-      viewer?.select(id, { flyTo: how === 'list' || how === 'key' });
+      viewer?.select(id);
       if (id) trackFocus(id);
       syncUrl();
     };
@@ -261,7 +261,7 @@ class Cell3DElement extends HTMLElement {
       showCell(kind);
       if (state.focus && !CELLS[kind].includes(state.focus)) { state.focus = null; showFocus(null); }
       viewer?.setCell(kind);
-      viewer?.select(state.focus, { flyTo: false });
+      viewer?.select(state.focus);
       syncUrl();
     };
     const setReady = () => {

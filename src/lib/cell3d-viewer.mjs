@@ -194,30 +194,15 @@ export function createViewer(o) {
       }
     }
   }
-  function select(id, { flyTo = true } = {}) {
+  // Selecting lights the structure up and pins its label; the camera stays put, so the whole cell remains in view.
+  function select(id) {
     if (state.selected === id) return;
     if (state.selected) highlight(state.selected, false);
     state.selected = id && cell.parts.has(id) ? id : null;
-    if (state.selected) {
-      highlight(state.selected, true);
-      if (flyTo) focusOn(state.selected);
-    }
+    if (state.selected) highlight(state.selected, true);
     for (const [pid, el] of labels) el.classList.toggle('is-selected', pid === state.selected);
     dirty = true;
   }
-  function focusOn(id) {
-    const part = cell.parts.get(id);
-    if (!part) return;
-    // A gentle nudge toward the structure: the orbit target moves a quarter of the way there, so the whole cell stays
-    // in view, and the camera keeps its distance.
-    const center = cell.root.localToWorld(part.anchor.point(explode.target, new THREE.Vector3()));
-    const toTarget = center.multiplyScalar(part.size > 9 ? 0 : 0.25);
-    const toPos = camera.position.clone().sub(controls.target).add(toTarget);
-    if (reducedMotion) { controls.target.copy(toTarget); camera.position.copy(toPos); controls.update(); }
-    else fly = { t: 0, dur: 0.7, fromPos: camera.position.clone(), toPos, fromTarget: controls.target.clone(), toTarget };
-    dirty = true;
-  }
-
   // ---- cutaway ------------------------------------------------------------------------------------------------
   // A wedge facing the viewer is removed from the membrane (and wall), and from the nucleus so the nucleolus shows.
   function updateClip(scale) {
@@ -469,7 +454,7 @@ export function createViewer(o) {
 
   setCell(state.cell);
   document.fonts?.ready.then(() => { measureLabels(); dirty = true; start(); });
-  if (o.state.focus) select(o.state.focus, { flyTo: true });
+  if (o.state.focus) select(o.state.focus);
   start();
 
   return {
@@ -479,7 +464,7 @@ export function createViewer(o) {
     setLabels(on) { state.labels = on; dirty = true; start(); },
     resize() { measureLabels(); resize(); start(); },
     setInset(px) { insetTarget = Math.max(0, px || 0); dirty = true; start(); },
-    select(id, opts) { select(id, opts); start(); },
+    select(id) { select(id); start(); },
     resetView() { markInteracted(); resetView(); start(); },
     stopAutoRotate: markInteracted,
     get state() { return { cell: state.cell, explode: explode.target, cut: cut.target > 0.5, labels: state.labels, focus: state.selected }; },
