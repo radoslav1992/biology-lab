@@ -1,10 +1,11 @@
 ---
 // Cell atlas diagram: a labeled animal or plant cell whose organelles link to their atlas pages.
-// Props: highlight (organelle slug), kind ('animal' | 'plant'), interactive (adds the animal/plant toggle and pre-renders both cells).
+// Props: highlight (organelle slug), kind ('animal' | 'plant'), interactive (adds the animal/plant toggle and pre-renders both cells),
+// poster (renders only the bare drawings, one wrapper per cell, for a page that frames them itself: the 3D cell's poster and fallback).
 // The SVG is drawn at build time from the geometry below; only the toggle and the key-to-diagram hover need JavaScript.
 import { organelles, cellTypes } from '../lib/organelles.mjs';
 import { text, line, rect, circle, ellipse, path, group } from '../lib/svg.mjs';
-const { highlight, kind = 'animal', interactive = false } = Astro.props;
+const { highlight, kind = 'animal', interactive = false, poster = false } = Astro.props;
 const HIGHLIGHT = highlight && organelles[highlight] ? highlight : undefined;
 const KIND = cellTypes[kind] ? kind : 'animal';
 
@@ -196,7 +197,8 @@ const current = cellTypes[KIND];
 const spotlight = HIGHLIGHT ? organelles[HIGHLIGHT] : null;
 const svgLabel = v => `Labeled diagram of ${v.title.toLowerCase()} with numbered organelles${spotlight ? `, highlighting the ${spotlight.title.toLowerCase()}` : ''}`;
 ---
-<cell-lab data-kind={KIND} data-highlight={HIGHLIGHT} data-interactive={interactive ? 'true' : undefined}>
+{poster && views.map(v => <div class="cell-poster" data-cell={v.kind} hidden={v.kind !== KIND}><svg viewBox="0 0 720 460" role="group" aria-label={svgLabel(v)} set:html={v.svg}/></div>)}
+{!poster && <cell-lab data-kind={KIND} data-highlight={HIGHLIGHT} data-interactive={interactive ? 'true' : undefined}>
 <div class="workbench">
   <div class="canvas-pane">
     <div class="canvas-top">
@@ -217,11 +219,11 @@ const svgLabel = v => `Labeled diagram of ${v.title.toLowerCase()} with numbered
     {spotlight ? <a class="secondary full-width cell-cta" href="/cells/">Compare all eight organelles ↗</a> : <a class="secondary full-width cell-cta" href="/printable-diagrams/">Print a cell to label ↗</a>}
   </div>
 </div>
-</cell-lab>
+</cell-lab>}
 <style is:global>
 cell-lab .cell-stage svg{max-height:560px;min-height:260px}
-cell-lab .cell-stage svg text{font-family:'DM Sans',sans-serif}
-cell-lab .cell-name,cell-lab .cell-stage text.cell-name{paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+cell-lab .cell-stage svg text,.cell-poster svg text{font-family:'DM Sans',sans-serif}
+cell-lab .cell-name,cell-lab .cell-stage text.cell-name,.cell-poster text.cell-name{paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
 cell-lab a[data-organelle]{cursor:pointer}
 cell-lab a[data-organelle] .cell-shape{transition:stroke-width .15s,stroke .15s}
 cell-lab a[data-organelle]:hover .cell-shape,cell-lab a[data-organelle]:focus-visible .cell-shape,cell-lab a[data-organelle].is-lit .cell-shape{stroke:#e2703a;stroke-width:4px}

@@ -6,6 +6,7 @@ import Layout from '../../layouts/Layout.astro';
 import { faqs } from '../../lib/faqs.mjs';
 import { lessons } from '../../lib/lessons.mjs';
 import { organelles } from '../../lib/organelles.mjs';
+import { cell3dHref } from '../../lib/cell3d-share.mjs';
 export function getStaticPaths() { return Object.keys(organelles).map(slug => ({ params: { slug }, props: { slug } })); }
 const { slug } = Astro.props;
 const o = organelles[slug];
@@ -20,10 +21,12 @@ const lesson = lessons.find(l => l.slug === o.lesson);
 const kind = slug === 'chloroplast' ? 'plant' : 'animal';
 const items = faqs[slug] || [];
 ---
-<Layout title={title} section="Cells" schemaType="Article" description={description} breadcrumbs={[['Cell organelles', '/cells/'], [o.title, `/cells/${slug}/`]]}><div class="breadcrumb"><a href="/cells/">Cell atlas</a> / {o.title}</div><div class="intro"><div><div class="eyebrow">{o.type}</div><h1>{o.title}</h1><p>{o.intro}</p></div><span class="intro-note">Found in: {o.foundIn.join(' · ')}</span></div><CellDiagram highlight={slug} kind={kind}/><AdSlot type="rectangle" /><div class="shape-intro-grid"><section class="shape-fact-box"><h2>Know its structure</h2><table class="fact-table"><tbody><tr><td>Found in</td><td>{o.foundIn.join(', ')}</td></tr>{o.properties.map(([key, val]) => <tr><td>{key}</td><td>{val}</td></tr>)}</tbody></table><h3>What it does</h3><ul class="cell-functions">{o.functions.map(([key, val]) => <li><strong>{key}.</strong> {val}</li>)}</ul></section><aside class="shape-fact-box"><h3>In action</h3><p>{o.example}</p><h3>A common misconception</h3><p>{o.pitfall}</p></aside></div><div class="related"><a href={`/learn/${o.lesson}/`}>Read the lesson{lesson ? `: ${lesson.title}` : ''} ↗</a>{o.related.map(key => <a href={`/cells/${key}/`}>Compare with the {organelles[key].title.toLowerCase()} ↗</a>)}<a href="/cells/">See the whole cell atlas ↗</a><a href="/printable-diagrams/">Print a cell diagram to label ↗</a><a href="/practice/">Practice cell questions ↗</a></div><AdSlot type="native" /><Faq items={items} title={`${o.title}: common questions`}/></Layout>
+<Layout title={title} section="Cells" schemaType="Article" description={description} breadcrumbs={[['Cell organelles', '/cells/'], [o.title, `/cells/${slug}/`]]}><div class="breadcrumb"><a href="/cells/">Cell atlas</a> / {o.title}</div><div class="intro"><div><div class="eyebrow">{o.type}</div><h1>{o.title}</h1><p>{o.intro}</p></div><span class="intro-note">Found in: {o.foundIn.join(' · ')}</span></div><CellDiagram highlight={slug} kind={kind}/><p class="see-3d"><a class="text-link" href={cell3dHref(slug)}>See the {o.title.toLowerCase()} in 3D ↗</a></p><AdSlot type="rectangle" /><div class="shape-intro-grid"><section class="shape-fact-box"><h2>Know its structure</h2><table class="fact-table"><tbody><tr><td>Found in</td><td>{o.foundIn.join(', ')}</td></tr>{o.properties.map(([key, val]) => <tr><td>{key}</td><td>{val}</td></tr>)}</tbody></table><h3>What it does</h3><ul class="cell-functions">{o.functions.map(([key, val]) => <li><strong>{key}.</strong> {val}</li>)}</ul></section><aside class="shape-fact-box"><h3>In action</h3><p>{o.example}</p><h3>A common misconception</h3><p>{o.pitfall}</p></aside></div><div class="related"><a href={`/learn/${o.lesson}/`}>Read the lesson{lesson ? `: ${lesson.title}` : ''} ↗</a>{o.related.map(key => <a href={`/cells/${key}/`}>Compare with the {organelles[key].title.toLowerCase()} ↗</a>)}<a href="/cells/">See the whole cell atlas ↗</a><a href="/printable-diagrams/">Print a cell diagram to label ↗</a><a href="/practice/">Practice cell questions ↗</a></div><AdSlot type="native" /><Faq items={items} title={`${o.title}: common questions`}/></Layout>
 <style>
 .cell-functions{padding-left:20px;margin:0}
 .cell-functions li{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:10px}
 .cell-functions strong{color:var(--ink)}
 .intro-note{max-width:260px;white-space:normal;text-align:right;line-height:1.5}
+.see-3d{margin:12px 2px 0;text-align:right}
+.see-3d .text-link{font-weight:600}
 </style>

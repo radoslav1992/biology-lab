@@ -14,7 +14,7 @@ const LESSONS = ['cell-theory', 'prokaryotes-vs-eukaryotes', 'cell-transport', '
 const TOOLS = ['cell-size', 'enzyme-kinetics', 'dilution-calculator', 'magnification-calculator', 'water-potential', 'bacterial-growth', 'energy-pyramid', 'chi-square-test', 'predator-prey'];
 const ORGANELLES = ['nucleus', 'mitochondrion', 'chloroplast', 'ribosome', 'endoplasmic-reticulum', 'golgi-apparatus', 'lysosome', 'cell-membrane'];
 const FLAGSHIP = ['/punnett-square-calculator/', '/hardy-weinberg-calculator/', '/dna-transcription-translation/', '/population-growth-calculator/'];
-const STATIC = ['/', '/tools/', '/cells/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/', '/about/', '/privacy/'];
+const STATIC = ['/', '/tools/', '/cells/', '/cells/3d/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/', '/about/', '/privacy/'];
 const REFERENCE = ['/codon-chart/'];
 const ROUTES = new Set([...STATIC, ...REFERENCE, ...FLAGSHIP, ...TOOLS.map(s => `/tools/${s}/`), ...ORGANELLES.map(s => `/cells/${s}/`), ...LESSONS.map(s => `/learn/${s}/`)]);
 const resolves = href => { const clean = href.split('#')[0]; return clean === '' || ROUTES.has(clean); };
@@ -40,14 +40,14 @@ test('organelles match the site map and link to real lessons and each other', ()
   for (const [slug, o] of Object.entries(organelles)) { assert.ok(LESSONS.includes(o.lesson), `${slug} lesson`); for (const r of o.related) assert.ok(ORGANELLES.includes(r) && r !== slug, `${slug} related ${r}`); assert.ok(o.title && o.type && o.intro && o.example && o.pitfall, slug); assert.ok(o.properties.length >= 3 && o.functions.length >= 2, slug); }
 });
 test('FAQ sets exist for every page that renders one and link internally', () => {
-  const expected = ['home', ...FLAGSHIP.map(h => h.replaceAll('/', '')), ...REFERENCE.map(h => h.replaceAll('/', '')), ...TOOLS, ...ORGANELLES, 'cells', 'printable-diagrams'];
+  const expected = ['home', ...FLAGSHIP.map(h => h.replaceAll('/', '')), ...REFERENCE.map(h => h.replaceAll('/', '')), ...TOOLS, ...ORGANELLES, 'cells', 'cells-3d', 'printable-diagrams'];
   for (const key of expected) { assert.ok(Array.isArray(faqs[key]) && faqs[key].length >= 2, `faq ${key}`); for (const item of faqs[key]) { assert.ok(item.question.endsWith('?'), `${key}: ${item.question}`); assert.ok(item.answer.length > 80, `${key}: short answer`); assert.ok(resolves(item.href), `${key} href ${item.href}`); assert.ok(item.label, `${key} label`); } }
   assert.equal(Object.keys(faqs).length, expected.length);
 });
 test('catalog covers every tool once and every href resolves', () => {
   assert.equal(new Set(catalog.map(t => t.href)).size, catalog.length);
   for (const t of catalog) assert.ok(resolves(t.href), t.href);
-  for (const href of [...FLAGSHIP, ...REFERENCE, ...TOOLS.map(s => `/tools/${s}/`), '/cells/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/']) assert.ok(catalog.some(t => t.href === href), href);
+  for (const href of [...FLAGSHIP, ...REFERENCE, ...TOOLS.map(s => `/tools/${s}/`), '/cells/', '/cells/3d/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/']) assert.ok(catalog.some(t => t.href === href), href);
 });
 test('practice bank has 100 unique questions, 20 per topic, four unique choices each', () => {
   assert.equal(QUESTIONS.length, 100);
