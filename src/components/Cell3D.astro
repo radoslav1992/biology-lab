@@ -116,7 +116,9 @@ const canvasLabel = k => `Interactive 3D model of ${k === 'plant' ? 'a plant' : 
 .c3d[data-state=nogl] .c3d-stage{background:#eef5ee;height:auto;min-height:var(--c3d-stage-h)}
 .c3d[data-state=nogl] .c3d-poster{position:relative;inset:auto;padding:18px 18px 130px}
 .c3d[data-state=nogl] .c3d-poster svg{box-shadow:none;border:1px solid var(--line)}
-.c3d-stage noscript{display:contents}
+/* The site styles noscript as a padded box; here it only carries the absolutely placed note. (Not display:contents,
+   which would make Chromium render the raw noscript text when scripting is on.) */
+.c3d-stage noscript{display:block;padding:0;background:none}
 .c3d-noscript{position:absolute;left:16px;right:16px;bottom:16px;margin:0;padding:10px 14px;border-radius:10px;background:#fff;color:var(--ink);font-size:14px}
 .c3d-card{position:absolute;left:14px;bottom:14px;z-index:2;width:min(360px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 18px 50px #03120b59;padding:18px 18px 16px;color:var(--ink)}
 .c3d-card[hidden]{display:none}
