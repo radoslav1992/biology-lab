@@ -11,6 +11,7 @@ A complete static Astro website for interactive biology. All calculations run in
 - Hardy–Weinberg calculator: allele and genotype frequencies from p, q², or observed counts, with a chi-square equilibrium test.
 - Nine additional explorers: cell size (surface-area-to-volume), enzyme kinetics (Michaelis–Menten with inhibitors), dilutions (C₁V₁ = C₂V₂ and serial dilutions), magnification and scale bars, water potential and osmosis, bacterial growth and doubling time, energy pyramids and the 10% rule, chi-square tests for genetic ratios, and a predator–prey (Lotka–Volterra) simulator.
 - Cell atlas: an interactive animal/plant cell diagram, a 17-structure organelle function chart (animal vs plant, membranes), and eight organelle guides, each with structure, functions, a worked example, a common misconception, related organelles, and FAQs.
+- 3D cell (`/cells/3d/`): an explodable Three.js model of an animal and a plant cell, generated procedurally in the browser (no downloaded models or textures). Drag or use the arrow keys to turn it, slide Explode to pull the organelles apart with labels and leader lines, switch on Cutaway to look inside, and tap a structure (or pick it from the list beside the model) for its atlas facts. Links such as `?cell=plant&focus=nucleus&explode=0.6` restore a view, and every organelle page links to its 3D counterpart. Three.js loads only on this page, through a dynamic import when the viewer nears the screen (or on a Load button with Data Saver on); until then, and wherever WebGL is unavailable, the 2D `CellDiagram` is shown instead. Every fact comes from `organelles.mjs`; structures without an atlas page (nucleolus, centrioles, cytoplasm, cell wall, central vacuole) are documented in `src/lib/cell3d.mjs`.
 - Sixteen concept notes with a key equation, explanation, worked example, and pitfall, plus three guided learning paths.
 - Practice studio: eight-question rounds drawn from 100 questions across cells, genetics, molecular biology, ecology, and physiology, with explanations, mistake review, focused retries, and device-local best scores.
 - Worksheet builder with 8, 12, or 20 questions and an optional answer key.
@@ -38,7 +39,7 @@ The production output is `dist/`. JavaScript is delivered only for interactive c
 `src/lib/site.mjs` holds the site-wide settings:
 
 - `url`: the canonical production domain. The production domain is `https://thebiologylab.org`; canonical links, Open Graph URLs, robots.txt, and the sitemap use it. Keep the `biology` entry in `src/lib/learning-apps.mjs` in sync when changing domains.
-- `analyticsId`: the Google Analytics 4 measurement ID (currently `G-90EH9Q7K6T`). The layout renders Google's gtag snippet on every page; when it is empty, no analytics script is rendered at all.
+- `analyticsId`: the Google Analytics 4 measurement ID (currently `G-90EH9Q7K6T`). The layout renders Google's gtag snippet on every page; when it is empty, no analytics script is rendered at all. The 3D cell also sends `cell3d_open` (the model loaded), `cell3d_focus` (structure id, debounced), and `cell3d_explode` (explode amount, debounced), with nothing personal.
 - `contactEmail`: shown in the footer and on the About page.
 
 ### Ads
@@ -102,6 +103,7 @@ Google Fonts supplies DM Sans and Manrope; system fonts are fallbacks. Calculato
 - `src/lib/tools/*.mjs`: one module per generic explorer (`definition`, `explore`, `diagram`), registered in `src/lib/explorations.mjs`. Explorers listed there as `embedded` (the population word-problem solver) render inside a flagship page and get no `/tools/` route or catalog card.
 - `src/lib/organelles.mjs`, `lessons.mjs`, `practice.mjs`, `faqs.mjs`, `catalog.mjs`: editorial content and site map.
 - `src/lib/activities.mjs`: classroom activities and answer keys, computed with the same modules as the tools.
+- `src/lib/cell3d-share.mjs` (share-link state, no imports), `cell3d.mjs` (structure list and info-card text drawn from `organelles.mjs`), `cell3d-models.mjs` (the procedural Three.js scenes, testable in Node), and `cell3d-viewer.mjs` (renderer, controls, labels, picking; loaded lazily).
 - `src/lib/format.mjs`, `svg.mjs`: shared formatting, validation, palette, and SVG chart helpers.
 - `src/components`: Astro markup and progressively enhanced custom elements.
 - `src/pages`: prerendered routes.

@@ -47,7 +47,7 @@ test('FAQ sets exist for every page that renders one and link internally', () =>
 test('catalog covers every tool once and every href resolves', () => {
   assert.equal(new Set(catalog.map(t => t.href)).size, catalog.length);
   for (const t of catalog) assert.ok(resolves(t.href), t.href);
-  for (const href of [...FLAGSHIP, ...REFERENCE, ...TOOLS.map(s => `/tools/${s}/`), '/cells/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/']) assert.ok(catalog.some(t => t.href === href), href);
+  for (const href of [...FLAGSHIP, ...REFERENCE, ...TOOLS.map(s => `/tools/${s}/`), '/cells/', '/cells/3d/', '/practice/', '/worksheets/', '/printable-diagrams/', '/learn/']) assert.ok(catalog.some(t => t.href === href), href);
 });
 test('practice bank has 100 unique questions, 20 per topic, four unique choices each', () => {
   assert.equal(QUESTIONS.length, 100);
