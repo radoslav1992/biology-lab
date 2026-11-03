@@ -1,4 +1,5 @@
 ---
+import AdSlot from '../components/AdSlot.astro';
 import Faq from '../components/Faq.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
@@ -33,6 +34,7 @@ const sheets = [
   </div>
 </printable-lab>
 <noscript><p class="small-note">Without JavaScript the sheets cannot be generated. Every structure on the cell sheets is described in the <a class="text-link" href="/cells/">cell atlas</a>, and the <a class="text-link" href="/punnett-square-calculator/">Punnett square calculator</a> works every cross the grids are designed for.</p></noscript>
+<AdSlot type="rectangle" />
 <section class="explanation printable-guide">
   <h2>How to use these printables</h2>
   <ol>
