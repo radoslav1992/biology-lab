@@ -23,6 +23,7 @@ const SISTERS = [
   ['Geometry Lab', 'https://geometrylab.net/'],
   ['Physics Lab', 'https://thephysicslab.org/'],
   ['KidsCode', 'https://kidscode.dev/'],
+  ['Cell by Cell', 'https://cellbycell.app/'],
 ];
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
