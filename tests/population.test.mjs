@@ -285,3 +285,24 @@ test('the embedded word-problem solver answers every preset cleanly and stays of
   assert.equal(metricOf(explore(t.slug, { ...d, n0: 100, n: 121, t: 2 }, 'rate'), 'Growth rate per year'), '10%');
   assert.throws(() => explore(t.slug, { ...d, rate: -5 }, 'doubling'), /greater than 0/);
 });
+
+test('the population FAQ and worked examples quote the numbers the functions compute', async () => {
+  const { faqs } = await import('../src/lib/faqs.mjs');
+  const { compoundGrowth, afterDoublings, timeToReach, growthRateFromCounts } = await import('../src/lib/population.mjs');
+  const answer = start => faqs['population-growth-calculator'].find(f => f.question.startsWith(start)).answer;
+  const after = answer('How do you find the population after a number of years');
+  assert.equal(Math.round(compoundGrowth(16000, 0.03, 7)), 19678);
+  assert.ok(after.includes('16,000 × 1.03^7 = 19,678'), after);
+  assert.equal(16000 * (1 + 0.03 * 7), 19360); // the simple-interest mistake the answer warns about
+  assert.ok(after.includes('19,360'));
+  const doubles = answer('How do you solve a problem where a population doubles');
+  assert.deepEqual(afterDoublings(67900, 21, 84), { doublings: 4, N: 1086400 });
+  assert.deepEqual(afterDoublings(1100, 60, 180), { doublings: 3, N: 8800 });
+  assert.ok(doubles.includes('67,900 × 16 = 1,086,400') && doubles.includes('1,100 × 8 = 8,800'), doubles);
+  // Hand-checked values behind the worked examples on /population-growth-calculator/.
+  close(compoundGrowth(15000, 0.025, 11), 19681.2999, 1e-3);
+  close(compoundGrowth(8000, 0.045, 14), 14815.5594, 1e-3);
+  close(timeToReach(3000, 4600, 0.025), 17.3106, 1e-3);
+  close(timeToReach(2000, 2700, 0.025), 12.1536, 1e-3);
+  close(growthRateFromCounts(179323175, 331449281, 60).percent, 0.0102907, 1e-6);
+});

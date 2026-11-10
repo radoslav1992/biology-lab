@@ -41,8 +41,8 @@ main:focus { outline:none; }
 .home-intro { padding:10px 0; min-width:0; }
 .home-intro .eyebrow { color:var(--leaf); font-size:12px; }
 .home-intro .eyebrow:before { background:var(--leaf); }
-.home-intro h1 { font-size:clamp(3rem,5.2vw,4.7rem); color:#f5faee; line-height:1.03; letter-spacing:-.055em; margin:21px 0; }
-.home-intro h1 em { font-family:Georgia,serif; font-weight:400; color:var(--leaf); letter-spacing:-.06em; }
+.home-intro h1 { font-size:clamp(2.3rem,3.3vw,3.1rem); color:#f5faee; line-height:1.08; letter-spacing:-.045em; margin:21px 0; }
+.home-intro h1 em { font-family:Georgia,serif; font-weight:400; color:var(--leaf); letter-spacing:-.04em; }
 .home-intro>p { font-size:17px; color:#c0d3c4; max-width:380px; margin:0 0 25px; }
 .home-intro .primary-link { background:var(--leaf); color:var(--forest); gap:30px; }
 .home-intro .primary-link:hover { background:#e2f6bc; }
@@ -223,7 +223,7 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
 @media(max-width:1150px) {
   .site-header nav { border-color:#ffffff20; }
   .home-stage { grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); gap:28px; }
-  .home-intro h1 { font-size:3.8rem; }
+  .home-intro h1 { font-size:2.4rem; }
   .home-experiment .workbench { grid-template-columns:minmax(0,1fr) 205px; }
   .home-experiment .controls { padding:18px 14px; }
   .experiment-heading { align-items:flex-start; flex-direction:column; gap:5px; }
@@ -237,7 +237,7 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
   .home-stage { grid-template-columns:1fr; padding-top:30px; gap:26px; }
   .home-intro { display:grid; grid-template-columns:1.1fr 1fr; gap:0 32px; }
   .home-intro .eyebrow { grid-column:1/-1; }
-  .home-intro h1 { grid-row:2/5; font-size:4.3rem; margin-bottom:0; }
+  .home-intro h1 { grid-row:2/5; font-size:2.7rem; margin-bottom:0; }
   .home-intro>p { margin:19px 0; font-size:16px; }
   .home-intro .primary-link { justify-self:start; align-self:start; }
   .free-note { margin-top:14px; }
@@ -258,7 +258,7 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
   .site-header nav { border:0; padding-top:2px; gap:3px; max-width:100%; }
   .site-header nav a { font-size:14px; padding:10px 12px; }
   .home-intro { display:block; }
-  .home-intro h1 { font-size:clamp(3.3rem,12vw,4.4rem); margin:18px 0; }
+  .home-intro h1 { font-size:clamp(2.1rem,8.4vw,2.8rem); margin:18px 0; }
   .home-intro h1 br { display:none; }
   .home-intro>p { font-size:16px; max-width:480px; margin:0 0 22px; }
   .home-experiment .workbench,.workbench { grid-template-columns:1fr; }
@@ -342,6 +342,7 @@ punnett-lab,hardy-lab,dna-lab,growth-lab,cell-lab,exploration-lab,practice-lab,w
   .faq-indicator { display:none; }
 }
 /* Worked examples: exam-style questions with the working, used on calculators and the codon chart */
+.worked-formula { font-size:20px; margin:0 0 20px; padding:16px 20px; }
 .worked-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:0 0 8px; }
 .worked-card { padding:24px 26px; border:1px solid var(--line); border-radius:16px; background:#fff; }
 .worked-card h3 { font-size:18px; line-height:1.45; letter-spacing:-.01em; margin:8px 0 12px; }

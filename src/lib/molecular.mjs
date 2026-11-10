@@ -102,6 +102,22 @@ export const INPUT_STRANDS = Object.freeze({
   mrna: 'mRNA, 5′ → 3′',
 });
 
+/** Link that opens the translator with a sequence loaded, e.g. "/dna-transcription-translation/#seq=TACGGACTT&strand=template". */
+export function sequenceHref(path, seq, kind = 'coding', { fromStartCodon = false } = {}) {
+  const params = new URLSearchParams({ seq, strand: kind });
+  if (fromStartCodon) params.set('start', '1');
+  return `${path}#${params}`;
+}
+
+/** Read a "#seq=…" fragment back into { seq, kind, fromStartCodon }; null when the fragment carries no sequence. */
+export function parseSequenceHref(hash) {
+  const params = new URLSearchParams(String(hash ?? '').replace(/^#/, ''));
+  const seq = (params.get('seq') || '').slice(0, MAX_LENGTH);
+  if (!seq) return null;
+  const strand = params.get('strand');
+  return { seq, kind: Object.hasOwn(INPUT_STRANDS, strand ?? '') ? strand : 'coding', fromStartCodon: params.get('start') === '1' };
+}
+
 /** Convert whichever strand a student has into the coding strand (5′→3′), the form every other helper expects. */
 export function codingStrandFrom(input, kind = 'coding') {
   if (kind === 'mrna') return toCodingStrand(input);

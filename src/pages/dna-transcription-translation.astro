@@ -7,7 +7,7 @@ import WorkedExamples from '../components/WorkedExamples.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
 import DnaTranslator from '../components/DnaTranslator.astro';
-import { AMINO_ACIDS, CODON_TABLE, STOP_CODONS, codingStrandFrom, transcribe, codons, anticodons, translate, proteinSummary, findStartCodon } from '../lib/molecular.mjs';
+import { AMINO_ACIDS, CODON_TABLE, STOP_CODONS, codingStrandFrom, transcribe, codons, anticodons, translate, proteinSummary, findStartCodon, sequenceHref } from '../lib/molecular.mjs';
 const codonCount = abbr => Object.values(CODON_TABLE).filter(a => a.abbr === abbr).length;
 const sixfold = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 6).map(a => a.name.toLowerCase());
 const single = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 1).map(a => a.name.toLowerCase());
@@ -16,10 +16,15 @@ const senseCodons = 64 - STOP_CODONS.length;
 const spaced = seq => seq.match(/.{1,3}/g).join(' ');
 const mrnaOf = (seq, kind) => transcribe(codingStrandFrom(seq, kind));
 const protein = rna => { const at = findStartCodon(rna); return proteinSummary(translate(rna, { frame: Math.max(0, at) % 3, fromStartCodon: at >= 0 })).abbrs; };
+// Each example opens in the converter with its sequence loaded ("#seq=…&strand=…" on this page).
+const load = (seq, kind, options) => ({ href: sequenceHref('', seq, kind, options), label: 'Load this sequence into the converter' });
+const lookup = rna => codons(rna).map(c => `${c} = ${CODON_TABLE[c].abbr}`).join(', ');
 const agt = mrnaOf('AGT', 'template');
 const strand12 = mrnaOf('TACGGTAGTACC', 'template');
 const given = 'AACUAUGUGGCAU';
 const flow = mrnaOf('TACGGACTT', 'template');
+const coding = mrnaOf('GCGATACCGTTA', 'coding');
+const message = 'AUGUUGCAGCACUAG', messageProtein = proteinSummary(translate(message));
 const alignment = [
   ['Coding strand (DNA)', '5′', 'ATG GCC TGA', '3′'],
   ['Template strand (DNA)', '3′', 'TAC CGG ACT', '5′'],
@@ -28,18 +33,21 @@ const alignment = [
   ['Protein', '', 'Met – Ala, released at the UGA stop', ''],
 ];
 const examples = [
-  { question: 'A triplet of bases in the template strand of DNA is AGT. What would be the corresponding codon for mRNA?', steps: ['The mRNA is complementary to the template strand: A pairs with U, G with C, and T with A.', `AGT → ${agt}. RNA has no thymine, so TCA cannot be right.`], answer: `${agt}, which codes for ${CODON_TABLE[agt].name.toLowerCase()} (${CODON_TABLE[agt].abbr}).` },
-  { question: 'How many codons will result from the transcription of this DNA strand: T A C G G T A G T A C C?', steps: [`Transcribe the template: TACGGTAGTACC → mRNA ${spaced(strand12)}.`, `12 bases ÷ 3 bases per codon = ${codons(strand12).length} codons.`], answer: `${codons(strand12).length} codons, translated as ${protein(strand12)}.` },
-  { question: 'An mRNA has the sequence 5′-AACUAUGUGGCAU-3′. What is the translated protein sequence from N-terminus to C-terminus?', steps: [`Ribosomes start at the first AUG, which begins at base ${findStartCodon(given) + 1}: AACU | AUG UGG CAU.`, 'Look up each codon: AUG = Met, UGG = Trp, CAU = His.'], answer: `${protein(given)} (N-terminus → C-terminus).` },
-  { question: 'Write the mRNA, the tRNA anticodons and the amino acids for the DNA template 3′-TAC GGA CTT-5′.', steps: [`mRNA (complement, U for T): 5′-${spaced(flow)}-3′.`, `Anticodons pair with each codon: 3′-${spaced(anticodons(flow))}-5′.`], answer: `${protein(flow)}.` },
+  { question: 'A DNA template strand reads 3′-TAC GGA CTT-5′. Write the mRNA, the tRNA anticodons and the amino acid sequence.', steps: [`Transcription: write the complement of each template base, with U for T: mRNA 5′-${spaced(flow)}-3′.`, `Translation: read the mRNA three bases at a time and look each codon up: ${lookup(flow)}.`, `The tRNA anticodons pair with each codon: 3′-${spaced(anticodons(flow))}-5′.`], answer: `mRNA 5′-${spaced(flow)}-3′, amino acids ${protein(flow)}.`, ...load('TACGGACTT', 'template') },
+  { question: 'If the coding strand of a DNA molecule is 5′-GCGATACCGTTA-3′, what amino acid sequence will be generated based on the mRNA strand?', steps: [`The mRNA has the same sequence as the coding strand with U in place of T: 5′-${spaced(coding)}-3′.`, `Look up each codon: ${lookup(coding)}.`], answer: `${protein(coding)}.`, ...load('GCGATACCGTTA', 'coding') },
+  { question: 'A triplet of bases in the template strand of DNA is AGT. What would be the corresponding codon for mRNA?', steps: ['The mRNA is complementary to the template strand: A pairs with U, G with C, and T with A.', `AGT → ${agt}. RNA has no thymine, so TCA cannot be right.`], answer: `${agt}, which codes for ${CODON_TABLE[agt].name.toLowerCase()} (${CODON_TABLE[agt].abbr}).`, ...load('AGT', 'template') },
+  { question: 'How many codons will result from the transcription of this DNA strand: T A C G G T A G T A C C?', steps: [`Transcribe the template: TACGGTAGTACC → mRNA ${spaced(strand12)}.`, `12 bases ÷ 3 bases per codon = ${codons(strand12).length} codons.`], answer: `${codons(strand12).length} codons, translated as ${protein(strand12)}.`, ...load('TACGGTAGTACC', 'template') },
+  { question: 'An mRNA has the sequence 5′-AACUAUGUGGCAU-3′. What is the translated protein sequence from N-terminus to C-terminus?', steps: [`Ribosomes start at the first AUG, which begins at base ${findStartCodon(given) + 1}: AACU | AUG UGG CAU.`, 'Look up each codon: AUG = Met, UGG = Trp, CAU = His.'], answer: `${protein(given)} (N-terminus → C-terminus).`, ...load(given, 'mrna', { fromStartCodon: true }) },
+  { question: 'Translate the mRNA strand 5′-AUG UUG CAG CAC UAG-3′ into amino acids.', steps: [`Look up each codon in order: ${codons(message).slice(0, messageProtein.length).map(c => `${c} = ${CODON_TABLE[c].abbr}`).join(', ')}.`, `${messageProtein.stopCodon} is a stop codon: it adds no amino acid and ends the chain.`], answer: `${messageProtein.abbrs}, then stop.`, ...load(message, 'mrna') },
 ];
 ---
-<Layout title="DNA to mRNA Converter: Transcribe & Translate DNA to Protein" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['DNA to mRNA converter', '/dna-transcription-translation/']]} description="Convert DNA to mRNA and protein: paste a coding strand, template strand, or mRNA to get the mRNA, tRNA anticodons, codons, and amino acid chain, with every step.">
-<div class="intro"><div><div class="eyebrow">Molecular biology, base by base</div><h1>DNA to mRNA converter and protein translator</h1><p>Paste a DNA coding strand, a template strand, or an mRNA sequence. We transcribe it into mRNA, line up the tRNA anticodons, read the codons in your chosen frame, and build the amino acid chain, with every step shown and every base color-coded.</p></div></div>
-<nav class="related page-jump" aria-label="On this page"><a href="#how-to-transcribe">How to convert DNA to mRNA ↓</a><a href="#worked-examples">Worked examples ↓</a><a href="#codon-chart-heading">Codon chart ↓</a><a href="/codon-chart/">Codon lookup &amp; amino acid table ↗</a></nav>
+<Layout title="DNA to mRNA to Protein Converter: Transcription & Translation" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['DNA to mRNA to protein converter', '/dna-transcription-translation/']]} description="Free transcription and translation tool: paste a DNA template strand, coding strand or mRNA to get the mRNA, tRNA anticodons and amino acid sequence.">
+<div class="intro"><div><div class="eyebrow">Molecular biology, base by base</div><h1>DNA to mRNA to protein converter: transcription and translation tool</h1><p>This transcription and translation tool converts a DNA sequence into mRNA and then into protein. Paste a DNA template strand, a coding strand or an mRNA. It writes the mRNA (from a template strand A → U, T → A, G → C, C → G; from a coding strand T → U), lines up the tRNA anticodons, splits the mRNA into three-base codons and looks each one up in the codon table to give the amino acid sequence. It is for biology students checking transcription and translation homework, and for teachers making examples.</p></div></div>
+<nav class="related page-jump" aria-label="On this page"><a href="#worked-examples">Worked examples ↓</a><a href="#how-to-transcribe">How to convert DNA to mRNA ↓</a><a href="#codon-chart-heading">Codon chart ↓</a><a href="/codon-chart/">Codon lookup &amp; amino acid table ↗</a></nav>
 <DnaTranslator/>
 <ClassroomStrip/>
 <AdSlot type="rectangle" />
+<WorkedExamples items={examples} title="DNA to mRNA to amino acids: worked examples" intro="Exam-style questions on transcription and translation, with the working: from a template strand, a coding strand or an mRNA to the amino acid sequence. Use the link under an example to load its sequence into the converter above."/>
 <section class="explanation" id="how-to-transcribe" aria-labelledby="how-to-transcribe-heading">
   <h2 id="how-to-transcribe-heading">How to convert DNA to mRNA, step by step</h2>
   <p>A gene has two DNA strands. The <strong>template strand</strong> (antisense) is the one RNA polymerase reads, 3′ → 5′. The <strong>coding strand</strong> (sense) is its partner, and it has the same sequence as the mRNA except that DNA uses T where RNA uses U. Which rule you apply depends on which strand the question gives you.</p>
@@ -55,7 +63,6 @@ const examples = [
   <h3>From mRNA or protein back to DNA</h3>
   <p>To go from mRNA to DNA, reverse the logic: swap U for T to get the coding strand, then take the complement to get the template strand. Choose “mRNA” in the translator and it does this for you. Going from a protein back to DNA has no single answer, because most amino acids have several codons: leucine alone has six.</p>
 </section>
-<WorkedExamples items={examples} title="DNA to mRNA practice problems, solved" intro="Exam-style questions on transcription and translation, with the working. Paste any of these sequences into the converter above and pick the matching strand type to check."/>
 <section class="explanation" aria-labelledby="codon-chart-heading">
   <h2 id="codon-chart-heading">Genetic code chart</h2>
   <p>The genetic code is the dictionary a ribosome uses to turn mRNA into protein. Each three-base codon names one amino acid or a stop signal. Find the codon’s first base in the left column, its second base in the next column, and its third base along the top: the cell where they meet is the amino acid. AUG both encodes methionine and marks where translation begins, and the three highlighted stop codons (UAA, UAG, UGA) end it. For a searchable version and an amino-acid-to-codon table, open the <a class="text-link" href="/codon-chart/">codon chart</a>.</p>

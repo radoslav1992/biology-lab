@@ -4,7 +4,7 @@ import {
   CODON_TABLE, AMINO_ACIDS, STOP_CODONS, MAX_LENGTH, DEFAULT_SEQUENCE,
   cleanSequence, complement, reverseComplement, transcribe, templateStrand, toCodingStrand,
   codons, translate, translateDna, findStartCodon, gcContent, meltingTemperature, composition,
-  proteinSummary, compareCodingStrands,
+  proteinSummary, compareCodingStrands, sequenceHref, parseSequenceHref,
 } from '../src/lib/molecular.mjs';
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
 const abbrs = peptide => peptide.map(p => p.amino.abbr);
@@ -182,4 +182,29 @@ test('any strand a student has converts to the coding strand, and anticodons pai
   assert.equal(anticodons('AUGGCU'), 'UACCGA');
   assert.throws(() => codingStrandFrom('ATG', 'protein'), /coding, template, or mRNA/);
   assert.throws(() => codingStrandFrom('AUG', 'template'), /choose mRNA as the input/);
+});
+
+test('sequence links round-trip through the URL fragment', () => {
+  const href = sequenceHref('/dna-transcription-translation/', 'TACGGACTT', 'template');
+  assert.equal(href, '/dna-transcription-translation/#seq=TACGGACTT&strand=template');
+  assert.deepEqual(parseSequenceHref(href.slice(href.indexOf('#'))), { seq: 'TACGGACTT', kind: 'template', fromStartCodon: false });
+  assert.deepEqual(parseSequenceHref(sequenceHref('', 'AACUAUGUGGCAU', 'mrna', { fromStartCodon: true })), { seq: 'AACUAUGUGGCAU', kind: 'mrna', fromStartCodon: true });
+  assert.deepEqual(parseSequenceHref('#seq=ATG&strand=protein'), { seq: 'ATG', kind: 'coding', fromStartCodon: false }, 'an unknown strand type falls back to coding');
+  assert.deepEqual(parseSequenceHref('#seq=ATG&strand=toString'), { seq: 'ATG', kind: 'coding', fromStartCodon: false });
+  assert.equal(parseSequenceHref('#worked-examples'), null);
+  assert.equal(parseSequenceHref('#seq='), null);
+  assert.equal(parseSequenceHref(undefined), null);
+  assert.equal(parseSequenceHref('#seq=' + 'A'.repeat(MAX_LENGTH + 50)).seq.length, MAX_LENGTH);
+});
+
+test('the worked examples on the converter page translate as printed', async () => {
+  const { codingStrandFrom, anticodons } = await import('../src/lib/molecular.mjs');
+  const mrna = (seq, kind) => transcribe(codingStrandFrom(seq, kind));
+  assert.equal(mrna('TACGGACTT', 'template'), 'AUGCCUGAA');
+  assert.deepEqual(abbrs(translate('AUGCCUGAA')), ['Met', 'Pro', 'Glu']);
+  assert.equal(anticodons('AUGCCUGAA'), 'UACGGACUU');
+  assert.equal(mrna('GCGATACCGTTA', 'coding'), 'GCGAUACCGUUA');
+  assert.deepEqual(abbrs(translate('GCGAUACCGUUA')), ['Ala', 'Ile', 'Pro', 'Leu']);
+  assert.deepEqual(abbrs(translate('AUGUUGCAGCACUAG')), ['Met', 'Leu', 'Gln', 'His', 'Stop']);
+  assert.equal(mrna('AGT', 'template'), 'UCA');
 });

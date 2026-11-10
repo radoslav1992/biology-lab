@@ -81,10 +81,10 @@ export const activities = [
   goal: 'Use compound, exponential and logistic growth models to predict population size and doubling time, solve percentage-growth word problems, and explain the effect of carrying capacity.',
   uses: [['explorer:population-word-problems', '20,000 at 12%/yr → 210,000'], ['explorer:population-word-problems', '1,100 doubling every 60 yr, in 180 yr'], ['explorer:population-word-problems', '6.17 billion, r = 0.013'], ['component:PopulationGrowth', 'Rabbits on an island']],
   steps: [
-    'In the word-problem solver further down the page, press “20,000 at 12%/yr → 210,000”. Record the time to reach N and the answer shown for a continuous rate.',
+    'In the word-problem solver at the top of the page, press “20,000 at 12%/yr → 210,000”. Record the time to reach N and the answer shown for a continuous rate.',
     'Press “1,100 doubling every 60 yr, in 180 yr” and record the population after 180 years.',
     'Press “6.17 billion, r = 0.013”. Record the doubling time for a continuous rate and the rule of 70 estimate.',
-    'Scroll back up to the growth-curve calculator and press “Rabbits on an island” (logistic growth, K = 2,000). Record N after 15 years, then set Time t to 5 and record N again.',
+    'Scroll down to the exponential and logistic growth curve calculator and press “Rabbits on an island” (logistic growth, K = 2,000). Record N after 15 years, then set Time t to 5 and record N again.',
   ],
   table: { setting: 'What to find', columns: ['Your result'], rows: [
     ['Years for 20,000 to reach 210,000 at 12% per year', pick(preset('population-word-problems', '20,000 at 12%/yr → 210,000'), ['Time to reach N'])],

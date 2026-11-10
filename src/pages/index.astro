@@ -11,30 +11,34 @@ import { catalog } from '../lib/catalog.mjs';
 import { lessons } from '../lib/lessons.mjs';
 import { QUESTIONS } from '../lib/practice.mjs';
 import { organelles } from '../lib/organelles.mjs';
-// Descriptive links to the most-searched tools, so each page is one click from the homepage.
-const popular = [
-  ['/population-growth-calculator/', 'Population growth calculator'],
-  ['/dna-transcription-translation/', 'DNA to mRNA converter'],
-  ['/codon-chart/', 'Codon chart (genetic code table)'],
-  ['/punnett-square-calculator/', 'Punnett square calculator'],
-  ['/hardy-weinberg-calculator/', 'Hardy-Weinberg calculator'],
-  ['/tools/cell-size/', 'Surface area to volume ratio calculator'],
-  ['/tools/water-potential/', 'Water potential calculator'],
-  ['/tools/enzyme-kinetics/', 'Michaelis-Menten calculator'],
-  ['/tools/bacterial-growth/', 'Bacterial doubling time calculator'],
-  ['/tools/chi-square-test/', 'Chi-square test for genetics'],
-  ['/cells/', 'Cell organelles and their functions'],
-  ['/practice/', 'Biology practice questions'],
-  ['/worksheets/', 'Printable biology worksheets'],
-];
+// Every tool, organelle page and concept note is one click from the homepage through an ordinary link with descriptive text.
+// The tool list is built from the catalog, so a new tool appears here without anyone remembering to add it.
+const anchor = {
+  '/dna-transcription-translation/': 'DNA to mRNA to protein converter',
+  '/codon-chart/': 'Codon chart and codon table',
+  '/tools/cell-size/': 'Surface area to volume ratio calculator',
+  '/tools/enzyme-kinetics/': 'Michaelis-Menten enzyme kinetics calculator',
+  '/tools/magnification-calculator/': 'Magnification calculator',
+  '/tools/water-potential/': 'Water potential calculator',
+  '/tools/bacterial-growth/': 'Bacterial doubling time calculator',
+  '/tools/energy-pyramid/': 'Energy pyramid calculator (10% rule)',
+  '/tools/predator-prey/': 'Predator–prey simulator',
+  '/cells/': 'Cell organelles and their functions',
+  '/cells/3d/': '3D animal and plant cell model',
+  '/printable-diagrams/': 'Printable cell diagrams',
+  '/worksheets/': 'Printable biology worksheets',
+  '/practice/': 'Biology practice questions',
+  '/learn/': 'Biology concept notes',
+};
+const allTools = catalog.map(t => [t.href, anchor[t.href] || t.title]);
 const toolCount = catalog.filter(t => !['Practice', 'Reference'].includes(t.category) && t.href !== '/cells/').length;
 ---
-<Layout title="The Biology Lab: Free Biology Calculators & Simulations" description="Free biology calculators and simulations: population growth, DNA to mRNA, codon chart, Punnett squares, cell organelles, practice questions, and worksheets.">
+<Layout title="Free Biology Virtual Labs, Calculators & Tools | Biology Lab" description="Free biology virtual labs, calculators and interactive tools: Punnett squares, DNA to mRNA, population growth, a 3D cell, practice questions, worksheets.">
 <section class="home-stage" aria-labelledby="home-title">
   <div class="home-intro">
-    <div class="eyebrow">The science of living things</div>
-    <h1 id="home-title">Life, under<br/>the <em>lens.</em></h1>
-    <p>The Biology Lab is a free set of biology calculators, simulations, and practice questions. From a single cell to a whole ecosystem, explore the patterns of life with interactive experiments.</p>
+    <div class="eyebrow">Life, under the lens</div>
+    <h1 id="home-title">Free biology <em>virtual labs,</em> calculators and interactive tools</h1>
+    <p>The Biology Lab is a free set of biology virtual labs, calculators and interactive tools for students and teachers. Cross two parents, convert DNA to protein, solve a population growth problem or turn a cell in 3D, and see every step of the answer.</p>
     <a class="primary-link" href="/tools/">Explore the lab <span aria-hidden="true">↗</span></a>
     <span class="free-note">Free to explore. No account needed.</span>
     <BiologySpecimen/>
@@ -48,7 +52,14 @@ const toolCount = catalog.filter(t => !['Practice', 'Reference'].includes(t.cate
 <div class="stat-strip"><span><strong>{toolCount}</strong>interactive tools</span><span><strong>{Object.keys(organelles).length}</strong>organelles to explore</span><span><strong>{lessons.length}</strong>ideas explained</span><span><strong>{QUESTIONS.length}</strong>ways to practice</span></div>
 <AdSlot type="rectangle" />
 <div class="section-heading"><div><div class="eyebrow">Your field guide to biology</div><h2>Interactive biology tools.<br/>A bigger picture of life.</h2><p>Explore cells, decode DNA, and test the patterns that connect living things.</p></div><a class="text-link" href="/tools/">All tools & collections ↗</a></div><ToolCards/>
-<section class="popular-tools" aria-labelledby="popular-heading"><div class="section-heading"><div><div class="eyebrow">Most used</div><h2 id="popular-heading">Popular biology calculators</h2><p>Jump straight to the tool your homework needs.</p></div></div><div class="related">{popular.map(([href, label]) => <a href={href}>{label} ↗</a>)}</div></section>
+<section class="popular-tools" aria-labelledby="popular-heading"><div class="section-heading"><div><div class="eyebrow">Everything in the lab</div><h2 id="popular-heading">All biology calculators, virtual labs and tools</h2><p>Jump straight to the tool your homework or lesson needs. Every one is free and shows its working.</p></div></div>
+<h3>Calculators and interactive tools</h3><div class="related">{allTools.map(([href, label]) => <a href={href}>{label} ↗</a>)}</div>
+<h3>Cell organelles: structure and function</h3><div class="related">{Object.entries(organelles).map(([slug, o]) => <a href={`/cells/${slug}/`}>{o.title}: structure and function ↗</a>)}</div>
+<h3>Biology concepts explained</h3><div class="related">{lessons.map(l => <a href={`/learn/${l.slug}/`}>{l.title} ↗</a>)}<a href="/teachers/">Classroom activities for teachers ↗</a></div></section>
 <div class="learning-strip"><div><span class="strip-label">OBSERVE. QUESTION. UNDERSTAND.</span><h2>Let your understanding grow.</h2><p>Eight biology questions, with explanations to help each idea take root.</p></div><a href="/practice/">Start a practice round ↗</a></div>
 <AdSlot type="native" />
 <LearningApps/><Faq items={faqs['home']} title="Biology Lab: frequently asked questions"/></Layout>
+<style>
+.popular-tools h3{font-size:18px;margin:26px 5px 0}
+.popular-tools .related{margin-top:8px}
+</style>

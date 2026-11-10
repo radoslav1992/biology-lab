@@ -6,9 +6,10 @@ import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
-import { AMINO_ACIDS, CODON_TABLE, SIDE_CHAIN_TYPES, STOP, STOP_CODONS, codingStrandFrom, transcribe, translate, proteinSummary } from '../lib/molecular.mjs';
+import { AMINO_ACIDS, CODON_TABLE, SIDE_CHAIN_TYPES, STOP, STOP_CODONS, codingStrandFrom, toCodingStrand, transcribe, translate, proteinSummary } from '../lib/molecular.mjs';
 const codonsFor = abbr => Object.entries(CODON_TABLE).filter(([, a]) => a.abbr === abbr).map(([codon]) => codon);
-const rows = [...AMINO_ACIDS, STOP].map(a => ({ ...a, codons: codonsFor(a.abbr) }));
+// DNA codons are the coding-strand triplets: the same letters as the mRNA codon with T in place of U.
+const rows = [...AMINO_ACIDS, STOP].map(a => ({ ...a, codons: codonsFor(a.abbr), dna: codonsFor(a.abbr).map(toCodingStrand) }));
 const leucine = codonsFor('Leu');
 const peptide = proteinSummary(translate('AUGGCAUUCUAG'));
 const tac = transcribe(codingStrandFrom('TAC', 'template'));
@@ -19,24 +20,24 @@ const examples = [
   { question: 'The DNA template strand reads 3′-TAC-5′. Which amino acid does it code for?', steps: [`Transcribe first: the complement of TAC with U for T is ${tac}.`, `Look up ${tac} in the chart, not TAC: the chart uses mRNA letters.`], answer: `${CODON_TABLE[tac].name} (${CODON_TABLE[tac].abbr}), the start codon.`, href: '/dna-transcription-translation/', label: 'Convert a longer DNA sequence' },
 ];
 ---
-<Layout title="Codon Chart: mRNA Codon to Amino Acid Table (All 64 Codons)" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['Codon chart', '/codon-chart/']]} description="Look up any mRNA codon in the genetic code: all 64 codons with their amino acids, the AUG start and three stop codons, and an amino acid to codon table.">
-<div class="intro"><div><div class="eyebrow">The genetic code, in one table</div><h1>Codon chart: mRNA codons to amino acids</h1><p>The codon chart (genetic code table) shows which amino acid each three-letter mRNA codon codes for. Type a codon such as AUG or an amino acid such as leucine to find it, then use the amino acid table to see every codon that codes for it.</p></div></div>
+<Layout title="Codon Chart & Codon Table: All 64 mRNA Codons to Amino Acids" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['Codon chart', '/codon-chart/']]} description="Codon chart and codon table of the genetic code: all 64 mRNA codons with their amino acids, the DNA codons, the start and stop codons, and a codon lookup.">
+<div class="intro"><div><div class="eyebrow">The genetic code, in one table</div><h1>Codon chart and codon table: mRNA codons to amino acids</h1><p>The codon chart, also called the codon table or genetic code table, shows which amino acid each three-letter mRNA codon codes for. Type a codon such as AUG, or its DNA form ATG, or an amino acid such as leucine to find it. Below the chart, the amino acid and codon table lists every mRNA and DNA codon for each of the 20 amino acids. It is for biology students translating mRNA by hand and for teachers who need a chart to project or print.</p></div></div>
 <codon-lookup class="explanation codon-lookup">
   <label class="field" for="codon-query">Find a codon or an amino acid</label>
   <div class="codon-lookup-row"><input id="codon-query" type="search" data-query placeholder="Try AUG, UGG, ATG, Leu, lysine, W or stop" autocomplete="off" spellcheck="false"/></div>
   <p class="codon-result" data-result aria-live="polite">Type three bases (mRNA or DNA letters) or an amino acid name, three-letter code, or one-letter code.</p>
 </codon-lookup>
 <section class="explanation" aria-labelledby="chart-heading">
-  <h2 id="chart-heading">The standard codon chart</h2>
+  <h2 id="chart-heading">The standard codon chart (codon table)</h2>
   <p>Read a codon from its 5′ end. Find the first base in the left column, the second base in the next column, and the third base along the top. The cell where they meet is the amino acid. {64 - STOP_CODONS.length} codons code for the 20 amino acids and 3 are stop signals.</p>
   <CodonChart/>
 </section>
 <ClassroomStrip/>
 <AdSlot type="rectangle" />
 <section class="explanation" aria-labelledby="amino-heading">
-  <h2 id="amino-heading">Amino acid to codon table</h2>
-  <p>The reverse lookup: every amino acid with its abbreviations, all the mRNA codons that code for it, and its side-chain class. Use it when a question asks which codons could code for a given amino acid, or how many.</p>
-  <div class="fact-table-wrap"><table class="fact-table amino-table"><thead><tr><th scope="col">Amino acid</th><th scope="col">3-letter</th><th scope="col">1-letter</th><th scope="col">mRNA codons</th><th scope="col">Codons</th><th scope="col">Side chain</th></tr></thead><tbody>{rows.map(a => <tr><td>{a.name}</td><td>{a.abbr}</td><td>{a.letter}</td><td><code>{a.codons.join(' ')}</code></td><td>{a.codons.length}</td><td>{SIDE_CHAIN_TYPES[a.type]}</td></tr>)}</tbody></table></div>
+  <h2 id="amino-heading">Amino acid and codon table (mRNA and DNA codons)</h2>
+  <p>The reverse lookup: every amino acid with its abbreviations, all the mRNA codons that code for it, the matching DNA codons, and its side-chain class. The DNA codons are written as they appear on the coding strand, 5′ → 3′, which is the mRNA codon with T in place of U. Use the table when a question asks which codons could code for a given amino acid, or how many.</p>
+  <div class="fact-table-wrap"><table class="fact-table amino-table"><thead><tr><th scope="col">Amino acid</th><th scope="col">3-letter</th><th scope="col">1-letter</th><th scope="col">mRNA codons</th><th scope="col">DNA codons (coding strand)</th><th scope="col">Codons</th><th scope="col">Side chain</th></tr></thead><tbody>{rows.map(a => <tr><td>{a.name}</td><td>{a.abbr}</td><td>{a.letter}</td><td><code>{a.codons.join(' ')}</code></td><td><code>{a.dna.join(' ')}</code></td><td>{a.codons.length}</td><td>{SIDE_CHAIN_TYPES[a.type]}</td></tr>)}</tbody></table></div>
 </section>
 <section class="explanation" aria-labelledby="start-stop-heading">
   <h2 id="start-stop-heading">Start codon, stop codons, and DNA codons</h2>
@@ -46,7 +47,7 @@ const examples = [
   <p><strong>Codons and anticodons.</strong> A codon is on the mRNA. The anticodon is the complementary triplet on the tRNA that reads it, written 3′ → 5′: AUG is read by UAC.</p>
 </section>
 <WorkedExamples items={examples} title="Reading the codon chart: worked examples" intro="Four questions that come up in every genetics unit, worked from the chart above."/>
-<div class="related"><a href="/dna-transcription-translation/">DNA to mRNA to protein converter ↗</a><a href="/learn/transcription-and-translation/">Transcription &amp; translation explained ↗</a><a href="/cells/ribosome/">The ribosome ↗</a><a href="/practice/">Practice molecular biology ↗</a></div>
+<div class="related"><a href="/dna-transcription-translation/">DNA to mRNA to protein converter ↗</a><a href="/codon-chart/activity/">Printable codon chart activity ↗</a><a href="/learn/transcription-and-translation/">Transcription &amp; translation explained ↗</a><a href="/cells/ribosome/">The ribosome ↗</a><a href="/practice/">Practice molecular biology ↗</a></div>
 <AdSlot type="native" />
 <Faq items={faqs['codon-chart']} title="Codon chart questions"/>
 </Layout>

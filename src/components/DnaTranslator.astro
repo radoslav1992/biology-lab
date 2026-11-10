@@ -42,7 +42,7 @@ const presets = [['demo', 'Start–stop demo'], ['hbb', 'β-globin (normal GAG)'
 </dna-lab>
 <noscript>Enable JavaScript to translate your own sequence. For the example coding strand {DEFAULT_SEQUENCE} ({DEFAULT_SEQUENCE.length} nt, GC content {demoGc}, Tm about {demoTm} °C), transcription gives the mRNA {demoRna}, and reading frame 1 translates to {demo.abbrs}, stopping at the {demo.stopCodon} codon: a {demo.length}-amino-acid peptide, one-letter code {demo.letters}.</noscript>
 <script>
-import { codingStrandFrom, anticodons, INPUT_STRANDS, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
+import { codingStrandFrom, anticodons, INPUT_STRANDS, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, parseSequenceHref, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
 import { fmt, pct, escapeHtml } from '../lib/format.mjs';
 type Preset = { dna: string; reference: string; referenceLabel: string; note: string };
 const PRESETS: Record<string, Preset> = {
@@ -165,7 +165,19 @@ ${scanning}
     startBox.addEventListener('change', run);
     el<HTMLButtonElement>('[data-translate]').addEventListener('click', run);
     el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; kindSelect.value = 'coding'; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; run(); });
-    run();
+    // Worked examples link here with "#seq=<bases>&strand=<coding|template|mrna>": load the sequence and bring the tool into view.
+    const fromLink = () => {
+      const state = parseSequenceHref(location.hash);
+      if (!state) return false;
+      textarea.value = state.seq; kindSelect.value = state.kind; startBox.checked = state.fromStartCodon; frame = 0; presetKey = '';
+      run();
+      this.scrollIntoView({ block: 'start' });
+      return true;
+    };
+    addEventListener('hashchange', fromLink);
+    // A second click on the same example leaves the fragment unchanged, so no hashchange fires: load it again by hand.
+    document.addEventListener('click', e => { const a = (e.target as Element).closest?.('a[href*="#seq="]') as HTMLAnchorElement | null; if (a && a.pathname === location.pathname && a.hash === location.hash) fromLink(); });
+    if (!fromLink()) run();
   }
 }
 customElements.define('dna-lab', DnaLab);

@@ -286,3 +286,72 @@ test('water potential diagram text is XML-safe and its explanation matches the e
   const tie = water.explore({ t: 25, iA: 1, cA: 0.4, pA: 0.5, iB: 2, cB: 0.2, pB: 0.5 }, 'compare');
   assert.ok(tie.steps[3].includes('i × C') && !tie.steps[3].includes('because pressure makes up'));
 });
+
+// ---- Tool page copy, worked examples and "#try=…" links ----
+import { explorations, findExploration, explore as runTool, prefillHref, parsePrefill } from '../src/lib/explorations.mjs';
+import { toolExamples, toolsWithExamples } from '../src/lib/tool-examples.mjs';
+
+test('every tool page opens with a plain-language paragraph: what it calculates, the formula, who it is for', () => {
+  for (const t of explorations) {
+    assert.ok(typeof t.intro === 'string' && t.intro.length >= 250 && t.intro.length <= 620, `${t.slug} intro ${t.intro?.length}`);
+    assert.match(t.intro, /^This (?:[a-z-]+ )*(?:calculator|simulator) /, `${t.slug} intro says what the tool is`);
+    assert.match(t.intro, /[=×÷]/, `${t.slug} intro states the formula`);
+    assert.match(t.intro, / It is for [^.]*(?:students|teachers)[^.]*\.$/, `${t.slug} intro ends with who it is for`);
+    if (t.h1) assert.ok(t.h1.length >= 20 && t.h1.length <= 70 && /calculator/i.test(t.h1), `${t.slug} h1`);
+  }
+  assert.match(findExploration('cell-size').seoTitle, /^Surface Area to Volume Ratio Calculator/);
+  assert.match(findExploration('water-potential').seoTitle, /^Water Potential Calculator/);
+});
+
+test('prefill links round-trip through the URL fragment and ignore anything that is not a field', () => {
+  const cell = findExploration('cell-size');
+  const href = prefillHref('/tools/cell-size/', 'sphere', { radius: 10 });
+  assert.equal(href, '/tools/cell-size/#try=sphere&radius=10');
+  assert.deepEqual(parsePrefill(href.slice(href.indexOf('#')), cell), { mode: 'sphere', values: { radius: 10 } });
+  assert.deepEqual(parsePrefill('#try=sphere&radius=2.5&side=abc&evil=1', cell), { mode: 'sphere', values: { radius: 2.5 } });
+  assert.deepEqual(parsePrefill('#try=pyramid&radius=', cell), { mode: 'cube', values: {} }, 'an unknown mode falls back to the default');
+  assert.equal(parsePrefill('#worked-examples', cell), null);
+  assert.equal(parsePrefill('', cell), null);
+  assert.equal(parsePrefill(undefined, cell), null);
+  const pyramid = findExploration('energy-pyramid'); // a tool without modes
+  assert.deepEqual(parsePrefill(prefillHref('', undefined, { energy: 5000 }), pyramid), { mode: '', values: { energy: 5000 } });
+  const solver = findExploration('population-word-problems');
+  assert.deepEqual(parsePrefill('#try=time&n0=2000&n=2700&rate=2.5', solver), { mode: 'time', values: { n0: 2000, n: 2700, rate: 2.5 } });
+});
+
+test('worked examples run through the tools themselves and print the hand-checked answers', () => {
+  assert.deepEqual(toolsWithExamples, ['cell-size', 'water-potential', 'enzyme-kinetics', 'bacterial-growth']);
+  assert.deepEqual(toolExamples('dilution-calculator'), []);
+  for (const slug of toolsWithExamples) {
+    const tool = findExploration(slug), list = toolExamples(slug);
+    assert.ok(list.length >= 2 && list.length <= 3, `${slug} examples`);
+    for (const e of list) {
+      assert.ok(e.question.endsWith('?') || e.question.endsWith('.'), e.question);
+      assert.ok(e.steps.length >= 2 && e.steps.length <= 3, `${slug}: ${e.question}`);
+      for (const text of [...e.steps, e.answer]) assert.doesNotMatch(text, BAD, `${slug}: ${text}`);
+      // The link under the example must load a state the tool accepts.
+      const state = parsePrefill(prefillHref('', e.mode, e.values), tool);
+      assert.deepEqual(state, { mode: e.mode, values: e.values });
+      assert.doesNotThrow(() => runTool(slug, { ...defaults(tool), ...state.values }, state.mode), `${slug}: ${e.question}`);
+    }
+  }
+  const [sphere, cube, grow] = toolExamples('cell-size');
+  close(4 * Math.PI * 10 ** 2, 1256.637, 1e-3); close(4 / 3 * Math.PI * 10 ** 3, 4188.790, 1e-3);
+  assert.match(sphere.answer, /1,256\.637 µm².*4,188\.79 µm³.*0\.3 per µm/);
+  assert.match(cube.answer, /24 µm².*8 µm³.*3 per µm/);
+  assert.match(grow.answer, /from 6 per µm to 3 per µm/);
+  const [salt, plant] = toolExamples('water-potential');
+  close(-2 * 0.3 * 0.0831 * 308.15, -15.364, 1e-3); // Ψs = −iCRT in bars
+  assert.match(salt.answer, /−15\.364 bar, about −15\.4 bars \(−1\.536 MPa\)/);
+  close(-1 * 0.3 * 0.00831 * 298.15 + 0.5, -0.243, 1e-3);
+  assert.match(plant.answer, /Ψ = −0\.243 MPa/);
+  const [fast, half, blocked] = toolExamples('enzyme-kinetics');
+  close(25 * 5 / (0.5 + 5), 22.727, 1e-3); close(100 * 2 / (2 * (1 + 1 / 1) + 2), 33.333, 1e-3);
+  assert.match(fast.answer, /22\.727 µmol\/min.*90\.9%/);
+  assert.match(half.answer, /^V = 50 µmol\/min/);
+  assert.match(blocked.answer, /33\.333 µmol\/min, down from 50 µmol\/min.*4 mM/);
+  const [coli, counts] = toolExamples('bacterial-growth');
+  assert.equal(1000 * 2 ** (240 / 20), 4096000); assert.equal(120 / Math.log2(6400 / 100), 20);
+  assert.match(coli.answer, /^4,096,000 cells .*12 generations/);
+  assert.match(counts.answer, /^20 min per generation \(6 generations/);
+});

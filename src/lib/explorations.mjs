@@ -17,6 +17,28 @@ export const explorations = modules.map(m => m.definition);
 export const findExploration = slug => bySlug.get(slug)?.definition;
 export const defaultMode = tool => tool.modes?.[0]?.[0] ?? '';
 export const activeKeys = (tool, mode) => tool.fieldsByMode?.[mode] ?? tool.fields.map(f => f.key);
+/**
+ * Link that opens an explorer with a mode and values filled in, e.g. "/tools/cell-size/#try=sphere&radius=10".
+ * The state lives in the URL fragment, so every link still points at the one canonical page.
+ */
+export function prefillHref(path, mode, values = {}) {
+  return `${path}#${new URLSearchParams({ try: mode ?? '', ...values })}`;
+}
+/** Read a "#try=…" fragment back into { mode, values } for a tool; null when the fragment is not a prefill link. */
+export function parsePrefill(hash, tool) {
+  const params = new URLSearchParams(String(hash ?? '').replace(/^#/, ''));
+  if (!params.has('try')) return null;
+  const wanted = params.get('try');
+  const mode = tool.modes?.some(([value]) => value === wanted) ? wanted : defaultMode(tool);
+  const values = {};
+  for (const f of tool.fields) {
+    const raw = params.get(f.key);
+    if (raw === null || raw.trim() === '') continue;
+    const v = Number(raw);
+    if (Number.isFinite(v)) values[f.key] = v;
+  }
+  return { mode, values };
+}
 export function validateFields(tool, values, mode = defaultMode(tool)) {
   const keys = activeKeys(tool, mode);
   for (const f of tool.fields) {

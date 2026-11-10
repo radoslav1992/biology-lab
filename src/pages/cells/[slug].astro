@@ -10,8 +10,10 @@ import { cell3dHref } from '../../lib/cell3d-share.mjs';
 export function getStaticPaths() { return Object.keys(organelles).map(slug => ({ params: { slug }, props: { slug } })); }
 const { slug } = Astro.props;
 const o = organelles[slug];
-const full = `${o.title}: Structure, Function & Location in the Cell`;
-const title = o.seoTitle || (full.length <= 65 ? full : `${o.title}: Structure, Function & Location`);
+// "<organelle> structure and function" is how people search for these pages, so the title and H1 carry the phrase.
+const full = `${o.title}: Structure and Function in the Cell`;
+const title = o.seoTitle || (full.length <= 60 ? full : `${o.title}: Structure and Function`);
+const others = Object.entries(organelles).filter(([key]) => key !== slug);
 // Meta description: the whole intro when it fits, otherwise its first sentence plus the longest tail that keeps it
 // within 160 characters (tests/organelles.test.mjs mirrors this rule).
 const TAILS = ['Structure, functions, size, and a common misconception.', 'Structure, functions, and a common misconception.', 'Structure and function.'];
@@ -21,7 +23,7 @@ const lesson = lessons.find(l => l.slug === o.lesson);
 const kind = slug === 'chloroplast' ? 'plant' : 'animal';
 const items = faqs[slug] || [];
 ---
-<Layout title={title} section="Cells" schemaType="Article" description={description} breadcrumbs={[['Cell organelles', '/cells/'], [o.title, `/cells/${slug}/`]]}><div class="breadcrumb"><a href="/cells/">Cell atlas</a> / {o.title}</div><div class="intro"><div><div class="eyebrow">{o.type}</div><h1>{o.title}</h1><p>{o.intro}</p></div><span class="intro-note">Found in: {o.foundIn.join(' · ')}</span></div><CellDiagram highlight={slug} kind={kind}/><p class="see-3d"><a class="text-link" href={cell3dHref(slug)}>See the {o.title.toLowerCase()} in 3D ↗</a></p><AdSlot type="rectangle" /><div class="shape-intro-grid"><section class="shape-fact-box"><h2>Know its structure</h2><table class="fact-table"><tbody><tr><td>Found in</td><td>{o.foundIn.join(', ')}</td></tr>{o.properties.map(([key, val]) => <tr><td>{key}</td><td>{val}</td></tr>)}</tbody></table><h3>What it does</h3><ul class="cell-functions">{o.functions.map(([key, val]) => <li><strong>{key}.</strong> {val}</li>)}</ul></section><aside class="shape-fact-box"><h3>In action</h3><p>{o.example}</p><h3>A common misconception</h3><p>{o.pitfall}</p></aside></div><div class="related"><a href={`/learn/${o.lesson}/`}>Read the lesson{lesson ? `: ${lesson.title}` : ''} ↗</a>{o.related.map(key => <a href={`/cells/${key}/`}>Compare with the {organelles[key].title.toLowerCase()} ↗</a>)}<a href="/cells/">See the whole cell atlas ↗</a><a href="/printable-diagrams/">Print a cell diagram to label ↗</a><a href="/practice/">Practice cell questions ↗</a></div><AdSlot type="native" /><Faq items={items} title={`${o.title}: common questions`}/></Layout>
+<Layout title={title} section="Cells" schemaType="Article" description={description} breadcrumbs={[['Cell organelles', '/cells/'], [o.title, `/cells/${slug}/`]]}><div class="breadcrumb"><a href="/cells/">Cell atlas</a> / {o.title}</div><div class="intro"><div><div class="eyebrow">{o.type}</div><h1>{o.title}: structure and function</h1><p>{o.intro}</p></div><span class="intro-note">Found in: {o.foundIn.join(' · ')}</span></div><CellDiagram highlight={slug} kind={kind}/><p class="see-3d"><a class="text-link" href={cell3dHref(slug)}>See the {o.title.toLowerCase()} in 3D ↗</a></p><AdSlot type="rectangle" /><div class="shape-intro-grid"><section class="shape-fact-box"><h2>Know its structure</h2><table class="fact-table"><tbody><tr><td>Found in</td><td>{o.foundIn.join(', ')}</td></tr>{o.properties.map(([key, val]) => <tr><td>{key}</td><td>{val}</td></tr>)}</tbody></table><h3>What it does</h3><ul class="cell-functions">{o.functions.map(([key, val]) => <li><strong>{key}.</strong> {val}</li>)}</ul></section><aside class="shape-fact-box"><h3>In action</h3><p>{o.example}</p><h3>A common misconception</h3><p>{o.pitfall}</p></aside></div><div class="related"><a href={`/learn/${o.lesson}/`}>Read the lesson{lesson ? `: ${lesson.title}` : ''} ↗</a><a href={o.tool.href}>{o.tool.label} ↗</a>{o.related.map(key => <a href={`/cells/${key}/`}>Compare with the {organelles[key].title.toLowerCase()} ↗</a>)}<a href="/cells/">All cell organelles and their functions ↗</a><a href="/cells/activity/">Cell organelles classroom activity ↗</a><a href="/printable-diagrams/">Print a cell diagram to label ↗</a><a href="/practice/">Practice cell questions ↗</a></div><nav class="related organelle-nav" aria-labelledby="organelle-nav-heading"><h2 id="organelle-nav-heading">More cell organelles</h2>{others.map(([key, other]) => <a href={`/cells/${key}/`}>{other.title}: structure and function ↗</a>)}</nav><AdSlot type="native" /><Faq items={items} title={`${o.title}: common questions`}/></Layout>
 <style>
 .cell-functions{padding-left:20px;margin:0}
 .cell-functions li{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:10px}
@@ -29,4 +31,6 @@ const items = faqs[slug] || [];
 .intro-note{max-width:260px;white-space:normal;text-align:right;line-height:1.5}
 .see-3d{margin:12px 2px 0;text-align:right}
 .see-3d .text-link{font-weight:600}
+.organelle-nav{margin-top:28px}
+.organelle-nav h2{font-size:20px;margin:0 5px 8px}
 </style>

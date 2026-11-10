@@ -18,6 +18,8 @@ export const definition = {
   category: 'Cells',
   icon: '2ⁿ',
   description: 'Find bacterial generation (doubling) time from two counts, or the cells after any time with N = N₀ × 2ⁿ, and see exponential growth on a log-scale curve.',
+  h1: 'Bacterial growth and doubling time calculator',
+  intro: 'This calculator answers the two standard bacterial growth questions. Enter a starting count, a generation (doubling) time and the elapsed time, and it finds the final number of cells with N = N₀ × 2ⁿ, where n = t ÷ g is the number of generations. Or enter two counts and the time between them, and it finds the generation time with g = t ÷ log₂(N ÷ N₀). It is for biology and microbiology students working on binary fission and log-phase growth.',
   keywords: 'binary fission generation time doubling time exponential e coli log phase growth rate constant colony forming units',
   meta: 'Binary fission · log-scale curve',
   fields: [

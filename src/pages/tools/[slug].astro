@@ -6,9 +6,20 @@ import { faqs } from '../../lib/faqs.mjs';
 import Layout from '../../layouts/Layout.astro';
 import Exploration from '../../components/Exploration.astro';
 import { explorations } from '../../lib/explorations.mjs';
+import WorkedExamples from '../../components/WorkedExamples.astro';
+import { prefillHref } from '../../lib/explorations.mjs';
+import { toolExamples } from '../../lib/tool-examples.mjs';
+import { activityFor } from '../../lib/activities.mjs';
+import { organelles } from '../../lib/organelles.mjs';
 import { lessons } from '../../lib/lessons.mjs';
 export function getStaticPaths() { return explorations.map(tool => ({ params: { slug: tool.slug }, props: { tool } })); }
 const { tool } = Astro.props;
 const lesson = lessons.find(l => l.slug === tool.lesson);
+const heading = tool.h1 || tool.title;
+// Each worked example links back into the calculator with its numbers filled in (a "#try=…" fragment on this page).
+const examples = toolExamples(tool.slug).map(e => ({ ...e, href: prefillHref('', e.mode, e.values), label: 'Load these numbers into the calculator' }));
+const activity = activityFor(`/tools/${tool.slug}/`);
+// Organelle pages that name this tool as their calculator link back here.
+const cellPages = Object.entries(organelles).filter(([, o]) => o.tool.href === `/tools/${tool.slug}/`);
 ---
-<Layout title={tool.seoTitle || tool.title} description={tool.description} section="Tools" breadcrumbs={[['Tools', '/tools/'], [tool.title, `/tools/${tool.slug}/`]]}><div class="breadcrumb"><a href="/tools/">All tools</a> / {tool.title}</div><div class="intro"><div><div class="eyebrow">{tool.category} · interactive lab</div><h1>{tool.title}</h1><p>{tool.description}</p></div></div><Exploration tool={tool}/><ClassroomStrip/><AdSlot type="rectangle" /><div class="related"><a href={`/learn/${tool.lesson}/`}>{lesson ? `Read: ${lesson.title}` : 'Read the concept & worked example'} ↗</a><a href="/practice/">Practice this topic ↗</a><a href="/worksheets/">Create a worksheet ↗</a></div><Faq items={faqs[tool.slug]} title={`${tool.title}: common questions`}/></Layout>
+<Layout title={tool.seoTitle || tool.title} description={tool.description} section="Tools" breadcrumbs={[['Tools', '/tools/'], [tool.title, `/tools/${tool.slug}/`]]}><div class="breadcrumb"><a href="/tools/">All tools</a> / {tool.title}</div><div class="intro"><div><div class="eyebrow">{tool.category} · interactive lab</div><h1>{heading}</h1><p>{tool.intro || tool.description}</p></div></div><Exploration tool={tool}/><ClassroomStrip/>{examples.length > 0 && <WorkedExamples items={examples} title={`${heading}: worked examples`} intro="Typical homework questions, solved with the same steps the calculator prints. Use the link under an example to load its numbers and change them."/>}<AdSlot type="rectangle" /><div class="related"><a href={`/learn/${tool.lesson}/`}>{lesson ? `Read: ${lesson.title}` : 'Read the concept & worked example'} ↗</a>{activity && <a href={activity.path}>Printable {activity.title.replace(/ Activity$/, '')} activity ↗</a>}{cellPages.map(([slug, o]) => <a href={`/cells/${slug}/`}>{o.title}: structure and function ↗</a>)}<a href="/tools/">All biology calculators ↗</a><a href="/practice/">Practice this topic ↗</a><a href="/worksheets/">Create a worksheet ↗</a></div><Faq items={faqs[tool.slug]} title={`${tool.title}: common questions`}/></Layout>

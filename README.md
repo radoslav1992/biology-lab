@@ -78,6 +78,10 @@ npx wrangler deploy --dry-run
 
 Both deployment commands read the assets directory from the same configuration. Build first so `dist/` exists. Retrying an old commit without this file will still fail with “Missing entry-point to Worker script or to assets directory”.
 
+### HTTPS only
+
+`public/_headers` sends `Strict-Transport-Security: max-age=31536000; includeSubDomains` on every response, so a browser that has visited the site once keeps using `https://`. A static site cannot redirect by scheme itself, and Workers static assets rejects host- or scheme-based `_redirects` rules, so the redirect from `http://` has to be switched on in the Cloudflare dashboard: **SSL/TLS → Edge Certificates → Always Use HTTPS** (on). Without it, `http://` copies of pages stay reachable and show up in Google Search Console as duplicates of the `https://` URLs. Canonical links, the sitemap and `robots.txt` already use `https://` (from `url` in `src/lib/site.mjs`).
+
 References: [Workers static assets configuration](https://developers.cloudflare.com/workers/static-assets/binding/) and [HTML routing](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/).
 
 ## Deploy to Cloudflare Pages
@@ -101,6 +105,7 @@ Google Fonts supplies DM Sans and Manrope; system fonts are fallbacks. Calculato
 
 - `src/lib/genetics.mjs`, `molecular.mjs`, `population.mjs`: independently tested biology calculations.
 - `src/lib/tools/*.mjs`: one module per generic explorer (`definition`, `explore`, `diagram`), registered in `src/lib/explorations.mjs`. Explorers listed there as `embedded` (the population word-problem solver) render inside a flagship page and get no `/tools/` route or catalog card.
+- `src/lib/tool-examples.mjs`: worked examples under the explorers, built from each tool's own `explore()` output. Example links use a URL fragment (`#try=<mode>&<field>=<value>` for explorers, `#seq=<bases>&strand=<type>` for the DNA converter) to load the numbers into the calculator without creating a second URL for the page.
 - `src/lib/organelles.mjs`, `lessons.mjs`, `practice.mjs`, `faqs.mjs`, `catalog.mjs`: editorial content and site map.
 - `src/lib/activities.mjs`: classroom activities and answer keys, computed with the same modules as the tools.
 - `src/lib/cell3d-share.mjs` (share-link state, no imports), `cell3d.mjs` (structure list and info-card text drawn from `organelles.mjs`), `cell3d-models.mjs` (the procedural Three.js scenes, testable in Node), and `cell3d-viewer.mjs` (renderer, controls, labels, picking; loaded lazily).
