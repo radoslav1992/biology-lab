@@ -208,3 +208,141 @@ test('the worked examples on the converter page translate as printed', async () 
   assert.deepEqual(abbrs(translate('AUGUUGCAGCACUAG')), ['Met', 'Leu', 'Gln', 'His', 'Stop']);
   assert.equal(mrna('AGT', 'template'), 'UCA');
 });
+
+test('tRNA anticodons: one per translated codon, written 3′→5′ under the codon or 5′→3′ reversed, none for a stop', async () => {
+  const { anticodonFor, anticodonRow, anticodons, ANTICODON_DIRECTIONS } = await import('../src/lib/molecular.mjs');
+  assert.deepEqual(Object.keys(ANTICODON_DIRECTIONS), ['3to5', '5to3']);
+  // the start codon 5′-AUG-3′ is read by 3′-UAC-5′, which is 5′-CAU-3′
+  assert.equal(anticodonFor('AUG'), 'UAC');
+  assert.equal(anticodonFor('AUG', '3to5'), 'UAC');
+  assert.equal(anticodonFor('AUG', '5to3'), 'CAU');
+  assert.equal(anticodonFor('GCC'), 'CGG');
+  assert.equal(anticodonFor('GCC', '5to3'), 'GGC');
+  assert.equal(anticodonFor('gcu', '5to3'), 'AGC');
+  assert.equal(anticodonFor('UUU'), 'AAA');
+  // every sense codon: the 3′→5′ form pairs base for base, and the 5′→3′ form is that string reversed
+  const pair = { A: 'U', U: 'A', G: 'C', C: 'G' };
+  let sense = 0;
+  for (const codon of Object.keys(CODON_TABLE)) {
+    if (STOP_CODONS.includes(codon)) { assert.equal(anticodonFor(codon), null, codon); assert.equal(anticodonFor(codon, '5to3'), null, codon); continue; }
+    sense++;
+    const paired = anticodonFor(codon), reversed = anticodonFor(codon, '5to3');
+    assert.equal(paired, [...codon].map(b => pair[b]).join(''), codon);
+    assert.equal(paired, anticodons(codon), codon);
+    assert.equal(reversed, [...paired].reverse().join(''), codon);
+    // pairing the anticodon back gives the codon: the reverse complement of the 5′→3′ anticodon
+    assert.equal([...reversed].reverse().map(b => pair[b]).join(''), codon, codon);
+  }
+  assert.equal(sense, 61);
+  // a translated message: the stop codon has no tRNA, and nothing after it is read
+  const peptide = translate('AUGGCUUAAGGG');
+  assert.deepEqual(anticodonRow(peptide), ['UAC', 'CGA', null]);
+  assert.deepEqual(anticodonRow(peptide, '5to3'), ['CAU', 'AGC', null]);
+  assert.deepEqual(anticodonRow(translate(transcribe(DEFAULT_SEQUENCE))), ['UAC', 'CGG', 'UAA', 'CAU', 'UAC', 'CCG', 'GCG', null]);
+  assert.deepEqual(anticodonRow(translate(transcribe(DEFAULT_SEQUENCE)), '5to3'), ['CAU', 'GGC', 'AAU', 'UAC', 'CAU', 'GCC', 'GCG', null]);
+  assert.deepEqual(anticodonRow([]), []);
+  assert.throws(() => anticodonFor('AU'), /exactly three bases/);
+  assert.throws(() => anticodonFor('AUGG'), /exactly three bases/);
+  assert.throws(() => anticodonFor('ATG'), /not a valid base/);
+  assert.throws(() => anticodonFor(''), /Enter a sequence/);
+  assert.throws(() => anticodonFor('AUG', 'sideways'), /3′ → 5′ or 5′ → 3′/);
+});
+
+test('DNA replication returns the complementary strand with the right 5′ and 3′ ends', async () => {
+  const { replicate, basePairs } = await import('../src/lib/molecular.mjs');
+  const r = replicate('ATGC');
+  assert.deepEqual(r.original, { seq: 'ATGC', left: '5′', right: '3′' });
+  assert.deepEqual(r.copy, { seq: 'TACG', left: '3′', right: '5′' });
+  assert.equal(r.copy53, 'GCAT');
+  assert.equal(r.copy53, reverseComplement('ATGC'));
+  assert.equal(r.original53, 'ATGC');
+  assert.deepEqual([r.at, r.gc, r.hydrogenBonds], [2, 2, 10]);
+  // a strand written 3′→5′: the new strand under it already reads 5′→3′ from left to right
+  const t = replicate('TACGGC', '3to5');
+  assert.deepEqual(t.original, { seq: 'TACGGC', left: '3′', right: '5′' });
+  assert.deepEqual(t.copy, { seq: 'ATGCCG', left: '5′', right: '3′' });
+  assert.equal(t.copy53, 'ATGCCG');
+  assert.equal(t.original53, 'CGGCAT');
+  // the same double helix whichever strand and whichever direction you start from
+  assert.equal(replicate(t.original53).copy53, t.copy53);
+  assert.equal(replicate(t.copy53).copy53, t.original53);
+  for (const seq of [DEFAULT_SEQUENCE, 'AGTCCGATA', 'A', 'GGGCCC']) {
+    const copy = replicate(seq);
+    assert.equal(copy.copy.seq.length, seq.length);
+    assert.equal(replicate(copy.copy53).copy53, seq, 'copying the copy restores the original');
+    assert.equal(copy.at + copy.gc, seq.length);
+    assert.equal(copy.hydrogenBonds, 2 * copy.at + 3 * copy.gc);
+    for (let i = 0; i < seq.length; i++) assert.ok(['AT', 'TA', 'GC', 'CG'].includes(seq[i] + copy.copy.seq[i]), `${seq[i]}–${copy.copy.seq[i]}`);
+  }
+  assert.deepEqual(basePairs(DEFAULT_SEQUENCE), { at: 17, gc: 22, hydrogenBonds: 100 });
+  assert.deepEqual(basePairs('AAAA'), { at: 4, gc: 0, hydrogenBonds: 8 });
+  assert.deepEqual(basePairs('GC'), { at: 0, gc: 2, hydrogenBonds: 6 });
+  assert.equal(replicate(' at gc\n12').copy.seq, 'TACG', 'input is cleaned like every other sequence');
+  assert.throws(() => replicate('AUGC'), /expects DNA/);
+  assert.throws(() => replicate(''), /Enter a sequence/);
+  assert.throws(() => replicate('ATGN'), /unknown base/);
+  assert.throws(() => replicate('ATGC', 'up'), /5′ → 3′ or 3′ → 5′/);
+  assert.throws(() => replicate('A'.repeat(MAX_LENGTH + 1)), /or fewer/);
+  assert.throws(() => basePairs('AUG'), /expects DNA/);
+});
+
+test('reverse transcription turns an mRNA into the DNA template and coding strands', async () => {
+  const { reverseTranscribe, codingStrandFrom } = await import('../src/lib/molecular.mjs');
+  const r = reverseTranscribe('AUGGCU');
+  assert.deepEqual(r, { mrna: 'AUGGCU', template: 'TACCGA', template53: 'AGCCAT', coding: 'ATGGCT', at: 3, gc: 3, hydrogenBonds: 15 });
+  // transcribing the DNA again gives back the mRNA, from either strand
+  assert.equal(transcribe(r.coding), r.mrna);
+  assert.equal(transcribe(codingStrandFrom(r.template, 'template')), r.mrna);
+  assert.equal(transcribe(codingStrandFrom(r.template53, 'template53')), r.mrna);
+  assert.equal(r.template, templateStrand(toCodingStrand('AUGGCU')));
+  const demo = reverseTranscribe(transcribe(DEFAULT_SEQUENCE));
+  assert.equal(demo.coding, DEFAULT_SEQUENCE);
+  assert.equal(demo.template53, reverseComplement(DEFAULT_SEQUENCE));
+  assert.throws(() => reverseTranscribe('ATGGCT'), /RNA uses U/);
+  assert.throws(() => reverseTranscribe(''), /Enter a sequence/);
+});
+
+test('example links can open the replication mode, and plain links are unchanged', async () => {
+  const { TOOL_MODES } = await import('../src/lib/molecular.mjs');
+  assert.deepEqual(Object.keys(TOOL_MODES), ['translate', 'replicate']);
+  const href = sequenceHref('', 'AGTCCGATA', 'coding', { mode: 'replicate' });
+  assert.equal(href, '#seq=AGTCCGATA&strand=coding&mode=replicate');
+  assert.deepEqual(parseSequenceHref(href), { seq: 'AGTCCGATA', kind: 'coding', fromStartCodon: false, mode: 'replicate' });
+  assert.equal(sequenceHref('', 'ATG', 'coding', { mode: 'translate' }), '#seq=ATG&strand=coding');
+  assert.equal(sequenceHref('', 'ATG', 'coding'), '#seq=ATG&strand=coding');
+  assert.deepEqual(parseSequenceHref('#seq=ATG&strand=coding&mode=anything'), { seq: 'ATG', kind: 'coding', fromStartCodon: false });
+});
+
+test('the new worked examples, the replication section and the FAQ print what the functions return', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { replicate, reverseTranscribe, anticodonRow, anticodonFor } = await import('../src/lib/molecular.mjs');
+  const { faqs } = await import('../src/lib/faqs.mjs');
+  const page = readFileSync(new URL('../src/pages/dna-transcription-translation.astro', import.meta.url), 'utf8');
+  // worked example: mRNA 5′-AUG GCU UAA-3′ to tRNA
+  assert.ok(page.includes("const toTrna = 'AUGGCUUAA'"));
+  assert.deepEqual(anticodonRow(translate('AUGGCUUAA')), ['UAC', 'CGA', null]);
+  assert.deepEqual(anticodonRow(translate('AUGGCUUAA'), '5to3'), ['CAU', 'AGC', null]);
+  assert.deepEqual(abbrs(translate('AUGGCUUAA')), ['Met', 'Ala', 'Stop']);
+  // worked example and table: the complementary strand of 5′-AGT CCG ATA-3′
+  assert.ok(page.includes("replicate('AGTCCGATA')") && page.includes("reverseTranscribe('AUGGCU')"));
+  const copied = replicate('AGTCCGATA');
+  assert.deepEqual([copied.copy.seq, copied.copy.left, copied.copy.right, copied.copy53, copied.at, copied.gc], ['TCAGGCTAT', '3′', '5′', 'TATCGGACT', 5, 4]);
+  // the title, H1 and URL of the page are unchanged
+  assert.ok(page.includes('<Layout title="DNA to mRNA to Protein Converter: Transcription & Translation"'));
+  assert.ok(page.includes('<h1>DNA to mRNA to protein converter: transcription and translation tool</h1>'));
+  const description = page.match(/<Layout title="[^"]+"[^>]* description="([^"]+)"/)[1];
+  assert.ok(description.length >= 120 && description.length <= 155, `description ${description.length}`);
+  assert.match(description, /tRNA anticodons/);
+  assert.match(description, /DNA replication/);
+  // FAQ answers
+  const answer = start => faqs['dna-transcription-translation'].find(f => f.question.startsWith(start)).answer;
+  const trna = answer('How do you convert mRNA to tRNA');
+  assert.ok(trna.includes(`5′-AUG-3′ is read by the anticodon 3′-${anticodonFor('AUG')}-5′`));
+  assert.ok(trna.includes(`5′-GCC-3′ by 3′-${anticodonFor('GCC')}-5′`));
+  assert.ok(trna.includes(`3′-${anticodonFor('AUG')}-5′ is 5′-${anticodonFor('AUG', '5to3')}-3′`));
+  for (const stop of STOP_CODONS) assert.ok(trna.includes(stop));
+  const copy = replicate('ATGC');
+  assert.ok(answer('How do you find the complementary strand in DNA replication').includes(`For the strand 5′-ATGC-3′ the new strand is ${copy.copy.left}-${copy.copy.seq}-${copy.copy.right}, which reads 5′-${copy.copy53}-3′`));
+  const back = reverseTranscribe('AUGGCU');
+  assert.ok(answer('How do you convert mRNA to DNA').includes(`The mRNA 5′-${back.mrna}-3′ gives the coding strand 5′-${back.coding}-3′ and the template strand 3′-${back.template}-5′`));
+});

@@ -7,7 +7,7 @@ import WorkedExamples from '../components/WorkedExamples.astro';
 import { faqs } from '../lib/faqs.mjs';
 import Layout from '../layouts/Layout.astro';
 import DnaTranslator from '../components/DnaTranslator.astro';
-import { AMINO_ACIDS, CODON_TABLE, STOP_CODONS, codingStrandFrom, transcribe, codons, anticodons, translate, proteinSummary, findStartCodon, sequenceHref } from '../lib/molecular.mjs';
+import { AMINO_ACIDS, CODON_TABLE, STOP_CODONS, codingStrandFrom, transcribe, codons, anticodons, anticodonRow, translate, proteinSummary, findStartCodon, sequenceHref, replicate, reverseTranscribe } from '../lib/molecular.mjs';
 const codonCount = abbr => Object.values(CODON_TABLE).filter(a => a.abbr === abbr).length;
 const sixfold = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 6).map(a => a.name.toLowerCase());
 const single = AMINO_ACIDS.filter(a => codonCount(a.abbr) === 1).map(a => a.name.toLowerCase());
@@ -25,6 +25,16 @@ const given = 'AACUAUGUGGCAU';
 const flow = mrnaOf('TACGGACTT', 'template');
 const coding = mrnaOf('GCGATACCGTTA', 'coding');
 const message = 'AUGUUGCAGCACUAG', messageProtein = proteinSummary(translate(message));
+// tRNA anticodons for a short mRNA, written both ways; the stop codon has none.
+const toTrna = 'AUGGCUUAA', trnaCodons = translate(toTrna), paired = anticodonRow(trnaCodons), reversed = anticodonRow(trnaCodons, '5to3');
+const carried = trnaCodons.filter((_, i) => paired[i]);
+const pairedList = carried.map((p, i) => `${p.codon} → ${paired[i]}`).join(', ');
+// DNA replication: the complementary strand of one strand, and the DNA made from an mRNA.
+const copied = replicate('AGTCCGATA'), cdna = reverseTranscribe('AUGGCU');
+const strandPair = [
+  ['Original strand', copied.original],
+  ['New strand', copied.copy],
+];
 const alignment = [
   ['Coding strand (DNA)', '5′', 'ATG GCC TGA', '3′'],
   ['Template strand (DNA)', '3′', 'TAC CGG ACT', '5′'],
@@ -39,11 +49,13 @@ const examples = [
   { question: 'How many codons will result from the transcription of this DNA strand: T A C G G T A G T A C C?', steps: [`Transcribe the template: TACGGTAGTACC → mRNA ${spaced(strand12)}.`, `12 bases ÷ 3 bases per codon = ${codons(strand12).length} codons.`], answer: `${codons(strand12).length} codons, translated as ${protein(strand12)}.`, ...load('TACGGTAGTACC', 'template') },
   { question: 'An mRNA has the sequence 5′-AACUAUGUGGCAU-3′. What is the translated protein sequence from N-terminus to C-terminus?', steps: [`Ribosomes start at the first AUG, which begins at base ${findStartCodon(given) + 1}: AACU | AUG UGG CAU.`, 'Look up each codon: AUG = Met, UGG = Trp, CAU = His.'], answer: `${protein(given)} (N-terminus → C-terminus).`, ...load(given, 'mrna', { fromStartCodon: true }) },
   { question: 'Translate the mRNA strand 5′-AUG UUG CAG CAC UAG-3′ into amino acids.', steps: [`Look up each codon in order: ${codons(message).slice(0, messageProtein.length).map(c => `${c} = ${CODON_TABLE[c].abbr}`).join(', ')}.`, `${messageProtein.stopCodon} is a stop codon: it adds no amino acid and ends the chain.`], answer: `${messageProtein.abbrs}, then stop.`, ...load(message, 'mrna') },
+  { question: `Convert the mRNA 5′-${spaced(toTrna)}-3′ to tRNA anticodons.`, steps: ['Each tRNA anticodon pairs with one codon, base by base: A with U and G with C.', `Write the partner of each base under its codon: ${pairedList}. Lined up like this the anticodons read 3′ → 5′.`, `${trnaCodons[trnaCodons.length - 1].codon} is a stop codon. No tRNA matches it; a release factor ends translation instead.`, `Written from their own 5′ ends, the same anticodons are reversed: ${carried.map((_, i) => reversed[i]).join(' and ')}.`], answer: `${carried.map((_, i) => `3′-${paired[i]}-5′`).join(' and ')} (the same as ${carried.map((_, i) => `5′-${reversed[i]}-3′`).join(' and ')}). They carry ${carried.map(p => p.amino.abbr).join(' and ')}; the stop codon has no tRNA.`, ...load(toTrna, 'mrna') },
+  { question: `One strand of a DNA molecule reads ${copied.original.left}-${spaced(copied.original.seq)}-${copied.original.right}. What is the complementary strand made in DNA replication?`, steps: ['Pair every base with its partner: A with T, and G with C.', `Written under the original strand, the new strand is ${copied.copy.left}-${spaced(copied.copy.seq)}-${copied.copy.right}. The two strands run in opposite directions, so its ends are labeled the other way round.`, `Read from its own 5′ end, the same new strand is 5′-${spaced(copied.copy53)}-3′.`], answer: `${copied.copy.left}-${spaced(copied.copy.seq)}-${copied.copy.right}, which is 5′-${spaced(copied.copy53)}-3′. The double helix has ${copied.at} A–T pairs and ${copied.gc} G–C pairs.`, ...load(copied.original.seq, 'coding', { mode: 'replicate' }) },
 ];
 ---
-<Layout title="DNA to mRNA to Protein Converter: Transcription & Translation" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['DNA to mRNA to protein converter', '/dna-transcription-translation/']]} description="Free transcription and translation tool: paste a DNA template strand, coding strand or mRNA to get the mRNA, tRNA anticodons and amino acid sequence.">
-<div class="intro"><div><div class="eyebrow">Molecular biology, base by base</div><h1>DNA to mRNA to protein converter: transcription and translation tool</h1><p>This transcription and translation tool converts a DNA sequence into mRNA and then into protein. Paste a DNA template strand, a coding strand or an mRNA. It writes the mRNA (from a template strand A → U, T → A, G → C, C → G; from a coding strand T → U), lines up the tRNA anticodons, splits the mRNA into three-base codons and looks each one up in the codon table to give the amino acid sequence. It is for biology students checking transcription and translation homework, and for teachers making examples.</p></div></div>
-<nav class="related page-jump" aria-label="On this page"><a href="#worked-examples">Worked examples ↓</a><a href="#how-to-transcribe">How to convert DNA to mRNA ↓</a><a href="#codon-chart-heading">Codon chart ↓</a><a href="/codon-chart/">Codon lookup &amp; amino acid table ↗</a></nav>
+<Layout title="DNA to mRNA to Protein Converter: Transcription & Translation" section="DNA translator" breadcrumbs={[['Tools', '/tools/'], ['DNA to mRNA to protein converter', '/dna-transcription-translation/']]} description="Free transcription and translation tool: paste DNA or mRNA to get mRNA, tRNA anticodons and amino acids, or the complementary strand in DNA replication.">
+<div class="intro"><div><div class="eyebrow">Molecular biology, base by base</div><h1>DNA to mRNA to protein converter: transcription and translation tool</h1><p>This transcription and translation tool converts a DNA sequence into mRNA and then into protein. Paste a DNA template strand, a coding strand or an mRNA. It writes the mRNA (from a template strand A → U, T → A, G → C, C → G; from a coding strand T → U), lines up the tRNA anticodons, splits the mRNA into three-base codons and looks each one up in the codon table to give the amino acid sequence. Every codon in the result shows its tRNA anticodon, written 3′ → 5′ under the codon or 5′ → 3′. A second mode, DNA replication, copies a DNA strand into its complementary strand with the 5′ and 3′ ends labeled, and turns an mRNA back into its DNA template and coding strands. It is for biology students checking transcription and translation homework, and for teachers making examples.</p></div></div>
+<nav class="related page-jump" aria-label="On this page"><a href="#worked-examples">Worked examples ↓</a><a href="#how-to-transcribe">How to convert DNA to mRNA ↓</a><a href="#dna-replication">DNA replication ↓</a><a href="#codon-chart-heading">Codon chart ↓</a><a href="/codon-chart/">Codon lookup &amp; amino acid table ↗</a></nav>
 <DnaTranslator/>
 <ClassroomStrip/>
 <AdSlot type="rectangle" />
@@ -59,9 +71,20 @@ const examples = [
   </ol>
   <div class="fact-table-wrap"><table class="fact-table dna-align"><caption class="codon-caption">One short gene, every layer lined up. Each tRNA anticodon pairs with the codon directly above it; stop codons have no tRNA.</caption><tbody>{alignment.map(([label, left, seq, right]) => <tr><th scope="row">{label}</th><td><code>{left ? `${left}-${seq}-${right}` : seq}</code></td></tr>)}</tbody></table></div>
   <h3>From mRNA to tRNA anticodons</h3>
-  <p>Each tRNA carries an anticodon that base-pairs with one codon, antiparallel, so it is written 3′ → 5′ under the codon. Take the complement of each codon base: the codon 5′-AUG-3′ is read by the anticodon 3′-UAC-5′, which carries methionine. The translator shows this as the bottom row of the strand display. Because of third-position “wobble” pairing, one tRNA can often read more than one codon.</p>
+  <p>Each tRNA carries an anticodon that base-pairs with one codon, antiparallel, so it is written 3′ → 5′ under the codon. Take the complement of each codon base: the codon 5′-AUG-3′ is read by the anticodon 3′-UAC-5′, which carries methionine. The translator shows this as the bottom row of the strand display and again under every codon in the amino acid chain. Written from its own 5′ end the same anticodon is reversed: 3′-UAC-5′ is 5′-CAU-3′. Choose “5′ → 3′ (reversed)” under <em>Write tRNA anticodons</em> if your course writes them that way. Because of third-position “wobble” pairing, one tRNA can often read more than one codon; the converter shows the exact Watson–Crick partner of each codon.</p>
   <h3>From mRNA or protein back to DNA</h3>
-  <p>To go from mRNA to DNA, reverse the logic: swap U for T to get the coding strand, then take the complement to get the template strand. Choose “mRNA” in the translator and it does this for you. Going from a protein back to DNA has no single answer, because most amino acids have several codons: leucine alone has six.</p>
+  <p>To go from mRNA to DNA, reverse the logic: swap U for T to get the coding strand, then take the complement to get the template strand. Choose “mRNA” in the translator and it does this for you: the mRNA 5′-{cdna.mrna}-3′ gives the coding strand 5′-{cdna.coding}-3′ and the template strand 3′-{cdna.template}-5′. Going from a protein back to DNA has no single answer, because most amino acids have several codons: leucine alone has six.</p>
+</section>
+<section class="explanation" id="dna-replication" aria-labelledby="dna-replication-heading">
+  <h2 id="dna-replication-heading">DNA replication: how to write the complementary strand</h2>
+  <p>Before a cell divides, it copies its DNA. Each of the two strands is used as a pattern for a new partner strand, so the result is two identical double helices. To work out the new strand on paper you need two rules: base pairing, and the fact that the two strands run in opposite directions.</p>
+  <ol>
+    <li><strong>Pair the bases.</strong> A pairs with T (two hydrogen bonds) and G pairs with C (three hydrogen bonds). Write the partner of each base in order.</li>
+    <li><strong>Label the ends.</strong> The strands are antiparallel. If the original strand is written 5′ → 3′, the new strand written under it runs 3′ → 5′.</li>
+    <li><strong>Reverse it if the question asks for 5′ → 3′.</strong> Read the new strand from its other end. This is the reverse complement of the original strand.</li>
+  </ol>
+  <div class="fact-table-wrap"><table class="fact-table dna-align"><caption class="codon-caption">A strand and the new strand made on it in DNA replication. Read from its own 5′ end, the new strand is 5′-{spaced(copied.copy53)}-3′.</caption><tbody>{strandPair.map(([label, strand]) => <tr><th scope="row">{label}</th><td><code>{`${strand.left}-${spaced(strand.seq)}-${strand.right}`}</code></td></tr>)}</tbody></table></div>
+  <p>In the cell, helicase separates the two strands and DNA polymerase builds each new strand in the 5′ → 3′ direction, reading its template 3′ → 5′. Replication is <strong>semi-conservative</strong>: each daughter molecule keeps one original strand and gains one new strand. Choose <em>DNA replication</em> in the converter above to copy your own strand, see both daughter molecules, and count the A–T and G–C pairs. If you choose mRNA as the input, the same mode shows reverse transcription: the mRNA copied back into a DNA template strand and a coding strand.</p>
 </section>
 <section class="explanation" aria-labelledby="codon-chart-heading">
   <h2 id="codon-chart-heading">Genetic code chart</h2>

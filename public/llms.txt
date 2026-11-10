@@ -4,7 +4,7 @@
 
 ## Tools
 
-- [DNA to mRNA to Protein Converter: Transcription & Translation](https://thebiologylab.org/dna-transcription-translation/): Free transcription and translation tool: paste a DNA template strand, coding strand or mRNA to get the mRNA, tRNA anticodons and amino acid sequence.
+- [DNA to mRNA to Protein Converter: Transcription & Translation](https://thebiologylab.org/dna-transcription-translation/): Free transcription and translation tool: paste DNA or mRNA to get mRNA, tRNA anticodons and amino acids, or the complementary strand in DNA replication.
 - [Hardy-Weinberg Calculator — Allele & Genotype Frequencies](https://thebiologylab.org/hardy-weinberg-calculator/): Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².
 - [Population Growth Calculator: Solve Growth & Doubling Problems](https://thebiologylab.org/population-growth-calculator/): Solve population growth word problems step by step: the population after t years at a % rate, the years to reach a target, and doubling-time problems.
 - [Punnett Square Calculator: Genotype & Phenotype Ratios](https://thebiologylab.org/punnett-square-calculator/): Free Punnett square calculator for monohybrid (2x2), dihybrid (4x4), and ABO blood type crosses: genotype and phenotype ratios, probabilities, and steps.

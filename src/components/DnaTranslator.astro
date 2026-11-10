@@ -1,48 +1,55 @@
 ---
-import { DEFAULT_SEQUENCE, INPUT_STRANDS, transcribe, translate, proteinSummary, gcContent, meltingTemperature } from '../lib/molecular.mjs';
+import { DEFAULT_SEQUENCE, INPUT_STRANDS, TOOL_MODES, ANTICODON_DIRECTIONS, transcribe, translate, proteinSummary, gcContent, meltingTemperature, replicate } from '../lib/molecular.mjs';
 import { fmt, pct } from '../lib/format.mjs';
 // Everything below is computed at build time only for the noscript fallback; the live tool runs in the browser.
 const demoRna = transcribe(DEFAULT_SEQUENCE);
 const demo = proteinSummary(translate(demoRna));
 const demoGc = pct(gcContent(DEFAULT_SEQUENCE), 1);
 const demoTm = fmt(meltingTemperature(DEFAULT_SEQUENCE), 1);
+const demoCopy = replicate(DEFAULT_SEQUENCE);
 const presets = [['demo', 'Start–stop demo'], ['hbb', 'β-globin (normal GAG)'], ['hbs', 'Sickle cell (GTG)'], ['insulin', 'Insulin B chain']];
 ---
 <dna-lab>
 <div class="workbench">
   <div class="canvas-pane">
-    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">◉</span> Gene to protein <span class="badge" data-status>COMPLETE ORF</span></span><span class="canvas-hint">Read left to right, 5′ → 3′</span></div>
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">◉</span> <span data-canvas-title>Gene to protein</span> <span class="badge" data-status>COMPLETE ORF</span></span><span class="canvas-hint" data-canvas-hint>Read left to right, 5′ → 3′</span></div>
     <div class="dna-strands" data-strands role="group" aria-label="DNA strands and mRNA aligned base by base"></div>
-    <div class="graph-caption"><div class="dna-legend" role="group" aria-label="Base colors"><span class="dna-b-A">A adenine</span><span class="dna-b-T">T thymine</span><span class="dna-b-G">G guanine</span><span class="dna-b-C">C cytosine</span><span class="dna-b-U">U uracil</span></div><span>Gaps mark codons in the chosen frame · faded bases are outside it</span></div>
-    <div class="dna-chain" data-chain role="group" aria-label="Codon to amino acid chain"></div>
-    <div class="graph-caption"><div class="dna-legend" role="group" aria-label="Amino acid side-chain classes"><span class="dna-key-nonpolar">Nonpolar</span><span class="dna-key-polar">Polar</span><span class="dna-key-basic">Basic (+)</span><span class="dna-key-acidic">Acidic (−)</span><span class="dna-key-stop">Stop</span></div><span>Codon above, amino acid below</span></div>
+    <div class="graph-caption"><div class="dna-legend" role="group" aria-label="Base colors"><span class="dna-b-A">A adenine</span><span class="dna-b-T">T thymine</span><span class="dna-b-G">G guanine</span><span class="dna-b-C">C cytosine</span><span class="dna-b-U">U uracil</span></div><span data-strands-note>Gaps mark codons in the chosen frame · faded bases are outside it</span></div>
+    <div class="dna-chain" data-chain data-translate-only role="group" aria-label="Codon, tRNA anticodon and amino acid chain"></div>
+    <div class="graph-caption" data-translate-only><div class="dna-legend" role="group" aria-label="Amino acid side-chain classes"><span class="dna-key-nonpolar">Nonpolar</span><span class="dna-key-polar">Polar</span><span class="dna-key-basic">Basic (+)</span><span class="dna-key-acidic">Acidic (−)</span><span class="dna-key-stop">Stop</span></div><span data-chain-note>Codon (5′ → 3′) on top · tRNA anticodon (3′ → 5′) under it · amino acid below</span></div>
     <div class="result-grid" data-metrics aria-live="polite"></div>
   </div>
   <div class="controls">
-    <h3>Paste DNA or mRNA. Watch it become protein.</h3>
+    <h3 data-heading>Paste DNA or mRNA. Watch it become protein.</h3>
+    <p class="control-label" id="dna-mode-label">What should the tool do?</p>
+    <div class="pills dna-modes" role="group" aria-labelledby="dna-mode-label">{Object.entries(TOOL_MODES).map(([value, label], i) => <button type="button" class:list={['pill', { selected: i === 0 }]} data-mode={value} aria-pressed={i === 0}>{label}</button>)}</div>
     <label class="field">What did you paste?<select data-kind>{Object.entries(INPUT_STRANDS).map(([value, label]) => <option value={value}>{label}</option>)}</select></label>
     <label class="field" for="dna-sequence" style="margin-bottom:8px" data-sequence-label>DNA coding strand, 5′ → 3′</label>
     <textarea id="dna-sequence" data-sequence rows="4" spellcheck="false" autocomplete="off" autocapitalize="characters" aria-describedby="dna-sequence-help" set:text={DEFAULT_SEQUENCE}></textarea>
-    <p class="small-note" id="dna-sequence-help" style="margin-top:8px">A template strand printed under the coding strand runs 3′ → 5′ (TAC… becomes mRNA AUG…). Spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.</p>
+    <p class="small-note" id="dna-sequence-help" data-help style="margin-top:8px">A template strand printed under the coding strand runs 3′ → 5′ (TAC… becomes mRNA AUG…). Spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.</p>
     <p class="control-label" style="margin-top:16px">Example sequences</p>
     <div class="pills" aria-label="Example sequences">{presets.map(([key, label]) => <button type="button" class:list={['pill', { selected: key === 'demo' }]} data-preset={key} aria-pressed={key === 'demo'}>{label}</button>)}</div>
+    <div data-translate-only>
     <p class="control-label" style="margin-top:16px">Reading frame</p>
     <div class="pills" aria-label="Reading frame">{[0, 1, 2].map(f => <button type="button" class:list={['pill', { selected: f === 0 }]} data-frame={f} aria-pressed={f === 0}>Frame {f + 1}</button>)}</div>
+    <p class="control-label" style="margin-top:16px" id="dna-anti-label">Write tRNA anticodons</p>
+    <div class="pills" role="group" aria-labelledby="dna-anti-label">{Object.entries(ANTICODON_DIRECTIONS).map(([value, label], i) => <button type="button" class:list={['pill', { selected: i === 0 }]} data-anti={value} aria-pressed={i === 0}>{label}</button>)}</div>
     <label class="check-row"><input type="checkbox" data-start/> Begin at first AUG (sets the frame automatically)</label>
-    <button type="button" class="primary full-width" data-translate>Translate</button>
+    </div>
+    <button type="button" class="primary full-width dna-go" data-translate>Translate</button>
     <p class="error" data-error role="alert"></p>
     <div class="dna-compare" data-compare aria-live="polite"></div>
     <div class="divider"></div>
-    <div class="dna-revcomp"><span class="control-label">Reverse complement (5′ → 3′)</span><code data-revcomp></code></div>
+    <div class="dna-revcomp"><span class="control-label" data-revcomp-label>Reverse complement (5′ → 3′)</span><code data-revcomp></code></div>
     <p class="small-note" data-note></p>
     <button type="button" class="secondary full-width" data-reset style="margin-top:20px">Reset example</button>
   </div>
 </div>
-<div class="explanation"><h2>Follow the flow of information</h2><div data-steps></div></div>
+<div class="explanation"><h2 data-steps-title>Follow the flow of information</h2><div data-steps></div></div>
 </dna-lab>
-<noscript>Enable JavaScript to translate your own sequence. For the example coding strand {DEFAULT_SEQUENCE} ({DEFAULT_SEQUENCE.length} nt, GC content {demoGc}, Tm about {demoTm} °C), transcription gives the mRNA {demoRna}, and reading frame 1 translates to {demo.abbrs}, stopping at the {demo.stopCodon} codon: a {demo.length}-amino-acid peptide, one-letter code {demo.letters}.</noscript>
+<noscript>Enable JavaScript to translate your own sequence. For the example coding strand {DEFAULT_SEQUENCE} ({DEFAULT_SEQUENCE.length} nt, GC content {demoGc}, Tm about {demoTm} °C), transcription gives the mRNA {demoRna}, and reading frame 1 translates to {demo.abbrs}, stopping at the {demo.stopCodon} codon: a {demo.length}-amino-acid peptide, one-letter code {demo.letters}. In DNA replication the same strand is copied into its complementary strand, {demoCopy.copy.left}-{demoCopy.copy.seq}-{demoCopy.copy.right}.</noscript>
 <script>
-import { codingStrandFrom, anticodons, INPUT_STRANDS, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, parseSequenceHref, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
+import { codingStrandFrom, anticodonFor, anticodonRow, replicate, reverseTranscribe, INPUT_STRANDS, transcribe, templateStrand, reverseComplement, codons, translate, gcContent, meltingTemperature, composition, proteinSummary, findStartCodon, compareCodingStrands, parseSequenceHref, DEFAULT_SEQUENCE, START_CODON } from '../lib/molecular.mjs';
 import { fmt, pct, escapeHtml } from '../lib/format.mjs';
 type Preset = { dna: string; reference: string; referenceLabel: string; note: string };
 const PRESETS: Record<string, Preset> = {
@@ -62,19 +69,92 @@ class DnaLab extends HTMLElement {
     const startBox = el<HTMLInputElement>('[data-start]');
     const framePills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-frame]'));
     const presetPills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-preset]'));
-    let frame = 0, presetKey = 'demo', referenceKey = 'demo';
-    const strand = (label: string, left: string, seq: string, right: string, from: number, to: number, marks: Map<number, string>) => {
+    const modePills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-mode]'));
+    const antiPills = Array.from(this.querySelectorAll<HTMLButtonElement>('[data-anti]'));
+    let frame = 0, presetKey = 'demo', referenceKey = 'demo', mode = 'translate', antiDir = '3to5';
+    const strand = (label: string, left: string, seq: string, right: string, from: number, to: number, marks: Map<number, string>, gaps = true) => {
       let html = '';
       for (let i = 0; i < seq.length; i++) {
-        if (i > 0 && i >= frame && (i - frame) % 3 === 0) html += ' ';
+        if (gaps && i > 0 && i >= frame && (i - frame) % 3 === 0) html += ' ';
         const outside = i < from || i >= to;
-        html += `<span class="dna-b dna-b-${seq[i]}${outside ? ' dna-dim' : ''}${marks.has(i) ? ' ' + marks.get(i) : ''}">${seq[i]}</span>`;
+        // “·” marks a position with no anticodon base: outside the translated codons, or under a stop codon.
+        html += seq[i] === '·' ? '<span class="dna-b dna-dim">·</span>' : `<span class="dna-b dna-b-${seq[i]}${outside ? ' dna-dim' : ''}${marks.has(i) ? ' ' + marks.get(i) : ''}">${seq[i]}</span>`;
       }
       return `<div class="dna-row"><span class="dna-row-label">${label}</span><code class="dna-seq"><span class="dna-end">${left} </span>${html}<span class="dna-end"> ${right}</span></code></div>`;
     };
     const syncPills = () => {
       framePills.forEach(b => { const on = Number(b.dataset.frame) === frame; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); b.disabled = startBox.checked; });
       presetPills.forEach(b => { const on = b.dataset.preset === presetKey; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      modePills.forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      antiPills.forEach(b => { const on = b.dataset.anti === antiDir; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      const copying = mode === 'replicate';
+      this.querySelectorAll<HTMLElement>('[data-translate-only]').forEach(part => { part.hidden = copying; });
+      el<HTMLElement>('[data-canvas-title]').textContent = copying ? 'DNA replication' : 'Gene to protein';
+      el<HTMLElement>('[data-canvas-hint]').textContent = copying ? 'Every strand has its 5′ and 3′ ends labeled' : 'Read left to right, 5′ → 3′';
+      el<HTMLElement>('[data-heading]').textContent = copying ? 'Paste a strand. Get its complementary strand.' : 'Paste DNA or mRNA. Watch it become protein.';
+      el<HTMLElement>('[data-translate]').textContent = copying ? 'Copy the strand' : 'Translate';
+      el<HTMLElement>('[data-steps-title]').textContent = copying ? 'Follow the copying, base by base' : 'Follow the flow of information';
+      el<HTMLElement>('[data-strands-note]').textContent = copying ? 'Each base sits above or below its partner · the two strands run in opposite directions' : 'Gaps mark codons in the chosen frame · faded bases are outside it';
+      el<HTMLElement>('[data-help]').textContent = copying
+        ? 'For replication only the direction matters, so either DNA strand works: choose 5′ → 3′ or 3′ → 5′ to match how yours is written. Choose mRNA to turn it back into DNA (reverse transcription). Spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.'
+        : 'A template strand printed under the coding strand runs 3′ → 5′ (TAC… becomes mRNA AUG…). Spaces, line breaks, numbers, and FASTA headers are ignored. Up to 3,000 nt.';
+    };
+    // DNA replication mode: the strand and its new partner (or, for an mRNA, the DNA made by reverse transcription).
+    const renderCopy = (kind: Kind) => {
+      const none = new Map<number, string>();
+      const shown12 = (seq: string) => seq.slice(0, 12) + (seq.length > 12 ? '…' : '');
+      const groupRow = (text: string) => `<div class="dna-group">${text}</div>`;
+      const pairLine = (r: { at: number; gc: number; hydrogenBonds: number }) => `${plural(r.at, 'A–T pair')} with two hydrogen bonds each and ${plural(r.gc, 'G–C pair')} with three, ${r.at} × 2 + ${r.gc} × 3 = ${r.hydrogenBonds.toLocaleString('en-US')} hydrogen bonds in all`;
+      let rows = '', steps = '', n = 0, dna = '', written = '', writtenLabel = '', note = '', status = '';
+      let pairs = { at: 0, gc: 0, hydrogenBonds: 0 };
+      if (kind === 'mrna') {
+        const r = reverseTranscribe(textarea.value);
+        n = r.mrna.length; dna = r.coding; pairs = r; written = r.template53; status = 'REVERSE TRANSCRIBED';
+        writtenLabel = 'Template strand (cDNA), written 5′ → 3′';
+        note = 'Read from its own 5′ end, the template strand is the reverse complement of the coding strand. The coding strand is the mRNA with T in place of U.';
+        rows = groupRow('mRNA and the DNA copied from it') + strand('mRNA 5′→3′', '5′', r.mrna, '3′', 0, n, none, false) + strand('Template 3′→5′', '3′', r.template, '5′', 0, n, none, false) + strand('Coding 5′→3′', '5′', r.coding, '3′', 0, n, none, false);
+        steps = `<ol>
+<li><strong>Your mRNA.</strong> You entered 5′-${shown12(r.mrna)}-3′, ${plural(n, 'nucleotide')} long.</li>
+<li><strong>Reverse transcription.</strong> The enzyme reverse transcriptase reads the mRNA and builds a complementary DNA strand (cDNA), pairing A with T, U with A, G with C, and C with G. Lined up under the mRNA it reads 3′-${shown12(r.template)}-5′. This is the template strand: the DNA strand the mRNA would be transcribed from.</li>
+<li><strong>Second strand.</strong> DNA polymerase then copies the cDNA into its partner, 5′-${shown12(r.coding)}-3′. This is the coding strand, and it is the mRNA with every U written as T.</li>
+<li><strong>The double-stranded DNA.</strong> The result is ${plural(n, 'base pair')}: ${pairLine(r)}.</li>
+<li><strong>Where this happens.</strong> Retroviruses such as HIV copy their RNA into DNA this way, and laboratories use the same enzyme to make cDNA from mRNA. In eukaryotes the introns are cut out of an mRNA, so DNA made from it matches the gene’s exons, not the whole gene.</li>
+</ol>`;
+      } else {
+        const r = replicate(textarea.value, kind === 'template' ? '3to5' : '5to3');
+        const o = r.original, c = r.copy, counts = composition(o.seq);
+        n = o.seq.length; dna = o.seq; pairs = r; written = r.copy53; status = 'REPLICATED';
+        writtenLabel = 'New strand, written 5′ → 3′';
+        note = o.left === '5′'
+          ? 'Read from its own 5′ end, the new strand is the reverse complement of the strand you entered: reverse the order of the bases, then swap A with T and G with C.'
+          : 'Your strand is written 3′ → 5′, so the new strand already reads 5′ → 3′ from left to right: just swap A with T and G with C.';
+        rows = groupRow('Daughter DNA molecule 1: your strand and its new partner') + strand(`Your strand ${o.left}→${o.right}`, o.left, o.seq, o.right, 0, n, none, false) + strand(`New strand ${c.left}→${c.right}`, c.left, c.seq, c.right, 0, n, none, false)
+          + groupRow('Daughter DNA molecule 2: the old partner strand and its new copy') + strand(`New strand ${o.left}→${o.right}`, o.left, o.seq, o.right, 0, n, none, false) + strand(`Partner ${c.left}→${c.right}`, c.left, c.seq, c.right, 0, n, none, false);
+        steps = `<ol>
+<li><strong>Your strand.</strong> You entered ${o.left}-${shown12(o.seq)}-${o.right}, ${plural(n, 'nucleotide')} long: ${counts.A} A, ${counts.T} T, ${counts.G} G, and ${counts.C} C.</li>
+<li><strong>Base pairing.</strong> Every base pairs with one partner: A with T and G with C. Writing the partner of each base in order gives the new strand, ${c.left}-${shown12(c.seq)}-${c.right}.</li>
+<li><strong>Opposite directions.</strong> The two strands of a double helix are antiparallel, so the new strand runs ${c.left} → ${c.right} where yours runs ${o.left} → ${o.right}. Read from its own 5′ end the new strand is 5′-${shown12(r.copy53)}-3′.</li>
+<li><strong>How the cell does it.</strong> Helicase separates the two original strands. DNA polymerase reads each one 3′ → 5′ and builds its new partner 5′ → 3′, adding one complementary nucleotide at a time. One new strand is made continuously (the leading strand) and the other in short Okazaki fragments (the lagging strand) that DNA ligase joins.</li>
+<li><strong>Two identical molecules.</strong> Replication is semi-conservative: each daughter molecule keeps one original strand and gains one new strand, so both carry the same ${plural(n, 'base pair')}. Here that is ${pairLine(r)}.</li>
+</ol>`;
+      }
+      el<HTMLElement>('[data-strands]').innerHTML = rows;
+      el<HTMLElement>('[data-chain]').innerHTML = '';
+      el<HTMLElement>('[data-metrics]').innerHTML = [
+        ['Length', `${n.toLocaleString('en-US')} bp`],
+        ['A–T pairs', pairs.at.toLocaleString('en-US')],
+        ['G–C pairs', pairs.gc.toLocaleString('en-US')],
+        ['Hydrogen bonds', pairs.hydrogenBonds.toLocaleString('en-US')],
+        ['GC content', pct(gcContent(dna), 1)],
+        ['Melting temperature', n <= 50 ? `${fmt(meltingTemperature(dna), 1)} °C` : 'n/a (> 50 nt)'],
+      ].map(([label, value]) => `<div class="result-tile"><span>${label}</span><strong>${value}</strong></div>`).join('');
+      el<HTMLElement>('[data-status]').textContent = status;
+      el<HTMLElement>('[data-steps]').innerHTML = steps;
+      el<HTMLElement>('[data-revcomp-label]').textContent = writtenLabel;
+      el<HTMLElement>('[data-revcomp]').textContent = written;
+      el<HTMLElement>('[data-compare]').innerHTML = '';
+      el<HTMLElement>('[data-note]').textContent = note;
+      el<HTMLElement>('[data-error]').textContent = '';
     };
     const compare = (dna: string) => {
       const reference = PRESETS[referenceKey];
@@ -95,6 +175,7 @@ class DnaLab extends HTMLElement {
     const render = () => {
       const kind = kindSelect.value as Kind;
       el<HTMLElement>('[data-sequence-label]').textContent = INPUT_STRANDS[kind];
+      if (mode === 'replicate') { syncPills(); renderCopy(kind); return; }
       const dna = codingStrandFrom(textarea.value, kind);
       const rna = transcribe(dna), template = templateStrand(dna);
       const shown12 = (seq: string) => seq.slice(0, 12) + (seq.length > 12 ? '…' : '');
@@ -115,10 +196,15 @@ class DnaLab extends HTMLElement {
       const marks = new Map<number, string>();
       if (first && first.codon === START_CODON) [0, 1, 2].forEach(k => marks.set(first.position - 1 + k, 'dna-start'));
       if (summary.terminated && last) [0, 1, 2].forEach(k => marks.set(last.position - 1 + k, 'dna-stop'));
-      el<HTMLElement>('[data-strands]').innerHTML = strand('Coding 5′→3′', '5′', dna, '3′', from, to, new Map()) + strand('Template 3′→5′', '3′', template, '5′', from, to, new Map()) + strand('mRNA 5′→3′', '5′', rna, '3′', from, to, marks) + strand('Anticodons 3′→5′', '3′', anticodons(rna), '5′', from, to, new Map());
+      // tRNA anticodons exist only for the codons that are translated: each sits under its codon, 3′→5′; a stop codon has none.
+      const anti = anticodonRow(peptide, antiDir), paired = Array.from(rna, () => '·');
+      peptide.forEach(p => { const a = anticodonFor(p.codon); if (a) [0, 1, 2].forEach(k => { paired[p.position - 1 + k] = a[k]; }); });
+      const antiText = (i: number) => anti[i] ? (antiDir === '3to5' ? `3′-${anti[i]}-5′` : `5′-${anti[i]}-3′`) : '';
+      el<HTMLElement>('[data-strands]').innerHTML = strand('Coding 5′→3′', '5′', dna, '3′', from, to, new Map()) + strand('Template 3′→5′', '3′', template, '5′', from, to, new Map()) + strand('mRNA 5′→3′', '5′', rna, '3′', from, to, marks) + strand('Anticodons 3′→5′', '3′', paired.join(''), '5′', from, to, new Map());
       el<HTMLElement>('[data-chain]').innerHTML = peptide.length
-        ? peptide.map((p, i) => `<span class="dna-chip dna-chip-${p.amino.type}${i === 0 && p.codon === START_CODON ? ' dna-chip-start' : ''}" title="${escapeHtml(p.amino.name)} · codon ${p.index} · nucleotides ${p.position}–${p.position + 2}"><b>${p.codon}</b><i>${p.amino.letter === '*' ? 'STOP' : p.amino.abbr}</i><small>${p.amino.letter === '*' ? 'release' : `#${i + 1} · ${p.amino.letter}`}</small></span>`).join('')
+        ? peptide.map((p, i) => `<span class="dna-chip dna-chip-${p.amino.type}${i === 0 && p.codon === START_CODON ? ' dna-chip-start' : ''}" title="${escapeHtml(p.amino.name)} · codon ${p.index} · nucleotides ${p.position}–${p.position + 2} · ${anti[i] ? `tRNA anticodon ${antiText(i)}` : 'no tRNA: a release factor binds'}"><b>${p.codon}</b><span class="dna-anti${anti[i] ? '' : ' dna-anti-none'}">${anti[i] ?? 'no tRNA'}</span><i>${p.amino.letter === '*' ? 'STOP' : p.amino.abbr}</i><small>${p.amino.letter === '*' ? 'release' : `#${i + 1} · ${p.amino.letter}`}</small></span>`).join('')
         : `<p class="dna-empty">${all.length ? 'No AUG start codon in this mRNA, so nothing is translated. Untick “Begin at first AUG” to read from the first base, or add an ATG to the coding strand.' : 'Add at least three bases in this frame to form a codon.'}</p>`;
+      el<HTMLElement>('[data-chain-note]').textContent = `Codon (5′ → 3′) on top · tRNA anticodon (${antiDir === '3to5' ? '3′ → 5′' : '5′ → 3′'}) under it · amino acid below`;
       const gc = gcContent(dna);
       el<HTMLElement>('[data-metrics]').innerHTML = [
         ['Length', `${dna.length.toLocaleString('en-US')} nt`],
@@ -137,9 +223,10 @@ ${converted}
 <li><strong>Transcription.</strong> RNA polymerase separates the two strands and reads the template strand 3′→5′ (3′-${template.slice(0, 12)}${template.length > 12 ? '…' : ''}-5′), adding the complementary RNA nucleotide at each step. The new mRNA, 5′-${rna.slice(0, 12)}${rna.length > 12 ? '…' : ''}-3′, has exactly the coding strand’s sequence with U in place of T. The coding strand has ${counts.A} A, ${counts.T} T, ${counts.G} G, and ${counts.C} C, so its GC content is ${pct(gc, 1)}.</li>
 ${scanning}
 <li><strong>Reading frame ${frame + 1}.</strong> Starting at nucleotide ${frame + 1}, the ${dna.length}-nt mRNA divides into ${plural(all.length, 'complete codon')}${leftover ? ` with ${plural(leftover, 'leftover base')} at the 3′ end` : ''}: ${all.length ? shown(all, 8) : 'none'}.</li>
-<li><strong>Translation.</strong> ${peptide.length ? `At the ribosome, each codon is matched by a tRNA whose anticodon pairs with it (the bottom row above: ${first ? `${first.codon} pairs with anticodon 3′-${anticodons(first.codon)}-5′` : 'A with U, G with C'}) and which carries the amino acid the code assigns. ${first && first.codon === START_CODON ? 'The AUG start codon brings in methionine, so the chain begins Met.' : `Translation here begins at ${first ? first.codon : ''} (${first ? first.amino.abbr : ''}) rather than at an AUG, which real ribosomes would not do.`} The growing chain reads ${summary.length ? summary.abbrs.split('-').slice(0, 12).join('-') + (summary.length > 12 ? '-…' : '') : '(no residues)'}.` : 'No codons were translated.'}</li>
+<li><strong>Translation.</strong> ${peptide.length ? `At the ribosome, each codon is matched by a tRNA whose anticodon pairs with it (the bottom row above: ${first && anticodonFor(first.codon) ? `${first.codon} pairs with anticodon 3′-${anticodonFor(first.codon)}-5′, which is 5′-${anticodonFor(first.codon, '5to3')}-3′ when written from its own 5′ end` : 'A with U, G with C'}) and which carries the amino acid the code assigns. ${first && first.codon === START_CODON ? 'The AUG start codon brings in methionine, so the chain begins Met.' : `Translation here begins at ${first ? first.codon : ''} (${first ? first.amino.abbr : ''}) rather than at an AUG, which real ribosomes would not do.`} The growing chain reads ${summary.length ? summary.abbrs.split('-').slice(0, 12).join('-') + (summary.length > 12 ? '-…' : '') : '(no residues)'}.` : 'No codons were translated.'}</li>
 <li><strong>${summary.terminated ? 'Termination' : 'No stop yet'}.</strong> ${summary.terminated ? `${summary.stopCodon} at codon ${summary.stopIndex} has no matching tRNA. A release factor binds instead, the ribosome hydrolyzes the last peptidyl-tRNA bond, and the finished chain of ${plural(summary.length, 'amino acid')} is released: ${summary.letters || '(empty)'} in one-letter code.` : peptide.length ? `None of the ${plural(all.length, 'codon')} in frame ${frame + 1} is UAA, UAG, or UGA, so the reading frame stays open and a ribosome would run off the end of this sequence with ${plural(summary.length, 'amino acid')} attached (${summary.letters}).` : 'Nothing to terminate.'}</li>
 </ol>`;
+      el<HTMLElement>('[data-revcomp-label]').textContent = 'Reverse complement (5′ → 3′)';
       el<HTMLElement>('[data-revcomp]').textContent = reverseComplement(dna);
       el<HTMLElement>('[data-compare]').innerHTML = compare(dna);
       el<HTMLElement>('[data-note]').textContent = presetKey && PRESETS[presetKey] ? PRESETS[presetKey].note : 'Your own sequence. The reverse complement is the template strand read in its own 5′ → 3′ direction: what you would paste if you had sequenced the other strand.';
@@ -163,13 +250,15 @@ ${scanning}
     framePills.forEach(b => b.addEventListener('click', () => { frame = Number(b.dataset.frame); run(); }));
     presetPills.forEach(b => b.addEventListener('click', () => { const preset = PRESETS[b.dataset.preset!]; presetKey = b.dataset.preset!; referenceKey = preset.reference; textarea.value = preset.dna; kindSelect.value = 'coding'; frame = 0; run(); }));
     startBox.addEventListener('change', run);
+    modePills.forEach(b => b.addEventListener('click', () => { mode = b.dataset.mode!; run(); }));
+    antiPills.forEach(b => b.addEventListener('click', () => { antiDir = b.dataset.anti!; run(); }));
     el<HTMLButtonElement>('[data-translate]').addEventListener('click', run);
-    el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; kindSelect.value = 'coding'; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; run(); });
-    // Worked examples link here with "#seq=<bases>&strand=<coding|template|mrna>": load the sequence and bring the tool into view.
+    el<HTMLButtonElement>('[data-reset]').addEventListener('click', () => { textarea.value = DEFAULT_SEQUENCE; kindSelect.value = 'coding'; frame = 0; presetKey = 'demo'; referenceKey = 'demo'; startBox.checked = false; antiDir = '3to5'; run(); });
+    // Worked examples link here with "#seq=<bases>&strand=<coding|template|mrna>" (plus "&mode=replicate" for the replication mode): load the sequence and bring the tool into view.
     const fromLink = () => {
       const state = parseSequenceHref(location.hash);
       if (!state) return false;
-      textarea.value = state.seq; kindSelect.value = state.kind; startBox.checked = state.fromStartCodon; frame = 0; presetKey = '';
+      textarea.value = state.seq; kindSelect.value = state.kind; startBox.checked = state.fromStartCodon; frame = 0; presetKey = ''; mode = state.mode === 'replicate' ? 'replicate' : 'translate';
       run();
       this.scrollIntoView({ block: 'start' });
       return true;
@@ -212,6 +301,14 @@ dna-lab .dna-chip{display:grid;justify-items:center;gap:1px;min-width:64px;paddi
 dna-lab .dna-chip b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:.6px;color:var(--muted)}
 dna-lab .dna-chip i{font-style:normal;font-family:Manrope,sans-serif;font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.2px}
 dna-lab .dna-chip small{font-size:10px;color:var(--muted);letter-spacing:.2px}
+dna-lab .dna-anti{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:.6px;color:#7b4b8a;border-top:1px dashed #b9a3c2;padding-top:1px;margin-bottom:2px}
+dna-lab .dna-anti-none{font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0;font-weight:500}
+dna-lab .dna-chip-stop .dna-anti{color:#fff;border-color:#ffffff66}
+dna-lab .dna-group{position:sticky;left:0;width:max-content;max-width:min(100%,calc(100vw - 76px));font-size:12px;font-weight:700;color:var(--ink);white-space:normal}
+dna-lab .dna-group:not(:first-child){margin-top:10px}
+dna-lab [data-translate-only][hidden]{display:none}
+dna-lab .dna-modes{margin-bottom:16px}
+dna-lab .dna-go{margin-top:16px}
 dna-lab .dna-chip-polar{background:#edf3f9;border-color:#a9c6de}
 dna-lab .dna-chip-basic{background:#fff4dd;border-color:#f0c96a}
 dna-lab .dna-chip-acidic{background:#fdeee6;border-color:#f0b391}
@@ -227,7 +324,7 @@ dna-lab .dna-revcomp code{display:block;margin-top:6px;padding:10px 12px;border-
 dna-lab .pill:disabled{opacity:.45;cursor:default}
 dna-lab .pill:disabled:hover{background:#fff;border-color:var(--line);color:var(--ink)}
 dna-lab .pill.selected:disabled:hover{background:#e3f0e5;border-color:var(--green);color:#226b45}
-dna-lab .check-row{margin:16px 0 18px;line-height:1.4}
+dna-lab .check-row{margin:16px 0 2px;line-height:1.4}
 dna-lab .explanation ol{padding-left:23px;display:grid;gap:10px}
 dna-lab .explanation li strong{color:var(--ink)}
 @media(max-width:700px){dna-lab .dna-strands{padding:16px;gap:8px}dna-lab .dna-row-label{flex-basis:112px;font-size:10px}dna-lab .dna-seq{font-size:14px}dna-lab .dna-chain{padding:14px 16px;gap:6px;max-height:340px}dna-lab .dna-chip{min-width:56px;padding:7px 7px 6px}dna-lab .dna-chip i{font-size:14px}}

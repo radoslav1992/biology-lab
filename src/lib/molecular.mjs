@@ -102,20 +102,34 @@ export const INPUT_STRANDS = Object.freeze({
   mrna: 'mRNA, 5′ → 3′',
 });
 
-/** Link that opens the translator with a sequence loaded, e.g. "/dna-transcription-translation/#seq=TACGGACTT&strand=template". */
-export function sequenceHref(path, seq, kind = 'coding', { fromStartCodon = false } = {}) {
+/** What the converter does with the strand: transcribe and translate it, or copy it (DNA replication; reverse transcription for an mRNA). */
+export const TOOL_MODES = Object.freeze({
+  translate: 'Transcribe and translate',
+  replicate: 'DNA replication',
+});
+
+/**
+ * Link that opens the translator with a sequence loaded, e.g. "/dna-transcription-translation/#seq=TACGGACTT&strand=template".
+ * With mode 'replicate' the link opens the DNA replication mode instead ("…&mode=replicate").
+ */
+export function sequenceHref(path, seq, kind = 'coding', { fromStartCodon = false, mode = 'translate' } = {}) {
   const params = new URLSearchParams({ seq, strand: kind });
   if (fromStartCodon) params.set('start', '1');
+  if (mode === 'replicate') params.set('mode', mode);
   return `${path}#${params}`;
 }
 
-/** Read a "#seq=…" fragment back into { seq, kind, fromStartCodon }; null when the fragment carries no sequence. */
+/**
+ * Read a "#seq=…" fragment back into { seq, kind, fromStartCodon }, plus mode: 'replicate' when the link asks for the
+ * replication mode; null when the fragment carries no sequence.
+ */
 export function parseSequenceHref(hash) {
   const params = new URLSearchParams(String(hash ?? '').replace(/^#/, ''));
   const seq = (params.get('seq') || '').slice(0, MAX_LENGTH);
   if (!seq) return null;
   const strand = params.get('strand');
-  return { seq, kind: Object.hasOwn(INPUT_STRANDS, strand ?? '') ? strand : 'coding', fromStartCodon: params.get('start') === '1' };
+  const state = { seq, kind: Object.hasOwn(INPUT_STRANDS, strand ?? '') ? strand : 'coding', fromStartCodon: params.get('start') === '1' };
+  return params.get('mode') === 'replicate' ? { ...state, mode: 'replicate' } : state;
 }
 
 /** Convert whichever strand a student has into the coding strand (5′→3′), the form every other helper expects. */
@@ -129,6 +143,32 @@ export function codingStrandFrom(input, kind = 'coding') {
 
 /** tRNA anticodons written 3′→5′ under the mRNA, so each base pairs with the codon base above it (AUG → UAC). */
 export const anticodons = rna => cleanSequence(rna, 'ACGU').replace(/[ACGU]/g, base => ({ A: 'U', U: 'A', C: 'G', G: 'C' })[base]);
+
+/**
+ * The two ways an anticodon is written. Paired under its codon it reads 3′→5′, base under partner. Written on its own, as
+ * a tRNA sequence usually is, it reads 5′→3′, which is the same three bases in reverse order.
+ */
+export const ANTICODON_DIRECTIONS = Object.freeze({
+  '3to5': '3′ → 5′ (under the codon)',
+  '5to3': '5′ → 3′ (reversed)',
+});
+
+/**
+ * The tRNA anticodon that pairs with one mRNA codon by Watson–Crick rules (A–U, G–C; wobble pairing is not modeled).
+ * '3to5' writes it antiparallel under the codon, so 5′-AUG-3′ → 3′-UAC-5′; '5to3' writes the same anticodon from its own
+ * 5′ end, 5′-CAU-3′. Stop codons have no tRNA, so they return null.
+ */
+export function anticodonFor(codon, direction = '3to5') {
+  const triplet = cleanSequence(codon, 'ACGU');
+  if (triplet.length !== 3) throw new Error('A codon is exactly three bases, such as AUG.');
+  if (!Object.hasOwn(ANTICODON_DIRECTIONS, direction)) throw new Error('Choose how to write the anticodon: 3′ → 5′ or 5′ → 3′.');
+  if (STOP_CODONS.includes(triplet)) return null;
+  const paired = anticodons(triplet);
+  return direction === '5to3' ? paired.split('').reverse().join('') : paired;
+}
+
+/** The anticodon for each codon of a translate() result, in order; null where the codon is a stop. */
+export const anticodonRow = (peptide, direction = '3to5') => peptide.map(p => anticodonFor(p.codon, direction));
 
 const checkFrame = frame => { if (![0, 1, 2].includes(frame)) throw new Error('Choose reading frame 1, 2, or 3.'); };
 
@@ -233,4 +273,43 @@ export function compareCodingStrands(reference, variant, frame = 0) {
     codonChanges.push({ codon: i + 1, from: codon, to: cb[i], aminoFrom, aminoTo, effect });
   });
   return { substitutions, codonChanges };
+}
+
+/** Base pairs in the double helix built on a DNA strand: A–T pairs (two hydrogen bonds each), G–C pairs (three each), and the hydrogen bonds in total. */
+export function basePairs(dna) {
+  const counts = composition(cleanSequence(dna));
+  const at = counts.A + counts.T, gc = counts.G + counts.C;
+  return { at, gc, hydrogenBonds: 2 * at + 3 * gc };
+}
+
+/**
+ * DNA replication of one strand. `direction` says how the strand is written: '5to3' or '3to5'. Returns the original
+ * strand and the new complementary strand lined up base under base, each with the label for its left and right end
+ * (the strands are antiparallel, so the labels are swapped), both strands in their own 5′→3′ direction, and the base
+ * pairs of the finished double helix.
+ */
+export function replicate(strand, direction = '5to3') {
+  const seq = cleanSequence(strand);
+  if (direction !== '5to3' && direction !== '3to5') throw new Error('Choose which way the strand is written: 5′ → 3′ or 3′ → 5′.');
+  const forward = direction === '5to3';
+  const paired = complement(seq);
+  const reversed = s => s.split('').reverse().join('');
+  return {
+    original: { seq, left: forward ? '5′' : '3′', right: forward ? '3′' : '5′' },
+    copy: { seq: paired, left: forward ? '3′' : '5′', right: forward ? '5′' : '3′' },
+    original53: forward ? seq : reversed(seq),
+    copy53: forward ? reversed(paired) : paired,
+    ...basePairs(seq),
+  };
+}
+
+/**
+ * Reverse transcription: mRNA back to DNA. Returns the mRNA, the first DNA strand (cDNA) lined up under it, which reads
+ * 3′→5′ and is the template strand, the same strand in its own 5′→3′ direction, the second strand (the coding strand,
+ * 5′→3′: the mRNA with T for U), and the base pairs of the double-stranded DNA.
+ */
+export function reverseTranscribe(rna) {
+  const mrna = cleanSequence(rna, 'ACGU');
+  const coding = toCodingStrand(mrna);
+  return { mrna, template: complement(coding), template53: reverseComplement(coding), coding, ...basePairs(coding) };
 }
