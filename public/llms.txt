@@ -1,0 +1,83 @@
+# Biology Lab
+
+> Free biology virtual labs, calculators and interactive tools for students and teachers: Punnett squares, DNA to mRNA to protein, population growth, cell size, enzyme kinetics and a 3D cell, with concept notes, practice questions, printable worksheets and teacher answer keys. Everything runs in the browser with no account. From the makers of Interactive Periodic Table.
+
+## Tools
+
+- [DNA to mRNA to Protein Converter: Transcription & Translation](https://thebiologylab.org/dna-transcription-translation/): Free transcription and translation tool: paste a DNA template strand, coding strand or mRNA to get the mRNA, tRNA anticodons and amino acid sequence.
+- [Hardy-Weinberg Calculator — Allele & Genotype Frequencies](https://thebiologylab.org/hardy-weinberg-calculator/): Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².
+- [Population Growth Calculator: Solve Growth & Doubling Problems](https://thebiologylab.org/population-growth-calculator/): Solve population growth word problems step by step: the population after t years at a % rate, the years to reach a target, and doubling-time problems.
+- [Punnett Square Calculator: Genotype & Phenotype Ratios](https://thebiologylab.org/punnett-square-calculator/): Free Punnett square calculator for monohybrid (2x2), dihybrid (4x4), and ABO blood type crosses: genotype and phenotype ratios, probabilities, and steps.
+- [Biology Calculators & Virtual Labs: All Free Tools](https://thebiologylab.org/tools/): Every free biology calculator and virtual lab in one list: Punnett squares, DNA to mRNA, Hardy-Weinberg, population growth, SA:V ratio and water potential.
+- [3D Animal and Plant Cell Model: Interactive Organelles](https://thebiologylab.org/cells/3d/): Turn a 3D animal and plant cell, pull it apart to watch each organelle float out with its label, and tap the nucleus or a chloroplast to learn what it does.
+- [Bacterial Doubling Time Calculator: Generation Time & Growth](https://thebiologylab.org/tools/bacterial-growth/): Find bacterial generation (doubling) time from two counts, or the cells after any time with N = N₀ × 2ⁿ, and see exponential growth on a log-scale curve.
+- [Surface Area to Volume Ratio Calculator for Cells (SA:V)](https://thebiologylab.org/tools/cell-size/): Calculate the surface area, volume and surface area to volume ratio (SA:V) of a cube-shaped or spherical cell from its side length or radius, with steps.
+- [Chi-Square Test Calculator for Genetics: χ², df & p-Value](https://thebiologylab.org/tools/chi-square-test/): Test whether observed offspring counts fit a 3:1, 1:1, 1:2:1 or 9:3:3:1 Mendelian ratio: χ², degrees of freedom, critical value, p-value and verdict.
+- [Dilution Calculator (C1V1 = C2V2) — Stock, Final & Serial](https://thebiologylab.org/tools/dilution-calculator/): Solve C₁V₁ = C₂V₂ for the stock volume or final concentration, get the diluent to add, and plan serial dilutions with the concentration after every step.
+- [Energy Pyramid Calculator — The 10% Rule Across Trophic Levels](https://thebiologylab.org/tools/energy-pyramid/): Enter the energy captured by producers and a transfer efficiency to see how much reaches each consumer level, how much is lost, and why food chains stay short.
+- [Michaelis-Menten Calculator: Enzyme Kinetics, Vmax & Km](https://thebiologylab.org/tools/enzyme-kinetics/): Michaelis-Menten calculator: find the reaction rate from Vmax, Km and substrate concentration, then add a competitive or noncompetitive inhibitor.
+- [Magnification Calculator — Actual Size, Image Size & Scale Bar](https://thebiologylab.org/tools/magnification-calculator/): Find actual size, image size, or magnification with correct mm-to-µm conversion, work out total microscope magnification, and size a scale bar.
+- [Predator–Prey Simulator — Lotka–Volterra Population Cycles](https://thebiologylab.org/tools/predator-prey/): Simulate prey and predator populations with the Lotka–Volterra equations: set the four rates, watch the boom-and-bust cycles, and find the equilibrium point.
+- [Water Potential Calculator: Solute Potential Ψs = −iCRT](https://thebiologylab.org/tools/water-potential/): Calculate solute potential with Ψs = −iCRT and water potential Ψ = Ψs + Ψp in MPa or bars, then compare two cells to see which way water moves by osmosis.
+
+## Lessons
+
+- [Key Biology Concepts Explained: 16 Notes with Examples](https://thebiologylab.org/learn/): Sixteen key biology concepts explained, from cell theory and DNA to genetics, enzymes and ecology, each with a worked example and a common mistake.
+- [Cell theory — Key Idea & Worked Example](https://thebiologylab.org/learn/cell-theory/): Three statements that every living thing obeys. Cell theory, assembled by Schleiden and Schwann in 1838–39 and completed by Virchow in 1855, makes three…
+- [Cell transport & osmosis — Key Idea & Worked Example](https://thebiologylab.org/learn/cell-transport/): How water, ions, and molecules cross a membrane. The phospholipid bilayer lets small nonpolar molecules such as O₂ and CO₂ slip through by simple diffusion,…
+- [Cellular respiration — Key Idea & Worked Example](https://thebiologylab.org/learn/cellular-respiration/): Glucose comes apart, and ATP captures the energy. Glycolysis, in the cytoplasm, splits one six-carbon glucose into two three-carbon pyruvate molecules with a…
+- [DNA structure — Key Idea & Worked Example](https://thebiologylab.org/learn/dna-structure/): A twisted ladder built from four bases. DNA is a polymer of nucleotides, each made of a deoxyribose sugar, a phosphate group, and one of four…
+- [Energy flow in ecosystems — Key Idea & Worked Example](https://thebiologylab.org/learn/energy-flow-in-ecosystems/): Why so little sunlight reaches the top predator. Producers — plants, algae, and cyanobacteria — capture roughly 1% of the sunlight that reaches them and store…
+- [Enzymes & activation energy — Key Idea & Worked Example](https://thebiologylab.org/learn/enzymes/): Biological catalysts that lower the energy hill. Enzymes are proteins (plus a few RNA ribozymes) that speed up reactions by lowering the activation energy —…
+- [Hardy-Weinberg Principle: What p and q Mean, With Example](https://thebiologylab.org/learn/hardy-weinberg-principle/): The baseline of a population that isn’t evolving. For a gene with two alleles, let p be the frequency of the dominant allele A and q the frequency of the…
+- [Lab measurements & scale — Key Idea & Worked Example](https://thebiologylab.org/learn/lab-measurements/): Turn what you see in a microscope into numbers. Magnification is image size divided by actual size (rearranged: image = actual × magnification), and it only…
+- [Mendelian inheritance — Key Idea & Worked Example](https://thebiologylab.org/learn/mendelian-inheritance/): Alleles, dominance, and predictable ratios. A gene can come in different versions called alleles, and a diploid organism carries two of them, one from…
+- [Mitosis & meiosis — Key Idea & Worked Example](https://thebiologylab.org/learn/mitosis-and-meiosis/): Copy a cell, or halve its chromosome set. Both divisions follow an interphase in which DNA is replicated (S phase), so each chromosome enters division…
+- [Natural selection — Key Idea & Worked Example](https://thebiologylab.org/learn/natural-selection/): Variation, heredity, and who leaves more offspring. Darwin’s mechanism needs three ingredients: individuals in a population vary (thanks to mutation and the…
+- [Photosynthesis — Key Idea & Worked Example](https://thebiologylab.org/learn/photosynthesis/): Light, water, and CO₂ become sugar and oxygen. In the light-dependent reactions, chlorophyll in the thylakoid membranes absorbs light; photosystem II splits…
+- [Exponential vs Logistic Population Growth Models Explained](https://thebiologylab.org/learn/population-growth/): Exponential with no limits, logistic with them. When resources are unlimited a population grows exponentially: the per-capita growth rate r (births minus…
+- [Prokaryotes vs. eukaryotes — Key Idea & Worked Example](https://thebiologylab.org/learn/prokaryotes-vs-eukaryotes/): Two cell plans: one with a nucleus, one without. Prokaryotes (bacteria and archaea) are typically 1–10 µm across and keep a single circular chromosome in a…
+- [Surface Area to Volume Ratio in Cells: Formula & Examples](https://thebiologylab.org/learn/surface-area-to-volume/): The geometry that keeps cells small. A cell takes in oxygen and nutrients and expels waste across its surface, but the demand for those exchanges…
+- [Transcription and Translation: DNA to mRNA to Protein](https://thebiologylab.org/learn/transcription-and-translation/): From a gene to a working protein, in two steps. In transcription, RNA polymerase binds a promoter, unzips the DNA, and builds a single strand of messenger…
+
+## Reference
+
+- [Cell Organelles and Their Functions: Labeled Diagram & Chart](https://thebiologylab.org/cells/): A labeled animal and plant cell diagram plus a chart of cell organelles and their functions, from the nucleus and mitochondria to ribosomes, ER, and Golgi.
+- [Codon Chart & Codon Table: All 64 mRNA Codons to Amino Acids](https://thebiologylab.org/codon-chart/): Codon chart and codon table of the genetic code: all 64 mRNA codons with their amino acids, the DNA codons, the start and stop codons, and a codon lookup.
+- [Cell membrane: Structure and Function in the Cell](https://thebiologylab.org/cells/cell-membrane/): The cell membrane, or plasma membrane, is a phospholipid bilayer about 7–8 nm thick that separates a cell from its surroundings. Structure and function.
+- [Chloroplast: Structure and Function in the Cell](https://thebiologylab.org/cells/chloroplast/): Chloroplasts capture light energy and use it to build sugar from carbon dioxide and water. Structure, functions, size, and a common misconception.
+- [Endoplasmic reticulum: Structure and Function in the Cell](https://thebiologylab.org/cells/endoplasmic-reticulum/): The endoplasmic reticulum (ER) is a maze of membrane tubes and sacs continuous with the nuclear envelope. Structure, functions, and a common misconception.
+- [Golgi apparatus: Structure and Function in the Cell](https://thebiologylab.org/cells/golgi-apparatus/): The Golgi apparatus receives proteins and lipids from the ER, finishes them, and sorts them into vesicles for delivery. Structure and function.
+- [Lysosome: Structure and Function in the Cell](https://thebiologylab.org/cells/lysosome/): Lysosomes are acidic sacs of enzymes that digest worn-out organelles, engulfed microbes, and large molecules. Structure, functions, and a common misconception.
+- [Mitochondria (Mitochondrion): Structure and Function](https://thebiologylab.org/cells/mitochondrion/): Mitochondria run aerobic respiration, converting the energy in glucose and fats into ATP the cell can spend. Structure, functions, and a common misconception.
+- [Nucleus: Structure and Function in the Cell](https://thebiologylab.org/cells/nucleus/): The nucleus stores the cell’s DNA and decides which genes are read at any moment. Structure, functions, size, and a common misconception.
+- [Ribosome: Structure and Function in the Cell](https://thebiologylab.org/cells/ribosome/): Ribosomes read messenger RNA three bases at a time and link amino acids into proteins. Structure, functions, size, and a common misconception.
+
+## Classroom
+
+- [Biology Practice Questions: 100 Free Questions with Answers](https://thebiologylab.org/practice/): 100 free biology practice questions with answers and explanations: cells, genetics, molecular biology, ecology and human physiology, in rounds of eight.
+- [Printable Cell Diagrams & Punnett Square Worksheets (PDF/SVG)](https://thebiologylab.org/printable-diagrams/): Free printable animal and plant cell diagrams to label, blank monohybrid and dihybrid Punnett square grids, and a pedigree chart, each with an answer key.
+- [Biology Lab for Teachers: Free Activities with Answer Keys](https://thebiologylab.org/teachers/): Free biology virtual labs and calculators with 12 printable classroom activities, answer keys and NGSS connections. No logins; works on Chromebooks.
+- [Biology Worksheets (PDF): Free Printables with Answer Keys](https://thebiologylab.org/worksheets/): Free printable biology worksheets with answer keys: pick cells, genetics, molecular biology, ecology or physiology and 8, 12 or 20 questions. Save as PDF.
+- [Cell Organelles Activity: Free Printable for Class](https://thebiologylab.org/cells/activity/): Free printable Cell Organelles activity for grades 6–8: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Codon Chart Activity: Free Printable for Class](https://thebiologylab.org/codon-chart/activity/): Free printable Codon Chart activity for grades 9–12: 15 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [DNA to Protein Activity: Free Printable for Class](https://thebiologylab.org/dna-transcription-translation/activity/): Free printable DNA to Protein activity for grades 9–12: 25 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Hardy-Weinberg Activity: Free Printable for Class](https://thebiologylab.org/hardy-weinberg-calculator/activity/): Free printable Hardy-Weinberg activity for grades 10–12: 25 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Population Growth Activity: Free Printable for Class](https://thebiologylab.org/population-growth-calculator/activity/): Free printable Population Growth activity for grades 9–12: 25 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Punnett Square Activity: Free Printable for Class](https://thebiologylab.org/punnett-square-calculator/activity/): Free printable Punnett Square activity for grades 7–10: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Bacterial Growth & Doubling Time Activity: Free Printable for Class](https://thebiologylab.org/tools/bacterial-growth/activity/): Free printable Bacterial Growth & Doubling Time activity for grades 9–12: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Cell Size & SA:V Ratio Activity: Free Printable for Class](https://thebiologylab.org/tools/cell-size/activity/): Free printable Cell Size & SA:V Ratio activity for grades 7–10: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Chi-Square Test Activity: Free Printable for Class](https://thebiologylab.org/tools/chi-square-test/activity/): Free printable Chi-Square Test activity for grades 10–12: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Enzyme Kinetics Activity: Free Printable for Class](https://thebiologylab.org/tools/enzyme-kinetics/activity/): Free printable Enzyme Kinetics activity for grades 11–12: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Microscope Magnification Activity: Free Printable for Class](https://thebiologylab.org/tools/magnification-calculator/activity/): Free printable Microscope Magnification activity for grades 7–10: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+- [Water Potential & Osmosis Activity: Free Printable for Class](https://thebiologylab.org/tools/water-potential/activity/): Free printable Water Potential & Osmosis activity for grades 11–12: 20 minutes with our interactive tool, a results table and 6 questions. No sign-up.
+
+## About
+
+- [About Biology Lab](https://thebiologylab.org/about/): How Biology Lab’s free calculators, cell diagrams, and practice questions work, what the models assume, and how your data is handled.
+- [Privacy Policy](https://thebiologylab.org/privacy/): What Biology Lab collects and why: no accounts, Google Analytics usage statistics, Adsterra banner ads, and practice scores kept only in your browser.
+- Contact: info@thebiologylab.org
+
+## Optional
+
+- [Interactive Periodic Table](https://interactiveperiodictable.net/), [Astronomy Lab](https://theastronomylab.com/), [Earth Science Lab](https://earthsciencelab.org/), [Geometry Lab](https://geometrylab.net/), [Physics Lab](https://thephysicslab.org/), [KidsCode](https://kidscode.dev/): Sister learning apps from the same makers.
