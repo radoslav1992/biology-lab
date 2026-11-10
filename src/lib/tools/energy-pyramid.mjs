@@ -15,6 +15,7 @@ export const definition = {
   category: 'Ecology',
   icon: '▲',
   description: 'Enter the energy captured by producers and a transfer efficiency to see how much reaches each consumer level, how much is lost, and why food chains stay short.',
+  intro: 'This calculator applies the 10% rule to a food chain: the energy stored at each trophic level is the energy at the level below multiplied by the transfer efficiency, Eₙ₊₁ = efficiency × Eₙ. Enter the energy stored in the producers, the number of trophic levels (2 to 5) and the efficiency to see the energy at every level and how much is lost on the way. It is for biology and environmental science students studying energy flow in ecosystems.',
   keywords: 'trophic level ten percent rule producers primary secondary tertiary consumers energy transfer efficiency food chain ecological pyramid',
   meta: '10% rule · 2 to 5 levels',
   fields: [

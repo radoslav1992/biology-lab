@@ -23,6 +23,7 @@ export const definition = {
   category: 'Lab skills',
   icon: '⚗',
   description: 'Solve C₁V₁ = C₂V₂ for the stock volume or final concentration, get the diluent to add, and plan serial dilutions with the concentration after every step.',
+  intro: 'This dilution calculator solves C₁V₁ = C₂V₂. Enter the stock concentration C₁ and the concentration and volume you want (C₂ and V₂) to get the volume of stock to measure out and the diluent to add, or enter C₁, V₁ and V₂ to get the final concentration. Serial mode divides the concentration by the same dilution factor at every step. It is for students and teachers preparing solutions for a biology or chemistry lab.',
   keywords: 'dilution calculator c1v1 c2v2 stock solution diluent serial dilution factor molarity lab',
   meta: 'Stock · final · serial',
   fields: [

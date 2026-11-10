@@ -15,10 +15,12 @@ const r1 = v => Math.round(v * 10) / 10;
 export const definition = {
   slug: 'cell-size',
   title: 'Cell size & surface-area-to-volume ratio',
-  seoTitle: 'Cell Surface Area to Volume Ratio Calculator (Cube & Sphere)',
+  seoTitle: 'Surface Area to Volume Ratio Calculator for Cells (SA:V)',
   category: 'Cells',
   icon: '◫',
-  description: 'Enter a cell’s side length or radius to get its surface area, volume, and SA:V ratio with worked steps, and see why doubling the size halves the ratio.',
+  description: 'Calculate the surface area, volume and surface area to volume ratio (SA:V) of a cube-shaped or spherical cell from its side length or radius, with steps.',
+  h1: 'Surface area to volume ratio calculator for cells',
+  intro: 'This calculator finds the surface area, the volume and the surface area to volume ratio (SA : V) of a cell from its size. Pick a cube-shaped cell (surface area 6s², volume s³, so SA : V = 6 ÷ s) or a spherical cell (surface area 4πr², volume 4⁄3 πr³, so SA : V = 3 ÷ r), type the side length or radius in micrometers, and read the answer with every step written out. It is for biology students and teachers working on cell size, diffusion and why cells stay small.',
   keywords: 'surface area to volume ratio sa:v cube sphere diffusion why are cells small cell size calculator',
   meta: 'Cube or sphere · live ratio',
   fields: [

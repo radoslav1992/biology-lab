@@ -37,7 +37,7 @@ test('every explorer mode and preset produces finite metrics, steps, and a clean
 });
 test('organelles match the site map and link to real lessons and each other', () => {
   assert.deepEqual(Object.keys(organelles), ORGANELLES);
-  for (const [slug, o] of Object.entries(organelles)) { assert.ok(LESSONS.includes(o.lesson), `${slug} lesson`); for (const r of o.related) assert.ok(ORGANELLES.includes(r) && r !== slug, `${slug} related ${r}`); assert.ok(o.title && o.type && o.intro && o.example && o.pitfall, slug); assert.ok(o.properties.length >= 3 && o.functions.length >= 2, slug); }
+  for (const [slug, o] of Object.entries(organelles)) { assert.ok(LESSONS.includes(o.lesson), `${slug} lesson`); for (const r of o.related) assert.ok(ORGANELLES.includes(r) && r !== slug, `${slug} related ${r}`); assert.ok(o.title && o.type && o.intro && o.example && o.pitfall, slug); assert.ok(o.properties.length >= 3 && o.functions.length >= 2, slug); assert.ok(resolves(o.tool.href) && o.tool.href !== '/cells/', `${slug} tool ${o.tool.href}`); }
 });
 test('FAQ sets exist for every page that renders one and link internally', () => {
   const expected = ['home', ...FLAGSHIP.map(h => h.replaceAll('/', '')), ...REFERENCE.map(h => h.replaceAll('/', '')), ...TOOLS, ...ORGANELLES, 'cells', 'cells-3d', 'printable-diagrams'];

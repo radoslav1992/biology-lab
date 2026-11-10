@@ -22,6 +22,8 @@ export const definition = {
   category: 'Cells',
   icon: '≋',
   description: 'Calculate solute potential with Ψs = −iCRT and water potential Ψ = Ψs + Ψp in MPa or bars, then compare two cells to see which way water moves by osmosis.',
+  h1: 'Water potential calculator: Ψ = Ψs + Ψp and Ψs = −iCRT',
+  intro: 'This calculator works out solute potential with Ψs = −iCRT and total water potential with Ψ = Ψs + Ψp. Enter the ionization constant i (1 for sucrose, 2 for NaCl), the molar concentration C, the temperature in °C and the pressure potential; it converts the temperature to kelvin, uses R = 0.00831 L·MPa/(mol·K), and gives the answer in megapascals and in bars. Switch to “Compare two cells” to see which way water moves by osmosis. It is for AP Biology and plant biology students, and for teachers running osmosis labs.',
   keywords: 'water potential calculator solute potential pressure potential osmosis icrt megapascals turgor plasmolysis',
   meta: 'Ψ = Ψs + Ψp · compare cells',
   fields: [

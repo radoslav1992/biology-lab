@@ -20,6 +20,7 @@ export const definition = {
   category: 'Genetics',
   icon: 'χ²',
   description: 'Test whether observed offspring counts fit a 3:1, 1:1, 1:2:1 or 9:3:3:1 Mendelian ratio: χ², degrees of freedom, critical value, p-value and verdict.',
+  intro: 'This calculator runs a chi-square goodness-of-fit test on a genetic cross. Choose the expected ratio (3 : 1, 1 : 1, 1 : 2 : 1 or 9 : 3 : 3 : 1), enter the observed count for each phenotype class, and it finds the expected counts, χ² = Σ (O − E)² ÷ E, the degrees of freedom (classes − 1), the critical value at α = 0.05 and the p-value. It is for genetics students checking whether real offspring counts fit a Mendelian ratio.',
   keywords: 'chi square goodness of fit mendel expected observed critical value p value degrees of freedom',
   meta: 'Goodness of fit · α = 0.05',
   fields: [

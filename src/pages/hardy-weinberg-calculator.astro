@@ -14,7 +14,7 @@ const table = [
 ];
 ---
 <Layout title="Hardy-Weinberg Calculator — Allele & Genotype Frequencies" section="Hardy-Weinberg" breadcrumbs={[['Tools', '/tools/'], ['Hardy-Weinberg calculator', '/hardy-weinberg-calculator/']]} description="Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².">
-<div class="intro"><div><div class="eyebrow">Population genetics, made visible</div><h1>Hardy-Weinberg Equilibrium Calculator</h1><p>Start from p, from how common a recessive trait is, or from real genotype counts. We’ll find every frequency and test whether the population is evolving.</p></div></div>
+<div class="intro"><div><div class="eyebrow">Population genetics, made visible</div><h1>Hardy-Weinberg Equilibrium Calculator</h1><p>This calculator finds allele and genotype frequencies with the Hardy-Weinberg equations, p + q = 1 and p² + 2pq + q² = 1. Start from p, from how common a recessive trait is (q²), or from real genotype counts; it works out p, q, the three genotype frequencies and the carrier frequency 2pq. With genotype counts it also runs a chi-square test to check whether the population is in equilibrium. It is for genetics and AP Biology students, and for teachers who want checked answers.</p></div></div>
 <HardyWeinberg/>
 <ClassroomStrip/>
 <AdSlot type="rectangle" />
@@ -31,6 +31,6 @@ const table = [
   <h2>Reading the chi-square verdict</h2>
   <p>In “observed counts” mode the calculator estimates p directly from the sample by counting alleles: each AA individual contributes two A alleles and each Aa contributes one, so p = (2 × AA + Aa) / 2n. It then predicts the counts expected under equilibrium (p²n, 2pqn, q²n) and computes χ² = Σ (O − E)² / E. There are three genotype classes, but one degree of freedom is lost to the total and another to estimating p from the same data, so df = 1 and the α = 0.05 critical value is 3.841. A χ² above 3.841 means the observed genotypes would arise by chance less than 5% of the time if the population were in equilibrium. A heterozygote deficit often signals inbreeding or population structure; a heterozygote excess can point to heterozygote advantage, as with the sickle-cell allele in malaria regions.</p>
 </div>
-<div class="related"><a href="/learn/hardy-weinberg-principle/">The Hardy-Weinberg principle explained ↗</a><a href="/learn/mendelian-inheritance/">Back to Mendelian inheritance ↗</a><a href="/tools/chi-square-test/">Chi-square test for genetics ↗</a><a href="/punnett-square-calculator/">Punnett square calculator ↗</a><a href="/practice/">Practice genetics questions ↗</a><a href="/printable-diagrams/">Printable diagrams ↗</a></div>
+<div class="related"><a href="/learn/hardy-weinberg-principle/">The Hardy-Weinberg principle explained ↗</a><a href="/hardy-weinberg-calculator/activity/">Printable Hardy-Weinberg activity ↗</a><a href="/learn/mendelian-inheritance/">Back to Mendelian inheritance ↗</a><a href="/tools/chi-square-test/">Chi-square test for genetics ↗</a><a href="/punnett-square-calculator/">Punnett square calculator ↗</a><a href="/practice/">Practice genetics questions ↗</a><a href="/printable-diagrams/">Printable diagrams ↗</a></div>
 <AdSlot type="native" />
 <Faq items={faqs['hardy-weinberg-calculator']} title="Hardy-Weinberg questions"/></Layout>

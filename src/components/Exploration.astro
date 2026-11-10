@@ -12,7 +12,7 @@ const visible = activeKeys(tool, firstMode);
 <div class="explanation"><h2>{tool.explanationTitle || 'Why it works'}</h2><div class="formula">{tool.formula}</div><ol data-steps></ol></div>
 </exploration-lab><noscript>Enable JavaScript for the interactive diagram and calculations. Key relationship: {tool.formula}. The linked concept note explains the method with a worked example.</noscript>
 <script>
-import { findExploration, explore, explorationDiagram, activeKeys, defaultMode } from '../lib/explorations.mjs';
+import { findExploration, explore, explorationDiagram, activeKeys, defaultMode, parsePrefill } from '../lib/explorations.mjs';
 class ExplorationLab extends HTMLElement {
   connectedCallback() {
     const tool = findExploration(this.dataset.slug!)!;
@@ -47,7 +47,20 @@ class ExplorationLab extends HTMLElement {
       Object.entries(preset.values).forEach(([key, value]) => { const i = inputs.find(i => i.dataset.field === key); if (i) i.value = String(value); });
       modeUI();
     });
-    modeUI();
+    // Worked examples link here with a "#try=<mode>&<field>=<value>" fragment: fill the inputs and bring the tool into view.
+    const prefill = () => {
+      const state = parsePrefill(location.hash, tool);
+      if (!state) return false;
+      mode = state.mode;
+      Object.entries(state.values).forEach(([key, value]) => { const i = inputs.find(i => i.dataset.field === key); if (i) i.value = String(value); });
+      modeUI();
+      this.scrollIntoView({ block: 'start' });
+      return true;
+    };
+    addEventListener('hashchange', prefill);
+    // A second click on the same example leaves the fragment unchanged, so no hashchange fires: apply it again by hand.
+    document.addEventListener('click', e => { const a = (e.target as Element).closest?.('a[href*="#try="]') as HTMLAnchorElement | null; if (a && a.pathname === location.pathname && a.hash === location.hash) prefill(); });
+    if (!prefill()) modeUI();
   }
 }
 customElements.define('exploration-lab', ExplorationLab);

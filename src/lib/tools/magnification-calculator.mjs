@@ -20,6 +20,7 @@ export const definition = {
   category: 'Lab skills',
   icon: '⌾',
   description: 'Find actual size, image size, or magnification with correct mm-to-µm conversion, work out total microscope magnification, and size a scale bar.',
+  intro: 'This calculator uses magnification = image size ÷ actual size. Enter any two of the three (image size in millimeters, actual size in micrometers, magnification) to get the third, with the mm to µm conversion done for you (1 mm = 1,000 µm) and a scale bar drawn to match. Total-magnification mode multiplies the eyepiece by the objective lens. It is for students measuring cells from micrographs and drawings in microscope lessons.',
   keywords: 'magnification calculator image size actual size scale bar micrometer millimeter eyepiece objective total magnification field of view',
   meta: 'I = A × M · scale bars',
   fields: [

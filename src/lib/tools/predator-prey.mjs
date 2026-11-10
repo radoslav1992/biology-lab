@@ -14,6 +14,7 @@ export const definition = {
   category: 'Ecology',
   icon: '∿',
   description: 'Simulate prey and predator populations with the Lotka–Volterra equations: set the four rates, watch the boom-and-bust cycles, and find the equilibrium point.',
+  intro: 'This simulator solves the Lotka–Volterra equations, dx/dt = αx − βxy for the prey and dy/dt = δxy − γy for the predators. Set the starting populations and the four rates (prey growth α, predation β, predator efficiency δ and predator death γ) and it plots both populations over time, with the equilibrium at γ ÷ δ prey and α ÷ β predators. It is for ecology students studying predator–prey cycles such as the lynx and the snowshoe hare.',
   keywords: 'lotka volterra predator prey cycle lynx hare oscillation equilibrium population dynamics differential equations',
   meta: 'RK4 simulation · cycle period',
   fields: [

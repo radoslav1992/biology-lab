@@ -1,5 +1,6 @@
 // Cell atlas data: eight organelles (fixed slug order) plus the two reference cell types drawn by CellDiagram.astro.
 // Every number is a textbook value; keep `properties[0]` as the membrane row (the comparison table reads it).
+// `tool` is the calculator each organelle page links to, with the anchor text that says why it is related.
 export const organelles = {
   nucleus: {
     title: 'Nucleus',
@@ -23,12 +24,13 @@ export const organelles = {
     pitfall: 'The nucleus is often called the “brain” of the cell, but it does not think or issue commands. It is an archive and copy room: genes are switched on or off by signals arriving from the cytoplasm, and the proteins that actually do the work are built outside it.',
     related: ['ribosome', 'endoplasmic-reticulum'],
     lesson: 'dna-structure',
+    tool: { href: '/dna-transcription-translation/', label: 'Transcribe a gene the way the nucleus does: DNA to mRNA converter' },
     keywords: 'nucleus function nuclear envelope nuclear pore chromatin nucleolus',
   },
   mitochondrion: {
     title: 'Mitochondrion',
     // Searchers mostly use the plural, so the page title leads with it.
-    seoTitle: 'Mitochondria (Mitochondrion): Structure, Function & Location',
+    seoTitle: 'Mitochondria (Mitochondrion): Structure and Function',
     type: 'Organelle · double membrane',
     foundIn: ['Animal cells', 'Plant cells', 'Fungi', 'Protists'],
     intro: 'Mitochondria run aerobic respiration, converting the energy in glucose and fats into ATP the cell can spend. Their folded inner membrane and their own small genome are relics of free-living bacteria.',
@@ -49,6 +51,7 @@ export const organelles = {
     pitfall: '“The powerhouse of the cell” makes it sound as if mitochondria create energy. They do not: they convert chemical energy already stored in glucose and fatty acids into ATP and release the rest as heat. Energy is conserved, so without fuel and oxygen a mitochondrion produces nothing.',
     related: ['chloroplast', 'cell-membrane'],
     lesson: 'cellular-respiration',
+    tool: { href: '/tools/cell-size/', label: 'Why cristae are folded: surface area to volume ratio calculator' },
     keywords: 'mitochondria function cristae matrix ATP aerobic respiration',
   },
   chloroplast: {
@@ -72,6 +75,7 @@ export const organelles = {
     pitfall: 'Plants do not “breathe in CO₂ and out O₂ instead of respiring.” Every plant cell has mitochondria and respires day and night; in the light, photosynthesis in the chloroplasts simply outpaces respiration, so the net gas exchange flips.',
     related: ['mitochondrion', 'ribosome'],
     lesson: 'photosynthesis',
+    tool: { href: '/tools/energy-pyramid/', label: 'Follow the energy plants capture: energy pyramid calculator' },
     keywords: 'chloroplast function thylakoid grana stroma chlorophyll photosynthesis',
   },
   ribosome: {
@@ -95,6 +99,7 @@ export const organelles = {
     pitfall: 'Ribosomes do not make amino acids, and they are not membrane-bound organelles. Amino acids come from food or the cell’s own metabolism; the ribosome only stitches them together in the order the mRNA dictates. Antibiotics such as tetracycline exploit the 70S/80S difference to hit bacterial ribosomes and spare ours.',
     related: ['endoplasmic-reticulum', 'nucleus'],
     lesson: 'transcription-and-translation',
+    tool: { href: '/codon-chart/', label: 'Read codons like a ribosome: codon chart and codon table' },
     keywords: 'ribosome function 80S 70S translation rough ER free ribosome',
   },
   'endoplasmic-reticulum': {
@@ -119,6 +124,7 @@ export const organelles = {
     pitfall: 'Rough and smooth ER are not two separate organelles. They are regions of one continuous membrane system, and ribosomes attach and detach as the cell’s needs change, so a cell can shift the balance between them within hours.',
     related: ['ribosome', 'golgi-apparatus'],
     lesson: 'transcription-and-translation',
+    tool: { href: '/dna-transcription-translation/', label: 'Build the protein the ER will fold: DNA to protein converter' },
     keywords: 'endoplasmic reticulum function rough ER smooth ER cisternae lumen',
   },
   'golgi-apparatus': {
@@ -143,6 +149,7 @@ export const organelles = {
     pitfall: 'The Golgi is not just a “packaging center” that wraps things in membrane. It edits what it receives, and its address tags decide where each protein ends up. In I-cell disease the mannose-6-phosphate tag is missing, so lysosomal enzymes are shipped out of the cell instead of into lysosomes.',
     related: ['endoplasmic-reticulum', 'lysosome'],
     lesson: 'cell-transport',
+    tool: { href: '/tools/magnification-calculator/', label: 'Measure organelles in a micrograph: magnification calculator' },
     keywords: 'golgi apparatus function cisternae cis trans vesicles secretion',
   },
   lysosome: {
@@ -167,6 +174,7 @@ export const organelles = {
     pitfall: 'Lysosomes are not “suicide sacs” waiting to burst and kill the cell. Programmed cell death is run by caspase enzymes, not lysosomal ones, and a leaked hydrolase does little at neutral pH. Lysosomes are recyclers first, and they are also unusually rare in plant cells, where the central vacuole does the digesting.',
     related: ['golgi-apparatus', 'cell-membrane'],
     lesson: 'enzymes',
+    tool: { href: '/tools/enzyme-kinetics/', label: 'See how enzymes speed up reactions: Michaelis-Menten calculator' },
     keywords: 'lysosome function acid hydrolase pH autophagy phagocytosis',
   },
   'cell-membrane': {
@@ -191,6 +199,7 @@ export const organelles = {
     pitfall: 'The membrane is neither a rigid wall nor a simple sieve that sorts by size. Its lipids drift sideways constantly (one can travel the length of a bacterium in about a second), and a tiny ion like Na⁺ is blocked while much larger nonpolar steroid hormones slip straight through: polarity matters more than size.',
     related: ['lysosome', 'golgi-apparatus'],
     lesson: 'cell-transport',
+    tool: { href: '/tools/water-potential/', label: 'Predict osmosis across the membrane: water potential calculator' },
     keywords: 'cell membrane function phospholipid bilayer fluid mosaic selective permeability',
   },
 };
