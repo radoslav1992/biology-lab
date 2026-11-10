@@ -1,0 +1,303 @@
+---
+// Label-the-cell quiz: the atlas's animal and plant cells drawn with numbered pointers (cell-diagram.mjs), a word bank or
+// a typed answer for each one, and a function-match round built from the organelle chart. The first question of the
+// animal cell is rendered on the server; the script below takes over from the JSON it is handed.
+// The page's answer-key diagrams (.lq-key-figure) reuse the pointer styles defined here.
+import { drawCell } from '../lib/cell-diagram.mjs';
+import { QUIZ_MODES, quizItems, wordBank } from '../lib/label-quiz.mjs';
+const modes = Object.fromEntries(QUIZ_MODES.map(([key, title]) => [key, { title, items: quizItems(key), bank: wordBank(key) }]));
+const cells = ['animal', 'plant'].map(kind => ({ kind, title: modes[kind].title, count: modes[kind].items.length, svg: drawCell(kind, { pointers: true }).svg }));
+const first = modes.animal;
+const json = JSON.stringify({ modes }).replace(/</g, '\\u003c');
+---
+<label-quiz data-mode="animal">
+<div class="tabs lq-modes" role="group" aria-label="Quiz mode">{QUIZ_MODES.map(([key, title], i) => <button type="button" class:list={['tab', { active: i === 0 }]} data-mode-tab={key} aria-pressed={i === 0}>{title}</button>)}</div>
+<div class="lq-print-head" aria-hidden="true"><strong data-print-title>Label the animal cell</strong><span>Name</span><span>Date</span></div>
+<div class="workbench lq-bench">
+  <div class="canvas-pane">
+    <div class="canvas-top"><span class="canvas-title"><span aria-hidden="true">◉</span> <span data-title>{first.title}</span> <span class="badge" data-status>0 OF {first.items.length} DONE</span></span><span class="canvas-hint" data-hint>Click a number to answer it next</span></div>
+    <noscript><style is:inline>label-quiz .lq-stage[hidden]{display:block!important}label-quiz .controls,label-quiz .lq-modes,label-quiz .lq-below{display:none}</style>JavaScript is off, so the quiz cannot mark your answers. Both numbered diagrams are shown here: write down a name for each number, then check yourself against the labeled diagrams further down this page.</noscript>
+    {cells.map(c => <div class="graph lq-stage" data-stage={c.kind} hidden={c.kind !== 'animal'}><svg viewBox="0 0 720 460" role="img" aria-label={`${c.title} diagram with ${c.count} numbered pointers, one for each structure to name`} set:html={c.svg}/></div>)}
+    <div class="graph lq-card" data-card hidden><span class="lq-card-label" data-card-label>Function 1 of {modes.functions.items.length}</span><p class="lq-card-job" data-card-job></p><span class="lq-card-label">Which part of the cell does this?</span></div>
+    <div class="graph-caption"><span data-caption>Each line ends on the structure to name</span><span class="lq-swipe">Swipe the diagram sideways to see the whole cell</span><span data-scale-note>Not to scale: organelles are enlarged for clarity</span></div>
+  </div>
+  <div class="controls">
+    <h3 data-heading>Name each numbered structure.</h3>
+    <p class="control-label" id="lq-answer-by">Answer by</p>
+    <div class="pills" role="group" aria-labelledby="lq-answer-by"><button type="button" class="pill selected" data-answer-by="bank" aria-pressed="true">Word bank</button><button type="button" class="pill" data-answer-by="type" aria-pressed="false">Typing the name</button></div>
+    <p class="lq-question" data-question tabindex="-1">Which structure is number 1?</p>
+    <div class="lq-bank" data-bank role="group" aria-label="Word bank">{first.bank.map(name => <button type="button" class="pill" data-word={name}>{name}</button>)}</div>
+    <form class="lq-type" data-type-form hidden><label class="field" for="lq-typed">Type the name of the structure</label><div class="lq-type-row"><input id="lq-typed" type="text" data-typed autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="60"/><button type="submit" class="primary">Check</button></div></form>
+    <div class="feedback lq-feedback" data-feedback aria-live="polite"></div>
+    <button type="button" class="primary full-width" data-next hidden>Next structure →</button>
+    <div class="lq-finish" data-finish hidden></div>
+    <div class="divider"></div>
+    <div class="lq-actions"><button type="button" class="secondary full-width" data-reveal>Show answers</button><button type="button" class="secondary full-width" data-restart>Start again</button><button type="button" class="secondary full-width" data-print>Print as a worksheet</button></div>
+    <p class="small-note" data-note>Each name is used once. A wrong answer shows the right name, so you can learn it and try the round again.</p>
+  </div>
+  <div class="lq-below">
+    <ol class="lq-sheet" data-sheet aria-label="Your answers">{first.items.map((item, i) => <li><button type="button" class="lq-row" data-goto={i} aria-current={i === 0 ? 'true' : undefined}><span class="lq-num">{item.n}</span><span class="lq-slot"><span class="lq-blank">not answered yet</span></span></button></li>)}</ol>
+    <p class="lq-print-bank" data-print-bank aria-hidden="true"><strong>Word bank:</strong> {first.bank.join(' · ')}</p>
+    <div class="result-grid" data-metrics aria-live="polite"><div class="result-tile"><span>Score</span><strong>0 / {first.items.length}</strong></div><div class="result-tile"><span>Answered</span><strong>0</strong></div><div class="result-tile"><span>Still to do</span><strong>{first.items.length}</strong></div></div>
+  </div>
+</div>
+<script type="application/json" data-quiz set:html={json}></script>
+</label-quiz>
+<script>
+import { checkAnswer, scoreRound, shuffled } from '../lib/label-quiz-score.mjs';
+import { escapeHtml } from '../lib/format.mjs';
+type Item = { n: number; id: string; name: string; accept: string[]; job: string; href: string; linkLabel: string; animal?: string; plant?: string };
+type Mode = { title: string; items: Item[]; bank: string[] };
+// finished: the student has seen the last answer's feedback (or pressed Show answers) and is looking at the score.
+type Round = { items: Item[]; results: (string | null)[]; chosen: (string | null)[]; current: number; retried: boolean; finished: boolean };
+const NEXT_MODE: Record<string, [string, string]> = { animal: ['plant', 'Label the plant cell'], plant: ['functions', 'Match organelles to their functions'], functions: ['animal', 'Label the animal cell'] };
+class LabelQuiz extends HTMLElement {
+  connectedCallback() {
+    const el = <T extends Element>(selector: string) => this.querySelector(selector) as T;
+    const all = <T extends Element>(selector: string) => Array.from(this.querySelectorAll<T>(selector));
+    const data = JSON.parse(el<HTMLScriptElement>('[data-quiz]').textContent || '{}') as { modes: Record<string, Mode> };
+    let mode = 'animal', answerBy = 'bank';
+    const rounds: Record<string, Round> = {};
+    const isLabel = () => mode !== 'functions';
+    const newRound = (key: string): Round => {
+      const source = data.modes[key].items;
+      // Function match asks the chart's rows in a fresh order each round; the diagrams keep their pointer numbers.
+      const items = key === 'functions' ? shuffled(source).map((item, i) => ({ ...item, n: i + 1 })) : source;
+      return { items, results: items.map(() => null), chosen: items.map(() => null), current: 0, retried: false, finished: false };
+    };
+    const round = () => rounds[mode] ??= newRound(mode);
+    const link = (item: Item) => `<a class="text-link" href="${item.href}">${escapeHtml(item.linkLabel)} <span aria-hidden="true">↗</span></a>`;
+    const where = (item: Item) => item.animal ? ` In animal cells: ${escapeHtml(item.animal.toLowerCase())}. In plant cells: ${escapeHtml(item.plant!.toLowerCase())}.` : '';
+    const question = (item: Item) => isLabel() ? `Which structure is number ${item.n}?` : `${item.n}. Which part of the cell does this? “${item.job.replace(/\.$/, '')}”`;
+
+    const paintStage = () => {
+      const r = round();
+      all<HTMLElement>('[data-stage]').forEach(stage => { stage.hidden = stage.dataset.stage !== mode; });
+      el<HTMLElement>('[data-card]').hidden = isLabel();
+      if (!isLabel()) {
+        const item = r.items[r.current];
+        el<HTMLElement>('[data-card-label]').textContent = `Function ${item.n} of ${r.items.length}`;
+        el<HTMLElement>('[data-card-job]').textContent = item.job.replace(/\.$/, '');
+        return;
+      }
+      const stage = el<HTMLElement>(`[data-stage="${mode}"]`);
+      r.items.forEach((item, i) => {
+        const pointer = stage.querySelector(`.cell-pointer[data-pointer="${item.n}"]`);
+        if (!pointer) return;
+        const result = r.results[i];
+        pointer.classList.toggle('is-active', i === r.current && !r.finished);
+        pointer.classList.toggle('is-correct', result === 'correct');
+        pointer.classList.toggle('is-wrong', result === 'wrong');
+        pointer.classList.toggle('is-shown', result === 'shown');
+        pointer.classList.toggle('is-revealed', result !== null);
+      });
+      // On a narrow screen the diagram scrolls sideways: bring the current pointer into view.
+      const active = stage.querySelector<SVGGraphicsElement>('.cell-pointer.is-active .cell-pointer-badge');
+      if (active && stage.scrollWidth > stage.clientWidth) {
+        const box = active.getBoundingClientRect(), frame = stage.getBoundingClientRect();
+        stage.scrollLeft += box.left + box.width / 2 - (frame.left + frame.width / 2);
+      }
+    };
+    const paintSheet = () => {
+      const r = round(), done = r.finished;
+      el<HTMLElement>('[data-sheet]').innerHTML = r.items.map((item, i) => {
+        const result = r.results[i];
+        const state = result ?? 'open';
+        const mark = result === 'correct' ? '✓' : result === 'wrong' ? '✗' : '';
+        const spoken = result === 'correct' ? `${item.name}, correct` : result === 'wrong' ? `${item.name}, you answered ${r.chosen[i] || 'something else'}` : result === 'shown' ? `${item.name}, answer shown` : 'not answered yet';
+        const job = isLabel() ? '' : `<span class="lq-job">${escapeHtml(item.job.replace(/\.$/, ''))}</span>`;
+        const slot = result ? `<span class="lq-answer">${mark ? `<span class="lq-mark" aria-hidden="true">${mark}</span> ` : ''}${escapeHtml(item.name)}</span>` : '<span class="lq-blank">not answered yet</span>';
+        return `<li data-state="${state}"><button type="button" class="lq-row" data-goto="${i}" aria-label="Number ${item.n}: ${escapeHtml(spoken)}"${i === r.current && !done ? ' aria-current="true"' : ''}><span class="lq-num">${item.n}</span><span class="lq-slot">${job}${slot}</span></button>${result ? `<a class="text-link lq-page" href="${item.href}" aria-label="${escapeHtml(item.linkLabel)}">${item.href.includes('#') ? 'Chart' : 'Page'} <span aria-hidden="true">↗</span></a>` : ''}</li>`;
+      }).join('');
+      el<HTMLElement>('[data-print-bank]').innerHTML = `<strong>Word bank:</strong> ${data.modes[mode].bank.map(escapeHtml).join(' · ')}`;
+    };
+    const paintMetrics = () => {
+      const s = scoreRound(round().results);
+      el<HTMLElement>('[data-metrics]').innerHTML = [['Score', `${s.correct} / ${s.total}`], ['Answered', String(s.answered)], ['Still to do', String(s.left)]].map(([label, value]) => `<div class="result-tile"><span>${label}</span><strong>${value}</strong></div>`).join('');
+      el<HTMLElement>('[data-status]').textContent = s.complete ? `${s.correct} OF ${s.total} CORRECT` : `${s.total - s.left} OF ${s.total} DONE`;
+    };
+    const feedbackFor = (item: Item, result: string | null, chosen: string | null) => {
+      if (!result) return '';
+      const told = isLabel() ? `Number ${item.n} is: ${escapeHtml(item.name)}.` : `The answer is: ${escapeHtml(item.name)}.`;
+      const lead = result === 'correct' ? `<strong>Correct: ${escapeHtml(item.name)}.</strong>` : result === 'wrong' ? `<strong>Not quite.</strong> You answered ${escapeHtml(chosen || 'something else')}. ${told}` : `<strong>Answer shown.</strong> ${told}`;
+      return `${lead} ${isLabel() ? escapeHtml(item.job) : ''}${where(item)} ${link(item)}`;
+    };
+    const paintControls = () => {
+      const r = round(), s = scoreRound(r.results), item = r.items[r.current], result = r.results[r.current];
+      const questionEl = el<HTMLElement>('[data-question]'), bank = el<HTMLElement>('[data-bank]'), form = el<HTMLFormElement>('[data-type-form]');
+      const feedback = el<HTMLElement>('[data-feedback]'), next = el<HTMLButtonElement>('[data-next]'), finish = el<HTMLElement>('[data-finish]');
+      el<HTMLElement>('[data-title]').textContent = data.modes[mode].title;
+      el<HTMLElement>('[data-heading]').textContent = isLabel() ? 'Name each numbered structure.' : 'Match each function to its organelle.';
+      el<HTMLElement>('[data-hint]').textContent = isLabel() ? 'Click a number to answer it next' : 'One function at a time';
+      el<HTMLElement>('[data-caption]').textContent = isLabel() ? 'Each line ends on the structure to name' : 'Functions come from the organelle chart';
+      el<HTMLElement>('[data-scale-note]').hidden = !isLabel();
+      el<HTMLElement>('[data-print-title]').textContent = isLabel() ? `Label the ${data.modes[mode].title.toLowerCase()}` : 'Match each function to its organelle';
+      all<HTMLButtonElement>('[data-mode-tab]').forEach(b => { const on = b.dataset.modeTab === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+      all<HTMLButtonElement>('[data-answer-by]').forEach(b => { const on = b.dataset.answerBy === answerBy; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+      this.dataset.mode = mode;
+      questionEl.textContent = r.finished ? `Round complete: ${s.correct} of ${s.total} correct (${s.percent}%).` : question(item);
+      const resolved = new Set(r.items.filter((_, i) => r.results[i] !== null).map(it => it.name));
+      bank.hidden = answerBy !== 'bank' || r.finished;
+      bank.innerHTML = data.modes[mode].bank.map(name => `<button type="button" class="pill${resolved.has(name) ? ' used' : ''}" data-word="${escapeHtml(name)}"${resolved.has(name) || result ? ' disabled' : ''}>${escapeHtml(name)}</button>`).join('');
+      form.hidden = answerBy !== 'type' || r.finished || result !== null;
+      feedback.className = 'feedback lq-feedback' + (result && result !== 'correct' ? ' feedback-retry' : '');
+      feedback.innerHTML = r.finished ? '' : feedbackFor(item, result, r.chosen[r.current]);
+      next.hidden = r.finished || result === null;
+      next.textContent = s.left === 0 ? 'See your score →' : isLabel() ? 'Next structure →' : 'Next function →';
+      finish.hidden = !r.finished;
+      if (r.finished) {
+        const [nextMode, nextLabel] = NEXT_MODE[mode];
+        const missed = s.missed.length;
+        finish.innerHTML = `<p>${missed === 0 ? `Every answer correct${r.retried ? ' after a retry' : ''}. ${isLabel() ? 'The diagram is now fully labeled, and every name in the list below opens that structure’s page.' : 'Every name in the list below opens that structure’s page.'}` : `You missed ${missed}. ${isLabel() ? 'The diagram now shows every label' : 'The list below shows every answer'}: read the ones marked ✗, then try them again.`}</p>${missed ? `<button type="button" class="primary full-width" data-retry>Retry the ${missed === 1 ? 'one' : missed} you missed</button>` : ''}<button type="button" class="${missed ? 'secondary' : 'primary'} full-width" data-switch="${nextMode}">${nextLabel} →</button>`;
+      }
+      el<HTMLButtonElement>('[data-reveal]').disabled = r.finished;
+    };
+    const paint = () => { paintStage(); paintSheet(); paintMetrics(); paintControls(); };
+    const focusQuestion = () => el<HTMLElement>('[data-question]').focus({ preventScroll: true });
+    const settle = (result: string, chosen: string) => {
+      const r = round();
+      r.results[r.current] = result; r.chosen[r.current] = chosen;
+      paint();
+      const next = el<HTMLButtonElement>('[data-next]');
+      if (!next.hidden) next.focus({ preventScroll: true }); else focusQuestion();
+    };
+    const goto = (index: number) => { const r = round(); r.current = index; paint(); if (answerBy === 'type' && r.results[index] === null) el<HTMLInputElement>('[data-typed]').value = ''; };
+
+    this.addEventListener('click', event => {
+      const target = event.target as Element;
+      const r = round();
+      const word = target.closest<HTMLButtonElement>('[data-word]');
+      if (word && !word.disabled && r.results[r.current] === null) { const item = r.items[r.current]; settle(word.dataset.word === item.name ? 'correct' : 'wrong', word.dataset.word!); return; }
+      const row = target.closest<HTMLElement>('[data-goto]');
+      if (row) { goto(Number(row.dataset.goto)); focusQuestion(); return; }
+      const pointer = target.closest<SVGElement>('.cell-pointer');
+      if (pointer && isLabel()) { const index = r.items.findIndex(item => String(item.n) === pointer.dataset.pointer); if (index >= 0) goto(index); return; }
+      const tab = target.closest<HTMLElement>('[data-mode-tab],[data-switch]');
+      if (tab) { mode = tab.dataset.modeTab || tab.dataset.switch!; paint(); if (tab.dataset.switch) focusQuestion(); return; }
+      const by = target.closest<HTMLElement>('[data-answer-by]');
+      if (by) { answerBy = by.dataset.answerBy!; paint(); if (answerBy === 'type' && !el<HTMLFormElement>('[data-type-form]').hidden) el<HTMLInputElement>('[data-typed]').focus({ preventScroll: true }); return; }
+      if (target.closest('[data-next]')) {
+        const open = r.results.findIndex((result, i) => result === null && i > r.current);
+        const index = open >= 0 ? open : r.results.findIndex(result => result === null);
+        if (index >= 0) { goto(index); if (answerBy === 'type') el<HTMLInputElement>('[data-typed]').focus({ preventScroll: true }); else focusQuestion(); }
+        else { r.finished = true; paint(); focusQuestion(); }
+        return;
+      }
+      if (target.closest('[data-reveal]')) { r.results = r.results.map(result => result ?? 'shown'); r.finished = true; paint(); focusQuestion(); return; }
+      if (target.closest('[data-restart]')) { rounds[mode] = newRound(mode); paint(); focusQuestion(); return; }
+      if (target.closest('[data-retry]')) { const first = scoreRound(r.results).missed[0]; r.results = r.results.map(result => result === 'correct' ? result : null); r.chosen = r.chosen.map((c, i) => r.results[i] ? c : null); r.current = first; r.retried = true; r.finished = false; paint(); focusQuestion(); return; }
+      if (target.closest('[data-print]')) print();
+    });
+    el<HTMLFormElement>('[data-type-form]').addEventListener('submit', event => {
+      event.preventDefault();
+      const r = round(), item = r.items[r.current], input = el<HTMLInputElement>('[data-typed]'), feedback = el<HTMLElement>('[data-feedback]');
+      if (r.results[r.current] !== null) return;
+      const verdict = checkAnswer(input.value, item, r.items);
+      if (verdict === 'empty' || verdict === 'close') {
+        feedback.className = 'feedback lq-feedback feedback-retry';
+        feedback.textContent = verdict === 'empty' ? 'Type a name first, then press Check.' : 'Very close: check the spelling and try again.';
+        input.focus({ preventScroll: true });
+        return;
+      }
+      const typed = input.value.trim().slice(0, 60);
+      input.value = '';
+      settle(verdict, typed);
+    });
+    paint();
+  }
+}
+customElements.define('label-quiz', LabelQuiz);
+</script>
+<style is:global>
+label-quiz{display:block;min-width:0}
+label-quiz .lq-modes{margin-bottom:18px}
+label-quiz .lq-bench{grid-template-rows:auto 1fr}
+label-quiz .lq-bench>.canvas-pane{grid-column:1;grid-row:1}
+label-quiz .lq-bench>.controls{grid-column:2;grid-row:1 / span 2}
+label-quiz .lq-bench>.lq-below{grid-column:1;grid-row:2;min-width:0;border-top:1px solid var(--line);background:#fff}
+label-quiz .lq-stage{overflow-x:auto}
+label-quiz .lq-stage svg{min-height:0;max-height:none;touch-action:auto}
+.lq-stage svg text,.lq-key-figure svg text{font-family:'DM Sans',sans-serif}
+.cell-pointer-name{display:none;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+.cell-pointer.is-revealed .cell-pointer-name,.lq-key-figure .cell-pointer-name{display:inline}
+.cell-pointer-badge,.cell-pointer-tip{transform-box:fill-box;transform-origin:center}
+label-quiz .cell-pointer{cursor:pointer}
+label-quiz .cell-pointer.is-active .cell-pointer-badge{fill:#e2703a;stroke:#fff;transform:scale(1.3)}
+label-quiz .cell-pointer.is-active .cell-pointer-line{stroke:#c9582a;stroke-width:2.6px}
+label-quiz .cell-pointer.is-active .cell-pointer-tip{fill:#c9582a;transform:scale(1.5)}
+label-quiz .cell-pointer.is-correct .cell-pointer-badge{fill:#287b58;stroke:#fff}
+label-quiz .cell-pointer.is-wrong .cell-pointer-badge{fill:#a85424;stroke:#fff}
+label-quiz .cell-pointer.is-shown .cell-pointer-badge{fill:#173226;stroke:#fff}
+label-quiz .cell-pointer.is-active .cell-pointer-number,label-quiz .cell-pointer.is-correct .cell-pointer-number,label-quiz .cell-pointer.is-wrong .cell-pointer-number,label-quiz .cell-pointer.is-shown .cell-pointer-number{fill:#fff!important}
+label-quiz .lq-card{display:grid;align-content:center;justify-items:center;gap:14px;min-height:300px;padding:34px 28px;text-align:center}
+label-quiz .lq-card[hidden]{display:none}
+label-quiz .lq-card-label{font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+label-quiz .lq-card-job{margin:0;max-width:560px;font-family:Manrope,sans-serif;font-size:28px;font-weight:700;line-height:1.3;letter-spacing:-.4px;color:var(--ink)}
+label-quiz .lq-question{margin:20px 0 14px;font-family:Manrope,sans-serif;font-size:20px;font-weight:700;line-height:1.35;color:var(--ink)}
+label-quiz .lq-question:focus{outline:none}
+label-quiz .lq-bank{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label-quiz .lq-bank[hidden],label-quiz .lq-type[hidden],label-quiz .lq-finish[hidden]{display:none}
+label-quiz .lq-bank .pill{min-height:44px;text-align:left;line-height:1.25}
+label-quiz .lq-bank .pill.used{text-decoration:line-through;color:var(--muted)}
+label-quiz .lq-bank .pill:disabled:hover{background:#fff;border-color:var(--line);color:inherit}
+label-quiz .lq-bank .pill.used:disabled:hover{color:var(--muted)}
+label-quiz .lq-type-row{display:flex;gap:8px}
+label-quiz .lq-type input{flex:1;min-width:0;padding:11px 12px;border:1px solid #b8cdbd;border-radius:8px;background:#fff;color:var(--ink);font-size:16px}
+label-quiz .lq-feedback{margin:14px 0 0;font-size:15px;line-height:1.6}
+label-quiz .lq-feedback:not(:empty){padding:14px 16px}
+label-quiz .lq-feedback .text-link{display:inline-block;margin-top:4px;color:inherit;text-decoration:underline}
+label-quiz [data-next]{margin-top:14px}
+label-quiz .lq-finish p{margin:0 0 14px;font-size:15px;line-height:1.6;color:var(--muted)}
+label-quiz .lq-finish button+button{margin-top:10px}
+label-quiz .lq-actions{display:grid;gap:10px}
+label-quiz .lq-sheet{list-style:none;margin:0;padding:12px 18px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 12px}
+label-quiz .lq-sheet li{display:flex;align-items:center;gap:8px;min-width:0;margin:0}
+label-quiz .lq-row{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px;border-radius:9px;background:none;color:var(--ink);text-align:left;font-size:14px;line-height:1.35}
+label-quiz .lq-row:hover{background:#f1f6ee}
+label-quiz .lq-row[aria-current]{background:#fff1e8;box-shadow:inset 0 0 0 2px #e2703a}
+label-quiz .lq-num{flex:0 0 26px;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-size:12px;font-weight:700;background:#fff}
+label-quiz li[data-state=correct] .lq-num{background:#287b58;border-color:#287b58;color:#fff}
+label-quiz li[data-state=wrong] .lq-num{background:#a85424;border-color:#a85424;color:#fff}
+label-quiz li[data-state=shown] .lq-num{background:var(--ink);color:#fff}
+label-quiz .lq-slot{display:flex;flex-direction:column;min-width:0}
+label-quiz .lq-job{color:var(--muted);font-size:13px}
+label-quiz .lq-blank{color:var(--muted);font-style:italic}
+label-quiz .lq-answer{font-weight:700}
+label-quiz li[data-state=wrong] .lq-mark{color:#a85424}
+label-quiz li[data-state=correct] .lq-mark{color:#287b58}
+label-quiz .lq-page{flex:0 0 auto;font-size:13px;padding:8px 6px}
+label-quiz .lq-print-head,label-quiz .lq-print-bank,label-quiz .lq-swipe{display:none}
+label-quiz noscript{display:block;padding:14px 18px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.6}
+@media(max-width:700px){
+label-quiz .lq-bench>.canvas-pane,label-quiz .lq-bench>.controls,label-quiz .lq-bench>.lq-below{grid-column:1;grid-row:auto}
+label-quiz .lq-stage svg{width:600px;max-width:none}
+label-quiz:not([data-mode=functions]) .lq-swipe{display:inline}
+label-quiz .lq-card{min-height:200px;padding:26px 18px}
+label-quiz .lq-card-job{font-size:22px}
+label-quiz .lq-sheet{grid-template-columns:1fr;padding:10px 12px 12px}
+label-quiz .lq-question{margin-top:18px}
+}
+@media print{
+label-quiz .lq-print-head{display:grid;grid-template-columns:3fr 2fr 1fr;gap:18px;align-items:end;margin:0 0 6mm;font-size:10pt;color:#333}
+label-quiz .lq-print-head strong{font-family:Manrope,sans-serif;font-size:17pt;color:#111}
+label-quiz .lq-print-head span{border-bottom:1px solid #777;padding-bottom:2px}
+label-quiz .lq-bench>.lq-below{border:0}
+label-quiz .lq-stage{overflow:visible}
+label-quiz .lq-stage svg{width:100%;max-width:none}
+label-quiz .lq-card{display:none}
+label-quiz .lq-sheet{grid-template-columns:1fr 1fr;gap:0 10mm;padding:4mm 0 0}
+label-quiz[data-mode=functions] .lq-sheet{grid-template-columns:1fr}
+label-quiz .lq-sheet li{break-inside:avoid}
+label-quiz .lq-row{min-height:9mm;padding:1mm 0;background:none!important;box-shadow:none!important;font-size:10pt}
+label-quiz .lq-slot{flex:1}
+label-quiz .lq-blank{display:block;height:6mm;border-bottom:1px solid #999;color:transparent}
+label-quiz .lq-page,label-quiz .result-grid,label-quiz noscript{display:none}
+label-quiz .lq-print-bank{display:block;margin:6mm 0 0;font-size:10pt;line-height:1.6;color:#111}
+label-quiz .cell-pointer .cell-pointer-badge{fill:#fff!important;stroke:#173226!important;transform:none!important}
+label-quiz .cell-pointer .cell-pointer-line{stroke:#173226!important;stroke-width:1.6px!important}
+label-quiz .cell-pointer .cell-pointer-tip{fill:#173226!important;transform:none!important}
+label-quiz .lq-stage g.cell-pointer.cell-pointer .cell-pointer-number{fill:#173226!important}
+label-quiz .lq-num{background:#fff!important;border-color:#173226!important;color:#173226!important}
+label-quiz .lq-mark{display:none}
+}
+</style>

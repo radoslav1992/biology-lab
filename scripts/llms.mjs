@@ -52,7 +52,7 @@ function section(route) {
   if (route === '/') return null;
   if (route.endsWith('/activity/') || /^\/(teachers|worksheets|practice|printable-diagrams)\//.test(route)) return 'Classroom';
   if (route.startsWith('/learn/')) return 'Lessons';
-  if (/^\/(planets|shapes|cells)\//.test(route) && route !== '/cells/3d/') return 'Reference';
+  if (/^\/(planets|shapes|cells)\//.test(route) && !['/cells/3d/', '/cells/label-the-cell/'].includes(route)) return 'Reference';
   if (/^\/(formulas|physics-symbols|units|library|codon-chart)\//.test(route)) return 'Reference';
   if (/^\/(about|privacy)\//.test(route)) return 'About';
   return 'Tools';

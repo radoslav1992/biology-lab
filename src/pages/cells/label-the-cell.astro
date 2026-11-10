@@ -1,0 +1,74 @@
+---
+import AdSlot from '../../components/AdSlot.astro';
+import ClassroomStrip from '../../components/ClassroomStrip.astro';
+import Faq from '../../components/Faq.astro';
+import LabelQuiz from '../../components/LabelQuiz.astro';
+import Layout from '../../layouts/Layout.astro';
+import { drawCell } from '../../lib/cell-diagram.mjs';
+import { faqs } from '../../lib/faqs.mjs';
+import { labelItems, functionItems } from '../../lib/label-quiz.mjs';
+import { organelles } from '../../lib/organelles.mjs';
+// tests/label-quiz.test.mjs checks these two against the snippet limits.
+const title = 'Label the Cell: Animal and Plant Cell Diagram Quiz';
+const description = 'Label a numbered animal or plant cell diagram from a word bank or by typing, get instant feedback and a score, then match each organelle to its function.';
+const keys = ['animal', 'plant'].map(kind => ({ kind, name: kind === 'animal' ? 'Animal cell' : 'Plant cell', items: labelItems(kind), svg: drawCell(kind, { pointers: true }).svg }));
+const [animal, plant] = keys.map(k => k.items);
+const names = items => items.map(item => item.name.toLowerCase());
+const list = words => words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words[0];
+const only = (a, b) => a.filter(item => !b.some(other => other.id === item.id));
+const plantOnly = only(plant, animal), animalOnly = only(animal, plant);
+const functionCount = functionItems().length;
+const prop = (slug, key) => organelles[slug].properties.find(p => p[0] === key)[1];
+---
+<Layout title={title} section="Cells" description={description} breadcrumbs={[['Cell organelles', '/cells/'], ['Label the cell', '/cells/label-the-cell/']]}>
+<div class="breadcrumb"><a href="/cells/">Cell atlas</a> / Label the cell</div>
+<div class="intro"><div><div class="eyebrow">Cell atlas quiz</div><h1>Label the cell: animal and plant cell diagram quiz</h1><p>This quiz shows an animal cell or a plant cell diagram with numbered pointers and asks you to name each structure. Pick each name from a word bank or type it, see straight away whether you were right, and finish with a score and a fully labeled diagram. A third mode, function match, gives you an organelle’s job and asks which part of the cell does it.</p></div></div>
+<LabelQuiz/>
+<ClassroomStrip href="/cells/"/>
+<section class="explanation lq-how"><h2>How to use the label the cell quiz</h2><ol>
+  <li><strong>Choose a mode.</strong> <em>Animal cell</em> has {animal.length} numbered structures, <em>Plant cell</em> has {plant.length}, and <em>Function match</em> asks about all {functionCount} rows of the organelle chart.</li>
+  <li><strong>Find the number.</strong> The pointer for the current question turns orange. Its line ends on the structure you have to name. Click any other number, or its row in the list under the diagram, to answer that one next.</li>
+  <li><strong>Answer.</strong> Pick a name from the word bank, or switch to <em>Typing the name</em> and press Check. Typed answers ignore capital letters, and a small spelling slip gets a second try.</li>
+  <li><strong>Read the feedback.</strong> A right answer turns the pointer green and writes the name on the diagram. A wrong answer shows the right name and what the structure does, with a link to its page.</li>
+  <li><strong>Check your score.</strong> When every number is done you see your score, the labeled diagram, and a button to retry only the ones you missed. <em>Show answers</em> labels everything at once.</li>
+  <li><strong>Print it.</strong> <em>Print as a worksheet</em> prints the numbered diagram with answer lines and the word bank. Press <em>Show answers</em> first to print the answer key.</li>
+</ol></section>
+<AdSlot type="rectangle" />
+<section class="explanation lq-key" id="labeled-diagrams"><h2>Labeled animal cell and plant cell diagrams</h2><p>These are the answers. Try the quiz first, then open a diagram to check a label or to revise. The numbers match the quiz, and each structure links to its page in the cell atlas or to its row in the <a class="text-link" href="/cells/#organelle-chart">organelle chart</a>.</p>
+{keys.map(k => <details class="lq-key-item"><summary>{k.name} diagram, labeled ({k.items.length} structures)</summary><div class="graph lq-key-figure"><svg viewBox="0 0 720 460" role="img" aria-label={`Labeled ${k.name.toLowerCase()} diagram: ${k.items.map(item => `${item.n} ${item.name}`).join(', ')}`} set:html={k.svg}/></div><div class="fact-table-wrap"><table class="fact-table"><thead><tr><th scope="col">No.</th><th scope="col">Structure</th><th scope="col">What it does</th></tr></thead><tbody>{k.items.map(item => <tr><td>{item.n}</td><td><a class="text-link" href={item.href}>{item.name}</a></td><td>{item.job}</td></tr>)}</tbody></table></div></details>)}
+</section>
+<section class="explanation"><h2>Animal cell and plant cell: which labels differ</h2><p>Both diagrams share the {list(names(animal.filter(item => plant.some(other => other.id === item.id))))}. The differences are the labels an exam question usually asks about.</p><ul>
+  <li><strong>Only on the plant cell ({plantOnly.length}):</strong> {list(names(plantOnly))}. The wall is a rigid cellulose layer outside the membrane, the chloroplasts carry out photosynthesis, and the central vacuole stores water and keeps the cell firm.</li>
+  <li><strong>Only on the animal cell ({animalOnly.length}):</strong> {list(names(animalOnly))}. Lysosomes are rare in plant cells, where the vacuole does most of the digesting, and flowering plants build their spindle without centrioles.</li>
+  <li><strong>Shape.</strong> The plant cell is boxy because its wall fixes its outline. The animal cell is rounded and bounded only by its membrane.</li>
+</ul></section>
+<section class="explanation"><h2>Labels that students often mix up</h2><ul>
+  <li><strong>Cell wall and cell membrane.</strong> On the plant cell the wall is the thick outer layer and the membrane is the thin line just inside it. The pointer for the wall comes from outside the cell; the pointer for the membrane comes from inside and stops at the inner line.</li>
+  <li><strong>Mitochondrion and chloroplast.</strong> Both are ovals with two membranes. A mitochondrion has an inner membrane folded into cristae; a chloroplast is green and holds stacks of discs called grana.</li>
+  <li><strong>Endoplasmic reticulum and Golgi apparatus.</strong> Rough ER is the set of ribosome-studded sheets joined to the nuclear envelope, and smooth ER is the tubes without ribosomes. The Golgi apparatus is a separate stack of curved sacs with small vesicles at its edges.</li>
+  <li><strong>Ribosomes and lysosomes.</strong> Ribosomes are the tiny dots, loose in the cytoplasm or on the rough ER, and they have no membrane. A lysosome is a much larger round sac with one membrane.</li>
+  <li><strong>Nucleus and nucleolus.</strong> The nucleus is the whole compartment inside the nuclear envelope. The nucleolus is the dense spot inside it that builds ribosome parts; it comes up in function match, not on the diagrams.</li>
+</ul></section>
+<section class="explanation"><h2>What the quiz simplifies</h2><ul>
+  <li><strong>The diagrams are not to scale.</strong> A ribosome is {prop('ribosome', 'Typical size').split(',')[0].toLowerCase()}, far too small to see beside a nucleus {prop('nucleus', 'Typical size').split(',')[0].replace('About ', '')}, so the small parts are drawn much larger than life.</li>
+  <li><strong>One pointer per structure.</strong> A real cell holds many of most organelles: {prop('mitochondrion', 'Number per cell').split('; ')[1]} mitochondria, and a leaf cell {prop('chloroplast', 'Number per cell').split(';')[0].replace('Around ', 'about ').replace(' in a leaf mesophyll cell', '')} chloroplasts. The quiz points at one of each.</li>
+  <li><strong>The endoplasmic reticulum is one answer.</strong> The animal cell’s pointer ends on rough ER and the plant cell’s on smooth ER tubes. They are regions of one continuous membrane, so both are labeled endoplasmic reticulum; function match asks about rough and smooth ER separately.</li>
+  <li><strong>Function match uses one main job per organelle.</strong> Each function is the “main function” entry from the organelle chart. Most organelles do more, and their pages list the rest.</li>
+  <li><strong>The plant cell shows no lysosome.</strong> It follows the atlas’s reference plant cell, where the central vacuole does the digesting.</li>
+</ul></section>
+<div class="related"><a href="/cells/">Cell organelles and their functions: labeled diagram and chart ↗</a><a href="/cells/3d/">3D animal and plant cell model ↗</a><a href="/printable-diagrams/">Printable cell diagrams to label ↗</a><a href="/cells/activity/">Cell organelles classroom activity ↗</a><a href="/learn/cell-theory/">Read the lesson: cell theory ↗</a><a href="/practice/">Practice cell questions ↗</a>{Object.entries(organelles).map(([slug, o]) => <a href={`/cells/${slug}/`}>{o.title}: structure and function ↗</a>)}</div>
+<Faq items={faqs['label-the-cell']} title="Label the cell: common questions"/>
+</Layout>
+<style is:global>
+.lq-how ol{padding-left:22px}
+.lq-how li,.lq-key+.explanation li{margin-bottom:8px}
+.lq-key-item{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.lq-key-item summary{cursor:pointer;padding:15px 18px;font-weight:600;color:var(--ink)}
+.lq-key-item summary:focus-visible{outline:3px solid #de793f;outline-offset:-3px}
+.lq-key-figure{border-top:1px solid var(--line);overflow-x:auto}
+.lq-key-figure svg{min-height:0;max-height:none;touch-action:auto}
+.lq-key-item .fact-table{margin:0}
+.lq-key-item .fact-table td:first-child{width:56px}
+@media(max-width:700px){.lq-key-figure svg{width:600px;max-width:none}}
+@media print{body:has(label-quiz) .faq-section,body:has(label-quiz) .lq-key,body:has(label-quiz) .related{display:none!important}}
+</style>
