@@ -119,3 +119,16 @@ Google Fonts supplies DM Sans and Manrope; system fonts are fallbacks. Calculato
 For printables, use A4 or Letter paper at 100% scale, disable browser headers/footers, and verify the 20 mm reference line.
 
 Do not commit `node_modules`, `dist`, `.env`, or local runtime files.
+
+## llms.txt
+
+`public/llms.txt` is a plain-text guide to the site for AI assistants (see llmstxt.org): one line per page with
+its title and description. ChatGPT is one of the site's main sources of visitors, and it can only recommend a
+tool it can read about. The file is generated from the built pages, so regenerate it after changing a title or
+description, or adding a page:
+
+```sh
+npm run build && npm run llms
+```
+
+`tests/llms.test.mjs` fails if a tool is missing from the file.
