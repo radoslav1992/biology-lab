@@ -4,12 +4,13 @@
 
 ## Tools
 
-- [DNA to mRNA to Protein Converter: Transcription & Translation](https://thebiologylab.org/dna-transcription-translation/): Free transcription and translation tool: paste a DNA template strand, coding strand or mRNA to get the mRNA, tRNA anticodons and amino acid sequence.
+- [DNA to mRNA to Protein Converter: Transcription & Translation](https://thebiologylab.org/dna-transcription-translation/): Free transcription and translation tool: paste DNA or mRNA to get mRNA, tRNA anticodons and amino acids, or the complementary strand in DNA replication.
 - [Hardy-Weinberg Calculator — Allele & Genotype Frequencies](https://thebiologylab.org/hardy-weinberg-calculator/): Find allele frequencies p and q and genotype frequencies p², 2pq, q² from p, a recessive phenotype frequency, or genotype counts, then test equilibrium with χ².
 - [Population Growth Calculator: Solve Growth & Doubling Problems](https://thebiologylab.org/population-growth-calculator/): Solve population growth word problems step by step: the population after t years at a % rate, the years to reach a target, and doubling-time problems.
 - [Punnett Square Calculator: Genotype & Phenotype Ratios](https://thebiologylab.org/punnett-square-calculator/): Free Punnett square calculator for monohybrid (2x2), dihybrid (4x4), and ABO blood type crosses: genotype and phenotype ratios, probabilities, and steps.
 - [Biology Calculators & Virtual Labs: All Free Tools](https://thebiologylab.org/tools/): Every free biology calculator and virtual lab in one list: Punnett squares, DNA to mRNA, Hardy-Weinberg, population growth, SA:V ratio and water potential.
 - [3D Animal and Plant Cell Model: Interactive Organelles](https://thebiologylab.org/cells/3d/): Turn a 3D animal and plant cell, pull it apart to watch each organelle float out with its label, and tap the nucleus or a chloroplast to learn what it does.
+- [Label the Cell: Animal and Plant Cell Diagram Quiz](https://thebiologylab.org/cells/label-the-cell/): Label a numbered animal or plant cell diagram from a word bank or by typing, get instant feedback and a score, then match each organelle to its function.
 - [Bacterial Doubling Time Calculator: Generation Time & Growth](https://thebiologylab.org/tools/bacterial-growth/): Find bacterial generation (doubling) time from two counts, or the cells after any time with N = N₀ × 2ⁿ, and see exponential growth on a log-scale curve.
 - [Surface Area to Volume Ratio Calculator for Cells (SA:V)](https://thebiologylab.org/tools/cell-size/): Calculate the surface area, volume and surface area to volume ratio (SA:V) of a cube-shaped or spherical cell from its side length or radius, with steps.
 - [Chi-Square Test Calculator for Genetics: χ², df & p-Value](https://thebiologylab.org/tools/chi-square-test/): Test whether observed offspring counts fit a 3:1, 1:1, 1:2:1 or 9:3:3:1 Mendelian ratio: χ², degrees of freedom, critical value, p-value and verdict.
@@ -80,4 +81,4 @@
 
 ## Optional
 
-- [Interactive Periodic Table](https://interactiveperiodictable.net/), [Astronomy Lab](https://theastronomylab.com/), [Earth Science Lab](https://earthsciencelab.org/), [Geometry Lab](https://geometrylab.net/), [Physics Lab](https://thephysicslab.org/), [KidsCode](https://kidscode.dev/): Sister learning apps from the same makers.
+- [Interactive Periodic Table](https://interactiveperiodictable.net/), [Astronomy Lab](https://theastronomylab.com/), [Earth Science Lab](https://earthsciencelab.org/), [Geometry Lab](https://geometrylab.net/), [Physics Lab](https://thephysicslab.org/), [KidsCode](https://kidscode.dev/), [Cell by Cell](https://cellbycell.app/): Sister learning apps from the same makers.
