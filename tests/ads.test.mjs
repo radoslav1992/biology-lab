@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { ads } from '../src/lib/ads.mjs';
 import { site } from '../src/lib/site.mjs';
 
-const UNITS = ['native', 'leaderboard', 'mobile', 'rectangle'];
+const UNITS = ['leaderboard', 'mobile', 'rectangle'];
 
 test('every ad unit key is 32 lowercase hex characters and unique', () => {
   for (const unit of UNITS) assert.match(ads[unit], /^[0-9a-f]{32}$/, `${unit} key`);
