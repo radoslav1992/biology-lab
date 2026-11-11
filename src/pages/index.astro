@@ -58,7 +58,7 @@ const toolCount = catalog.filter(t => !['Practice', 'Reference'].includes(t.cate
 <h3>Cell organelles: structure and function</h3><div class="related">{Object.entries(organelles).map(([slug, o]) => <a href={`/cells/${slug}/`}>{o.title}: structure and function ↗</a>)}</div>
 <h3>Biology concepts explained</h3><div class="related">{lessons.map(l => <a href={`/learn/${l.slug}/`}>{l.title} ↗</a>)}<a href="/teachers/">Classroom activities for teachers ↗</a></div></section>
 <div class="learning-strip"><div><span class="strip-label">OBSERVE. QUESTION. UNDERSTAND.</span><h2>Let your understanding grow.</h2><p>Eight biology questions, with explanations to help each idea take root.</p></div><a href="/practice/">Start a practice round ↗</a></div>
-<AdSlot type="native" />
+<AdSlot type="rectangle" />
 <LearningApps/><Faq items={faqs['home']} title="Biology Lab: frequently asked questions"/></Layout>
 <style>
 .popular-tools h3{font-size:18px;margin:26px 5px 0}
