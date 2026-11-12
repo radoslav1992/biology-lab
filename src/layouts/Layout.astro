@@ -5,6 +5,7 @@ import { site } from '../lib/site.mjs';
 import { learningApps, currentApp } from '../lib/learning-apps.mjs';
 import AdSlot from '../components/AdSlot.astro';
 import AdFree from '../components/AdFree.astro';
+import { anyAds } from '../lib/ads.mjs';
 import ConsentDefaults from '../components/ConsentDefaults.astro';
 import ConsentBanner from '../components/ConsentBanner.astro';
 const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', schema: customSchema, noindex = false, breadcrumbs = [], ads = true } = Astro.props;
@@ -30,7 +31,7 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><AdFree/><ConsentDefaults/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>{anyAds&&<AdFree/>}<ConsentDefaults/>
   <title>{pageTitle}</title>
   <meta name="description" content={description}/><link rel="canonical" href={url}/>
   {noindex ? <meta name="robots" content="noindex,follow"/> : <meta name="robots" content="index,follow,max-image-preview:large"/>}
@@ -56,6 +57,6 @@ const website = { '@context': 'https://schema.org', '@type': 'WebSite', name: si
   <main id="main" tabindex="-1"><slot/></main>
   {ads && <AdSlot type="leaderboard" />}
   <footer class="site-footer"><a href="/" class="footer-brand">biology<span class="brand-light">lab</span></a><p>Look closer. Life is full of discoveries.</p><div><a href="/learn/">Concept notes</a><a href="/about/">About this lab</a><a href="/teachers/">For teachers</a><a href="/privacy/">Privacy</a><button type="button" class="footer-link-button" data-cookie-settings>Cookie settings</button><a href="/#learning-apps">Explore our learning apps</a><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></div><nav class="footer-apps" aria-label="More free learning apps"><strong>More free learning apps</strong>{sisterApps.map(app => <a href={app.url + '/'}>{app.name}</a>)}</nav><span>Free to explore. No account needed. For learning, not medical advice.</span></footer>
-  <ConsentBanner/>
+  <ConsentBanner ads={anyAds}/>
 </body>
 </html>

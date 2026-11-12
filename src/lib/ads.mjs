@@ -1,9 +1,18 @@
-// Adsterra ad units for thebiologylab.org, copied from the Adsterra publisher dashboard.
-// Ads load only on this hostname, so local and preview builds stay ad-free.
+// Adsterra ad units. Ads are switched off: the unit keys are empty, so AdSlot renders nothing (no markup,
+// no script, no requests) and AdFree does not run. The privacy, about and teacher pages say Biology Lab has
+// no ads: update them before setting keys again (tests/ads.test.mjs fails as a reminder).
+// Ads load only on `domain`, so local and preview builds stay ad-free.
 export const ads = {
   domain: 'thebiologylab.org',
   host: 'https://bauval.org',
-  leaderboard: 'f1fc0952653c71886f0fc77007948063', // 728×90, wide screens
-  mobile: '0ba2ca1dffe7fb172aff08425ee52252', // 320×50, phones
-  rectangle: '0c1d1eacc9b9a3a62297a786c892c745', // 300×250
+  leaderboard: '', // 728×90, wide screens
+  mobile: '', // 320×50, phones
+  rectangle: '', // 300×250
 };
+
+// The leaderboard needs both its desktop and phone sizes.
+export const adsEnabled = {
+  leaderboard: Boolean(ads.leaderboard && ads.mobile),
+  rectangle: Boolean(ads.rectangle),
+};
+export const anyAds = Object.values(adsEnabled).some(Boolean);

@@ -76,7 +76,7 @@
 ## About
 
 - [About Biology Lab](https://thebiologylab.org/about/): How Biology Lab’s free calculators, cell diagrams, and practice questions work, what the models assume, and how your data is handled.
-- [Privacy Policy](https://thebiologylab.org/privacy/): What Biology Lab collects and why: no accounts, Google Analytics usage statistics, Adsterra banner ads, and practice scores kept only in your browser.
+- [Privacy Policy](https://thebiologylab.org/privacy/): What Biology Lab collects and why: no accounts, Google Analytics usage statistics, no ads, and practice scores kept only in your browser.
 - Contact: info@thebiologylab.org
 
 ## Optional
