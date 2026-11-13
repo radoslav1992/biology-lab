@@ -15,7 +15,7 @@ test('llms.txt names the site, summarises it and lists every tool or hub on the 
 });
 
 test('llms.txt links only to this site and its sister apps, each line with a description', () => {
-  const sisters = ['interactiveperiodictable.net', 'theastronomylab.com', 'thebiologylab.org', 'earthsciencelab.org', 'geometrylab.net', 'thephysicslab.org', 'kidscode.dev', 'cellbycell.app'];
+  const sisters = ['interactiveperiodictable.net', 'theastronomylab.com', 'thebiologylab.org', 'earthsciencelab.org', 'geometrylab.net', 'thephysicslab.org', 'kidscode.dev', 'cellbycell.app', 'fictionandfactlibrary.com'];
   for (const [, url] of text.matchAll(/\]\((https?:\/\/[^)]+)\)/g)) {
     assert.ok(url.startsWith('https://') && sisters.includes(new URL(url).hostname), url);
   }
