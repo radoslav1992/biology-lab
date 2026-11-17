@@ -6,12 +6,15 @@ import Faq from '../components/Faq.astro';
 import WorkedExamples from '../components/WorkedExamples.astro';
 import { faqs } from '../lib/faqs.mjs';
 import { findExploration, prefillHref } from '../lib/explorations.mjs';
-import { timeToReach, afterDoublings, doublingTimes, doublingTime, compoundGrowth, growthRateFromCounts } from '../lib/population.mjs';
+import { timeToReach, afterDoublings, doublingTimes, doublingTime, compoundGrowth, growthRateFromCounts, doublingSolution } from '../lib/population.mjs';
 import { fmt } from '../lib/format.mjs';
 import Layout from '../layouts/Layout.astro';
 import PopulationGrowth from '../components/PopulationGrowth.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 const solver = findExploration('population-word-problems');
+// tests/site.test.mjs keeps these within 60 and 120–155 characters.
+const title = 'Population Doubling & Growth Calculator, Step by Step';
+const description = 'A city doubles every 41 years: 700,000 people now means 5,600,000 in 123 years. Solve doubling and % growth problems with P = P₀ × 2^(t/T).';
 const comparison = [
   ['Equation', 'dN/dt = rN, so N(t) = N₀e^(rt)', 'dN/dt = rN(1 − N/K), so N(t) = K / (1 + ((K − N₀)/N₀)e^(−rt))'],
   ['Curve shape', 'J-shaped: steeper and steeper', 'S-shaped (sigmoid): levels off at K'],
@@ -29,6 +32,11 @@ const town = timeToReach(20000, 210000, 0.12), townContinuous = timeToReach(2000
 const sixty = afterDoublings(1100, 60, 180), city = afterDoublings(67900, 21, 84), world = doublingTimes(0.013);
 const after7 = compoundGrowth(16000, 0.03, 7), after11 = compoundGrowth(15000, 0.025, 11), after14 = compoundGrowth(8000, 0.045, 14);
 const census = growthRateFromCounts(179323175, 331449281, 60);
+// "A city doubles its size every 41 years…" is how most visitors from search phrase their question, so the page answers
+// it first, with the same function the quick form below and the solver's "Doubles every…" mode use.
+const doubling = { n0: 700000, td: 41, t: 123 };
+const answer = doublingSolution(doubling.n0, doubling.td, doubling.t);
+const partial = doublingSolution(700000, 41, 100);
 const compound = [
   { question: 'A town has a population of 16,000 and grows at 3% every year. What will be the population after 7 years, to the nearest whole number?', steps: ['Growing by 3% a year multiplies the population by 1.03 each year: N = N₀(1 + r)^t = 16,000 × 1.03^7.', `1.03^7 = ${fmt(1.03 ** 7, 6)}, so N = 16,000 × ${fmt(1.03 ** 7, 6)} = ${fmt(after7, 2)}.`], answer: `${fmt(after7, 0)} people.`, ...open('future', { n0: 16000, rate: 3, t: 7 }) },
   { question: 'A town has a population of 15,000 and grows at 2.5% every year. What will be the population after 11 years, to the nearest whole number?', steps: ['N = N₀(1 + r)^t = 15,000 × 1.025^11.', `1.025^11 = ${fmt(1.025 ** 11, 6)}, so N = 15,000 × ${fmt(1.025 ** 11, 6)} = ${fmt(after11, 2)}.`], answer: `${fmt(after11, 0)} people.`, ...open('future', { n0: 15000, rate: 2.5, t: 11 }) },
@@ -51,9 +59,19 @@ const rates = [
   { question: 'The United States census counted 179,323,175 people in 1960 and 331,449,281 in 2020. What was the average annual growth rate?', steps: [`Growth factor = 331,449,281 ÷ 179,323,175 = ${fmt(331449281 / 179323175, 4)} over 60 years.`, `(1 + r)^60 = ${fmt(331449281 / 179323175, 4)}, so 1 + r = ${fmt(331449281 / 179323175, 4)}^(1/60) = ${fmt(1 + census.percent, 5)}.`], answer: `about ${fmt(census.percent * 100, 2)}% per year (a continuous rate r of ${fmt(census.r, 4)}).`, ...open('rate', { n0: 179323175, n: 331449281, t: 60 }) },
 ];
 ---
-<Layout title="Population Growth Calculator: Solve Growth & Doubling Problems" section="Population growth" breadcrumbs={[['Tools', '/tools/'], ['Population growth calculator', '/population-growth-calculator/']]} description="Solve population growth word problems step by step: the population after t years at a % rate, the years to reach a target, and doubling-time problems.">
+<Layout title={title} section="Population growth" breadcrumbs={[['Tools', '/tools/'], ['Population growth calculator', '/population-growth-calculator/']]} description={description}>
 <div class="intro"><div><div class="eyebrow">Ecology and algebra, one step at a time</div><h1>Population growth calculator: solve growth and doubling-time problems step by step</h1><p>Type in a word problem such as “a town has a population of 2,000 and grows at 2.5% every year: how long until it reaches 2,700?” or “a city doubles its size every 21 years” and get the answer with every step. The solver finds the population after t years with N = N₀(1 + r)^t, the years needed to reach a target with t = ln(N ÷ N₀) ÷ ln(1 + r), the doubling time, and the growth rate between two counts. Further down, a second calculator draws exponential and logistic growth curves. It is for algebra, biology and environmental science students, and for teachers who want checked answers.</p></div></div>
-<nav class="related page-jump" aria-label="On this page"><a href="#word-problems">Word-problem solver ↓</a><a href="#worked-examples">Growth after t years ↓</a><a href="#doubling-problems">Doubling-time problems ↓</a><a href="#time-to-reach">How long until it reaches… ↓</a><a href="#growth-curve">Exponential &amp; logistic curves ↓</a><a href="#growth-models-heading">Formulas ↓</a></nav>
+<section id="doubling" class="doubling-answer" aria-labelledby="doubling-heading">
+<div class="section-heading"><div><div class="eyebrow">Doubles every T years</div><h2 id="doubling-heading">Population doubling formula: P = P₀ × 2^(t/T)</h2><p>When a word problem says a town or city “doubles its size every T years”, you do not need a growth rate at all. Count how many times the population doubles in the time you are given, then multiply the starting population by 2 that many times.</p></div></div>
+<div class="formula worked-formula">P = P₀ × 2^(t ÷ T)</div>
+<ul class="doubling-terms"><li><strong>P</strong> is the population after t years, the number the question asks for.</li><li><strong>P₀</strong> is the population now (“currently”).</li><li><strong>T</strong> is the doubling time: the population doubles once every T years.</li><li><strong>t ÷ T</strong> is the number of doublings, and 2^(t ÷ T) is how many times larger the population becomes.</li></ul>
+<div class="doubling-grid">
+<article class="worked-card"><span class="worked-number">Worked example</span><h3>A city doubles its size every {doubling.td} years. If the population is currently {fmt(doubling.n0, 0)}, what will the population be in {doubling.t} years?</h3><ol>{answer.steps.map(step => <li>{step}</li>)}</ol><p class="worked-answer"><strong>Answer:</strong> {fmt(answer.rounded, 0)} people.</p><a class="text-link" href={prefillHref('', 'doublings', doubling)}>Open this problem in the solver <span aria-hidden="true">↗</span></a></article>
+<doubling-quick class="doubling-quick"><h3>Population doubling calculator</h3><p class="small-note">Type the numbers from your problem. Use the same time unit (years, days or hours) for T and t.</p><div class="doubling-fields"><label class="field">Population now, P₀<input type="number" data-dq="n0" min="1" step="any" value={doubling.n0}/></label><label class="field">Doubles every T<input type="number" data-dq="td" min="0.01" step="any" value={doubling.td}/></label><label class="field">Time from now, t<input type="number" data-dq="t" min="0" step="any" value={doubling.t}/></label></div><div class="result-grid doubling-results" aria-live="polite"><div class="result-tile"><span>Doublings t ÷ T</span><strong data-dq-out="doublings">{fmt(answer.doublings, 4)}</strong></div><div class="result-tile"><span>Growth factor 2^(t ÷ T)</span><strong data-dq-out="factor">{fmt(answer.factor, 4)}×</strong></div><div class="result-tile"><span>Population after t</span><strong data-dq-out="n">{answer.text}</strong></div></div><ol class="doubling-steps" data-dq-steps>{answer.steps.map(step => <li>{step}</li>)}</ol><p class="error" data-dq-error role="alert"></p></doubling-quick>
+</div>
+<p class="doubling-more">If t ÷ T is not a whole number, use the power key on a calculator rather than counting: {fmt(doubling.n0, 0)} people doubling every {doubling.td} years reach {fmt(partial.rounded, 0)} after 100 years, because 100 ÷ 41 = {fmt(partial.doublings, 3)} doublings and 2^{fmt(partial.doublings, 3)} ≈ {fmt(partial.factor, 4)}. To go the other way and find the doubling time from a growth rate, use T = ln 2 ÷ ln(1 + r), or the rule of 70: a town growing 2% a year doubles in about 35 years. <a class="text-link" href="#doubling-problems">More doubling-time problems ↓</a></p>
+</section>
+<nav class="related page-jump" aria-label="On this page"><a href="#doubling">Doubles every T years ↓</a><a href="#word-problems">Word-problem solver ↓</a><a href="#worked-examples">Growth after t years ↓</a><a href="#doubling-problems">Doubling-time problems ↓</a><a href="#time-to-reach">How long until it reaches… ↓</a><a href="#growth-curve">Exponential &amp; logistic curves ↓</a><a href="#growth-models-heading">Formulas ↓</a></nav>
 <section id="word-problems" aria-labelledby="word-problems-heading">
 <div class="section-heading"><div><div class="eyebrow">Solve for population, time, doubling or rate</div><h2 id="word-problems-heading">Population growth word-problem solver</h2><p>Pick the question your problem asks: how long until the population reaches a number, what it will be after t years, how long it takes to double, what it will be if it doubles every so many years, or what growth rate turns one count into another. Percentages compound once a year; the continuous-rate answer is shown alongside.</p></div></div>
 {solver && <Exploration tool={solver}/>}
@@ -87,3 +105,49 @@ const rates = [
 <RelatedTools/>
 <Faq items={faqs['population-growth-calculator']} title="Population growth questions"/>
 </Layout>
+<style>
+.doubling-answer{margin:8px 0 34px}
+.doubling-terms{padding-left:22px;margin:0 0 20px;display:grid;gap:4px}
+.doubling-terms li{font-size:15px;line-height:1.65;color:var(--muted)}
+.doubling-terms strong{color:var(--ink)}
+.doubling-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.doubling-quick{display:block;padding:24px 26px;border:1px solid var(--line);border-radius:16px;background:#fff;min-width:0}
+.doubling-quick h3{font-size:18px;margin:0 0 4px}
+.doubling-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 4px}
+.doubling-fields label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.doubling-fields input{width:100%;min-width:0;border:1px solid #b8cdbd;border-radius:8px;padding:10px;font-size:16px}
+.doubling-results{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px 0 0;display:grid}
+.doubling-results strong{display:block;overflow-wrap:anywhere}
+.doubling-steps{padding-left:20px;margin:14px 0 0;display:grid;gap:6px}
+.doubling-steps li{font-size:15px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+.doubling-more{font-size:15px;line-height:1.7;color:var(--muted);margin:18px 0 0}
+@media(max-width:800px){.doubling-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.doubling-fields,.doubling-results{grid-template-columns:1fr}.doubling-quick{padding:20px}}
+</style>
+<script>
+import { doublingSolution } from '../lib/population.mjs';
+import { fmt } from '../lib/format.mjs';
+// Quick doubling form: the page already shows the 700,000 / 41 / 123 answer; this recalculates as the numbers change.
+class DoublingQuick extends HTMLElement {
+  connectedCallback() {
+    const input = (key: string) => this.querySelector<HTMLInputElement>(`[data-dq="${key}"]`)!;
+    const out = (key: string) => this.querySelector<HTMLElement>(`[data-dq-out="${key}"]`)!;
+    const update = () => {
+      const [n0, td, t] = ['n0', 'td', 't'].map(k => input(k).value === '' ? NaN : Number(input(k).value));
+      const error = this.querySelector<HTMLElement>('[data-dq-error]')!;
+      try {
+        const r = doublingSolution(n0, td, t);
+        out('doublings').textContent = fmt(r.doublings, 4);
+        out('factor').textContent = `${fmt(r.factor, 4)}×`;
+        out('n').textContent = r.text;
+        this.querySelector('[data-dq-steps]')!.replaceChildren(...r.steps.map(s => { const li = document.createElement('li'); li.textContent = s; return li; }));
+        error.textContent = '';
+      } catch (e) {
+        error.textContent = (e as Error).message;
+      }
+    };
+    this.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  }
+}
+customElements.define('doubling-quick', DoublingQuick);
+</script>
