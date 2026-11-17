@@ -255,6 +255,34 @@ test('word-problem helpers solve compound and continuous growth for time, rate a
   assert.throws(() => afterDoublings(1, 0.01, 100000), /too large/);
 });
 
+test('doubling problems: P = P₀ × 2^(t/T) for the "city doubles its size every T years" searches', async () => {
+  const { doublingSolution } = await import('../src/lib/population.mjs');
+  // [P₀, T, t, answer]: the worked example on the page and questions taken from Search Console.
+  const cases = [[700000, 41, 123, 5600000], [150000, 76, 228, 1200000], [139000, 82, 246, 1112000], [88200, 83, 249, 705600], [365000, 24, 96, 5840000], [467500, 42, 168, 7480000], [3070, 17, 68, 49120], [6790, 38, 76, 27160], [15085, 81, 405, 482720]];
+  for (const [n0, td, t, expected] of cases) {
+    const r = doublingSolution(n0, td, t);
+    assert.equal(r.doublings, t / td, `${n0}/${td}/${t} doublings`);
+    assert.equal(r.N, expected, `${n0} doubling every ${td} for ${t}`);
+    assert.equal(r.text, expected.toLocaleString('en-US'));
+    assert.equal(r.steps.length, 3);
+    assert.match(r.steps[2], new RegExp(`= ${expected.toLocaleString('en-US')}\\.$`));
+  }
+  const example = doublingSolution(700000, 41, 123);
+  assert.equal(example.steps[0], 'Count the doublings: t ÷ T = 123 ÷ 41 = 3.');
+  assert.equal(example.steps[1], 'Each doubling multiplies the population by 2, so the growth factor is 2^3 = 8.');
+  assert.equal(example.steps[2], 'P = P₀ × 2^(t ÷ T) = 700,000 × 8 = 5,600,000.');
+  // A part-finished doubling uses the power, not a count: 100 ÷ 41 = 2.439 doublings.
+  const partial = doublingSolution(700000, 41, 100);
+  close(partial.factor, 2 ** (100 / 41));
+  close(partial.N, 700000 * Math.exp(Math.LN2 * 100 / 41));
+  assert.equal(partial.rounded, 3795924);
+  assert.match(partial.steps[2], /≈ 3,795,924\.$/);
+  assert.equal(doublingSolution(500, 10, 0).N, 500);
+  assert.match(doublingSolution(1, 1, 60).text, /× 10\^18$/);
+  assert.throws(() => doublingSolution(700000, 0, 123), /doubling time/);
+  assert.throws(() => doublingSolution(-5, 41, 123), /starting population/);
+});
+
 test('the embedded word-problem solver answers every preset cleanly and stays off the /tools/ site map', async () => {
   const solver = await import('../src/lib/tools/population-word-problems.mjs');
   const { explorations, findExploration, explore, explorationDiagram } = await import('../src/lib/explorations.mjs');

@@ -2,13 +2,14 @@
 import '../styles/global.css';
 import '../styles/studio.css';
 import { site } from '../lib/site.mjs';
+import { isIndexable } from '../lib/indexing.mjs';
 import { learningApps, currentApp } from '../lib/learning-apps.mjs';
 import AdSlot from '../components/AdSlot.astro';
 import AdFree from '../components/AdFree.astro';
 import { anyAds } from '../lib/ads.mjs';
 import ConsentDefaults from '../components/ConsentDefaults.astro';
 import ConsentBanner from '../components/ConsentBanner.astro';
-const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', schema: customSchema, noindex = false, breadcrumbs = [], ads = true } = Astro.props;
+const { title = site.defaultTitle, description = site.defaultDescription, section = 'Explore', schemaType = 'WebApplication', schema: customSchema, noindex = !isIndexable(Astro.url.pathname), breadcrumbs = [], ads = true } = Astro.props;
 const toolSections = ['Punnett square', 'DNA translator', 'Population growth', 'Hardy-Weinberg'];
 const activeSection = toolSections.includes(section) ? 'Tools' : section;
 const url = new URL(Astro.url.pathname, Astro.site);

@@ -1,11 +1,13 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { site } from './src/lib/site.mjs';
+import { isIndexable } from './src/lib/indexing.mjs';
 
-// Answer keys are for teachers: noindex and left out of the sitemap.
+// The sitemap lists only indexable pages: the 404 page, teacher answer keys and printable activities are noindex
+// (src/lib/indexing.mjs explains why).
 export default defineConfig({
   site: site.url,
   output: 'static',
   trailingSlash: 'always',
-  integrations: [sitemap({ filter: page => !page.endsWith('/404/') && !page.includes('/teachers/answers/') })],
+  integrations: [sitemap({ filter: isIndexable })],
 });

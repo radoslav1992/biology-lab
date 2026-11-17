@@ -327,8 +327,8 @@ test('the new worked examples, the replication section and the FAQ print what th
   assert.ok(page.includes("replicate('AGTCCGATA')") && page.includes("reverseTranscribe('AUGGCU')"));
   const copied = replicate('AGTCCGATA');
   assert.deepEqual([copied.copy.seq, copied.copy.left, copied.copy.right, copied.copy53, copied.at, copied.gc], ['TCAGGCTAT', '3′', '5′', 'TATCGGACT', 5, 4]);
-  // the title, H1 and URL of the page are unchanged
-  assert.ok(page.includes('<Layout title="DNA to mRNA to Protein Converter: Transcription & Translation"'));
+  // the title (shortened to fit 60 characters) keeps the converter's search phrases; the H1 and URL are unchanged
+  assert.ok(page.includes('<Layout title="DNA to mRNA to Protein: Transcription & Translation Tool"'));
   assert.ok(page.includes('<h1>DNA to mRNA to protein converter: transcription and translation tool</h1>'));
   const description = page.match(/<Layout title="[^"]+"[^>]* description="([^"]+)"/)[1];
   assert.ok(description.length >= 120 && description.length <= 155, `description ${description.length}`);

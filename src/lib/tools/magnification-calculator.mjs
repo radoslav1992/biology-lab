@@ -16,7 +16,7 @@ const niceBar = actual => { const t = actual / 2.5, base = 10 ** Math.floor(Math
 export const definition = {
   slug: 'magnification-calculator',
   title: 'Magnification & scale bar calculator',
-  seoTitle: 'Magnification Calculator — Actual Size, Image Size & Scale Bar',
+  seoTitle: 'Magnification Calculator: Actual Size, Image Size, Scale Bar',
   category: 'Lab skills',
   icon: '⌾',
   description: 'Find actual size, image size, or magnification with correct mm-to-µm conversion, work out total microscope magnification, and size a scale bar.',

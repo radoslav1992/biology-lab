@@ -121,6 +121,29 @@ export function afterDoublings(N0, Td, t) {
   return { doublings, N };
 }
 
+/**
+ * "A city doubles its size every Td years. If the population is currently N₀, what will it be in t years?"
+ * Returns afterDoublings' numbers plus the growth factor 2^(t/Td), the answer rounded to a whole number of people,
+ * the answer as text, and the three written steps shown on /population-growth-calculator/ (server-rendered and in the quick form).
+ */
+export function doublingSolution(N0, Td, t) {
+  const { doublings, N } = afterDoublings(N0, Td, t);
+  const factor = 2 ** doublings;
+  const whole = Math.abs(doublings - Math.round(doublings)) < 1e-9;
+  const num = n => Math.abs(n) >= 1e12 ? formatCount(n) : fmt(n, Math.abs(n) >= 1000 ? 0 : 2);
+  const n = fmt(doublings, 4), f = whole ? fmt(factor, 0) : fmt(factor, 4), eq = whole ? '=' : '≈';
+  return {
+    doublings, factor, N, rounded: Math.round(N),
+    // The answer as the page prints it: whole people, or scientific notation past a trillion.
+    text: N >= 1e12 ? formatCount(N) : fmt(Math.round(N), 0),
+    steps: [
+      `Count the doublings: t ÷ T = ${fmt(t, 4)} ÷ ${fmt(Td, 4)} = ${n}${whole ? '' : ' (not a whole number, so the last doubling is only partly finished)'}.`,
+      `Each doubling multiplies the population by 2, so the growth factor is 2^${n} ${eq} ${f}.`,
+      `P = P₀ × 2^(t ÷ T) = ${num(N0)} × ${f} ${eq} ${num(N)}.`,
+    ],
+  };
+}
+
 /** Binary fission: after elapsed/generation doublings, N = N₀ · 2^generations. Generations may be fractional. */
 export function bacterialGrowth(N0, generationMinutes, elapsedMinutes) {
   positiveNumber(N0, 'The starting number of cells');
