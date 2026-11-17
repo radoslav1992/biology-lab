@@ -30,8 +30,11 @@ npm ci
 npm run dev
 npm test
 npm run build
+npm run check   # build, then every test including the built-site checks
 npm run preview
 ```
+
+`tests/site.test.mjs` checks the built `dist/` (it is skipped until a build exists): the sitemap lists exactly the indexable pages, robots tags follow `src/lib/indexing.mjs`, canonicals are self-referencing, internal links resolve with trailing slashes and nothing uses `http://`, every indexable page is within two clicks of the home page, the hubs link every child, tools link their sibling tools (`src/lib/related.mjs`), and titles (≤ 60 characters) and descriptions (110–160) fit search snippets.
 
 The production output is `dist/`. JavaScript is delivered only for interactive components; lessons, FAQs, the codon chart, and the cell atlas remain readable without it. Tests cover genetics ratios, Hardy–Weinberg and chi-square values, the genetic code, growth models, every explorer's modes and presets, the label-the-cell quiz (one pointer per structure, functions that match the organelle chart, answer checking and scoring), the practice bank, and cross-module link integrity.
 

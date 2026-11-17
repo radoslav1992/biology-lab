@@ -11,7 +11,7 @@ const EXAMPLES = ['grass, algae, trees', 'grasshoppers, rabbits', 'frogs, small 
 export const definition = {
   slug: 'energy-pyramid',
   title: 'Energy pyramid & the 10% rule',
-  seoTitle: 'Energy Pyramid Calculator — The 10% Rule Across Trophic Levels',
+  seoTitle: 'Energy Pyramid Calculator: The 10% Rule by Trophic Level',
   category: 'Ecology',
   icon: '▲',
   description: 'Enter the energy captured by producers and a transfer efficiency to see how much reaches each consumer level, how much is lost, and why food chains stay short.',
