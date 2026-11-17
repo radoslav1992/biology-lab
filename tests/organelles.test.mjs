@@ -66,3 +66,12 @@ test('cell types reference real slugs and the plant cell has a chloroplast, wall
   assert.deepEqual(cellTypes.animal.extras.map(e => e[0]), ['Centrioles']);
   for (const o of ORDER) assert.ok(cellTypes.animal.organelles.includes(o) || cellTypes.plant.organelles.includes(o), `${o} appears in a cell`);
 });
+
+test('every organelle page explains how it works with the other organelles', () => {
+  for (const [slug, o] of Object.entries(organelles)) {
+    assert.ok(o.teamwork && o.teamwork.length >= 300 && o.teamwork.length <= 650, `${slug} teamwork is ${o.teamwork?.length} characters`);
+    assert.ok(sentences(o.teamwork).length >= 2, `${slug} teamwork sentences`);
+    assert.doesNotMatch(o.teamwork, /'/, `${slug}: use a typographic apostrophe`);
+  }
+});
+

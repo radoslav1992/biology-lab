@@ -1,6 +1,7 @@
 // Cell atlas data: eight organelles (fixed slug order) plus the two reference cell types drawn by CellDiagram.astro.
 // Every number is a textbook value; keep `properties[0]` as the membrane row (the comparison table reads it).
 // `tool` is the calculator each organelle page links to, with the anchor text that says why it is related.
+// `teamwork` is how the organelle depends on and supplies the others, shown on its page under the facts.
 export const organelles = {
   nucleus: {
     title: 'Nucleus',
@@ -22,6 +23,7 @@ export const organelles = {
     ],
     example: 'When blood glucose rises, a pancreatic β-cell ramps up transcription of the insulin gene inside its nucleus. The pre-mRNA is capped, spliced, and tailed there, then leaves through one of the roughly 2,000–5,000 nuclear pores, each about 120 nm wide, to be translated on the rough ER within minutes.',
     pitfall: 'The nucleus is often called the “brain” of the cell, but it does not think or issue commands. It is an archive and copy room: genes are switched on or off by signals arriving from the cytoplasm, and the proteins that actually do the work are built outside it.',
+    teamwork: 'Genes in the nucleus are copied into messenger RNA, which leaves through the nuclear pores to be translated by ribosomes in the cytoplasm or on the rough ER. The outer nuclear membrane is continuous with the rough ER, so proteins meant for export begin their journey right beside the nucleus. The nucleolus assembles ribosomal subunits, which leave through the same pores. Traffic runs the other way too: histones, and the RNA polymerases that read the genes, are made in the cytoplasm and imported.',
     related: ['ribosome', 'endoplasmic-reticulum'],
     lesson: 'dna-structure',
     tool: { href: '/dna-transcription-translation/', label: 'Transcribe a gene the way the nucleus does: DNA to mRNA converter' },
@@ -49,6 +51,7 @@ export const organelles = {
     ],
     example: 'A heart muscle cell is packed with mitochondria, which take up roughly a third of its volume, because it never rests. Each glucose molecule yields just 2 ATP from glycolysis in the cytoplasm but about 28 more inside the mitochondrion, so cutting off oxygen cuts the cell’s energy income by over 90% within minutes.',
     pitfall: '“The powerhouse of the cell” makes it sound as if mitochondria create energy. They do not: they convert chemical energy already stored in glucose and fatty acids into ATP and release the rest as heat. Energy is conserved, so without fuel and oxygen a mitochondrion produces nothing.',
+    teamwork: 'Mitochondria take in pyruvate made by glycolysis in the cytoplasm and oxygen that has diffused across the cell membrane, and send ATP back out to the rest of the cell while CO₂ diffuses away. In a plant cell they work alongside the chloroplasts: the sugar and oxygen that chloroplasts make in the light are what mitochondria use, day and night. Their own DNA codes for only a few of their proteins; most are encoded in the nucleus, made on cytoplasmic ribosomes and imported.',
     related: ['chloroplast', 'cell-membrane'],
     lesson: 'cellular-respiration',
     tool: { href: '/tools/cell-size/', label: 'Why cristae are folded: surface area to volume ratio calculator' },
@@ -73,6 +76,7 @@ export const organelles = {
     ],
     example: 'A spinach leaf cell holding about 50 chloroplasts runs the summary equation 6 CO₂ + 6 H₂O + light → C₆H₁₂O₆ + 6 O₂. Because the light reactions need at least 8 photons per O₂ released, one glucose costs a minimum of 48 photons. RuBisCO, the enzyme that grabs CO₂, is so slow (about 3 reactions per second per active site) that leaves compensate by making it up to half of their soluble protein.',
     pitfall: 'Plants do not “breathe in CO₂ and out O₂ instead of respiring.” Every plant cell has mitochondria and respires day and night; in the light, photosynthesis in the chloroplasts simply outpaces respiration, so the net gas exchange flips.',
+    teamwork: 'Chloroplasts export three-carbon sugar phosphates to the cytoplasm, where they are turned into sucrose and carried around the plant; inside the chloroplast, extra sugar is stored as starch. The plant’s mitochondria then break that sugar down to make ATP, including at night, when chloroplasts make none. Most chloroplast proteins are encoded in the nucleus and imported. RuBisCO shows the partnership: its large subunit is made inside the chloroplast from chloroplast DNA, its small subunit from a gene in the nucleus.',
     related: ['mitochondrion', 'ribosome'],
     lesson: 'photosynthesis',
     tool: { href: '/tools/energy-pyramid/', label: 'Follow the energy plants capture: energy pyramid calculator' },
@@ -97,6 +101,7 @@ export const organelles = {
     ],
     example: 'The β-chain of hemoglobin is 146 amino acids long. A eukaryotic ribosome adding about 5 amino acids per second finishes one chain in roughly 30 seconds, and because a single mRNA is usually read by several ribosomes at once (a polysome), a developing red blood cell turns out hemoglobin fast enough to fill itself with about 270 million molecules.',
     pitfall: 'Ribosomes do not make amino acids, and they are not membrane-bound organelles. Amino acids come from food or the cell’s own metabolism; the ribosome only stitches them together in the order the mRNA dictates. Antibiotics such as tetracycline exploit the 70S/80S difference to hit bacterial ribosomes and spare ours.',
+    teamwork: 'Free ribosomes in the cytoplasm make the proteins that stay there or move into the nucleus, mitochondria or chloroplasts. When a new protein starts with an ER signal sequence, its ribosome is drawn to the rough ER and threads the growing chain inside; from there the protein travels to the Golgi apparatus and on to lysosomes, the cell membrane or the outside of the cell. Ribosomal subunits themselves are assembled in the nucleolus and leave the nucleus through its pores.',
     related: ['endoplasmic-reticulum', 'nucleus'],
     lesson: 'transcription-and-translation',
     tool: { href: '/codon-chart/', label: 'Read codons like a ribosome: codon chart and codon table' },
@@ -122,6 +127,7 @@ export const organelles = {
     ],
     example: 'A plasma cell devoted to antibody production is crammed with rough ER and releases about 2,000 antibody molecules per second; each one is folded and glycosylated in the ER lumen before shipment. In the liver, a few days of barbiturate exposure makes hepatocytes roughly double their smooth ER, which is one reason the drug loses its effect over time.',
     pitfall: 'Rough and smooth ER are not two separate organelles. They are regions of one continuous membrane system, and ribosomes attach and detach as the cell’s needs change, so a cell can shift the balance between them within hours.',
+    teamwork: 'Proteins made on the rough ER fold and receive their first sugar groups inside the ER, then leave in transport vesicles for the Golgi apparatus. The smooth ER makes the phospholipids that build new membrane for the ER, the Golgi, lysosomes and the cell membrane. The ER is continuous with the outer membrane of the nuclear envelope, and in muscle cells a specialized smooth ER, the sarcoplasmic reticulum, stores the calcium ions that trigger contraction.',
     related: ['ribosome', 'golgi-apparatus'],
     lesson: 'transcription-and-translation',
     tool: { href: '/dna-transcription-translation/', label: 'Build the protein the ER will fold: DNA to protein converter' },
@@ -147,6 +153,7 @@ export const organelles = {
     ],
     example: 'The mucins that coat your gut are up to 80% sugar by mass, and nearly all of that carbohydrate is attached in the Golgi. A goblet cell in the intestinal lining refills and releases its mucin granules within hours, while a typical protein takes on the order of 20 minutes to cross a Golgi stack from the cis face to the trans face.',
     pitfall: 'The Golgi is not just a “packaging center” that wraps things in membrane. It edits what it receives, and its address tags decide where each protein ends up. In I-cell disease the mannose-6-phosphate tag is missing, so lysosomal enzymes are shipped out of the cell instead of into lysosomes.',
+    teamwork: 'The Golgi receives vesicles from the ER at its cis face, modifies proteins as they move through the stack (trimming and adding sugar groups, for example) and sorts them at its trans face: into secretory vesicles that fuse with the cell membrane, into vesicles that carry digestive enzymes to lysosomes, or back to the ER. In plant cells it also makes the cell wall’s other polysaccharides, such as pectin; cellulose itself is made by enzymes in the cell membrane.',
     related: ['endoplasmic-reticulum', 'lysosome'],
     lesson: 'cell-transport',
     tool: { href: '/tools/magnification-calculator/', label: 'Measure organelles in a micrograph: magnification calculator' },
@@ -172,6 +179,7 @@ export const organelles = {
     ],
     example: 'A proton pump (V-type ATPase) holds the lysosome interior at pH 4.5–5.0 while the cytosol sits near pH 7.2, a 100- to 500-fold difference in H⁺ concentration. That acidity is a safety feature too: if a lysosome leaks, its enzymes are nearly inactive at cytosolic pH. In Tay–Sachs disease one missing hydrolase (hexosaminidase A) lets GM2 ganglioside pile up in neurons, showing how much a single enzyme matters.',
     pitfall: 'Lysosomes are not “suicide sacs” waiting to burst and kill the cell. Programmed cell death is run by caspase enzymes, not lysosomal ones, and a leaked hydrolase does little at neutral pH. Lysosomes are recyclers first, and they are also unusually rare in plant cells, where the central vacuole does the digesting.',
+    teamwork: 'Lysosomal enzymes are made on the rough ER, tagged with a sugar marker (mannose-6-phosphate) in the Golgi apparatus, and delivered in vesicles. Lysosomes then fuse with food vacuoles brought in by endocytosis at the cell membrane, and with membrane sacs that wrap worn-out organelles such as old mitochondria (autophagy). Proton pumps in the lysosome membrane keep the inside at about pH 4.5–5, the acidity its enzymes need to work.',
     related: ['golgi-apparatus', 'cell-membrane'],
     lesson: 'enzymes',
     tool: { href: '/tools/enzyme-kinetics/', label: 'See how enzymes speed up reactions: Michaelis-Menten calculator' },
@@ -197,6 +205,7 @@ export const organelles = {
     ],
     example: 'Drop a red blood cell into pure water and it swells and bursts within seconds: water crosses the membrane freely but the salts inside cannot follow. Keeping the balance is expensive, since the Na⁺/K⁺ pump alone burns roughly a third of a typical animal cell’s ATP, and far more in neurons, to hold a resting potential of about −70 mV.',
     pitfall: 'The membrane is neither a rigid wall nor a simple sieve that sorts by size. Its lipids drift sideways constantly (one can travel the length of a bacterium in about a second), and a tiny ion like Na⁺ is blocked while much larger nonpolar steroid hormones slip straight through: polarity matters more than size.',
+    teamwork: 'Vesicles from the Golgi apparatus fuse with the cell membrane, adding new membrane and releasing their contents outside the cell (exocytosis); endocytosis pinches membrane back off to bring material in, some of it bound for lysosomes. Most membrane proteins, such as receptors and pumps, are made on the rough ER and reach the surface by this route. In a plant cell the membrane presses against the cell wall, and the cellulose of the wall is made by enzymes in the membrane itself.',
     related: ['lysosome', 'golgi-apparatus'],
     lesson: 'cell-transport',
     tool: { href: '/tools/water-potential/', label: 'Predict osmosis across the membrane: water potential calculator' },
