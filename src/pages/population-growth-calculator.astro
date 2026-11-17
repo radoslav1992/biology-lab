@@ -10,6 +10,7 @@ import { timeToReach, afterDoublings, doublingTimes, doublingTime, compoundGrowt
 import { fmt } from '../lib/format.mjs';
 import Layout from '../layouts/Layout.astro';
 import PopulationGrowth from '../components/PopulationGrowth.astro';
+import RelatedTools from '../components/RelatedTools.astro';
 const solver = findExploration('population-word-problems');
 const comparison = [
   ['Equation', 'dN/dt = rN, so N(t) = N₀e^(rt)', 'dN/dt = rN(1 − N/K), so N(t) = K / (1 + ((K − N₀)/N₀)e^(−rt))'],
@@ -82,6 +83,7 @@ const rates = [
   <h3>Carrying capacity in the real world</h3>
   <p>K is set by whatever runs out first: food, nesting sites, water, or the reach of predators and disease. Sheep introduced to Tasmania in the early 1800s followed a textbook S-curve, leveling off near 1.7 million by the 1850s. Populations can also overshoot: 25 reindeer released on St. Paul Island, Alaska, in 1911 grew to about 2,000 by 1938, stripped the lichen they depended on, and crashed to 8 animals by 1950. K is not a fixed number either; it moves with the seasons, rainfall and the arrival of competitors, which is why real curves wobble around the smooth line this calculator draws.</p>
 </section>
-<div class="related"><a href="/learn/population-growth/">Exponential vs logistic growth explained ↗</a><a href="/tools/predator-prey/">Predator–prey cycles (Lotka–Volterra) ↗</a><a href="/tools/bacterial-growth/">Bacterial growth &amp; doubling time ↗</a><a href="/practice/">Practice ecology questions ↗</a></div>
+<div class="related"><a href="/learn/population-growth/">Exponential vs logistic growth explained ↗</a><a href="/learn/energy-flow-in-ecosystems/">Energy flow and food chains explained ↗</a><a href="/practice/">Practice ecology questions ↗</a></div>
+<RelatedTools/>
 <Faq items={faqs['population-growth-calculator']} title="Population growth questions"/>
 </Layout>
